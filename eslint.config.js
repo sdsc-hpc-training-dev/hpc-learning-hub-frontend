@@ -10,7 +10,7 @@ import { FlatCompat } from "@eslint/eslintrc";
 
 const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
 
-export default tseslint.defineConfig()(
+export default tseslint.config()(
   {
     ignores: [
       "node_modules/**",

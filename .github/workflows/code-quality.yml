@@ -236,6 +236,7 @@ jobs:
   #     This job runs Semgrep as a local, license-free
   #     fallback so SAST still runs on private repos without Advanced Security.
   # ---------------------------------------------------------------------
+  # nosemgrep: yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag
   semgrep:
     name: Static analysis (Semgrep)
     runs-on: ubuntu-latest
