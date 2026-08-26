@@ -1,16 +1,13 @@
 // ESLint flat config for the Next.js frontend.
-//
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import security from "eslint-plugin-security";
 import sonarjs from "eslint-plugin-sonarjs";
 import promisePlugin from "eslint-plugin-promise";
 import prettierConfig from "eslint-config-prettier";
-import { FlatCompat } from "@eslint/eslintrc";
+import nextPlugin from "@next/eslint-plugin-next";
 
-const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
-
-export default tseslint.defineConfig()(
+export default tseslint.config(
   {
     ignores: [
       "node_modules/**",
@@ -20,6 +17,11 @@ export default tseslint.defineConfig()(
       "coverage/**",
       "report/**",
       "next-env.d.ts",
+      "**/*.d.ts",
+      "*.config.js",
+      "*.config.mjs",
+      "*.config.cjs",
+      "types/validator.ts"
     ],
   },
 
@@ -29,21 +31,32 @@ export default tseslint.defineConfig()(
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
 
-  // Next.js core-web-vitals rules (via legacy-config compat shim)
-  ...compat.extends("next/core-web-vitals"),
+  // Native Next.js recommended & Core Web Vitals rules for ESLint 9
+  {
+    plugins: {
+      "@next/next": nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+    },
+  },
 
   security.configs.recommended,
   sonarjs.configs.recommended,
 
   {
-    languageOptions: {
-      parserOptions: {
-        project: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
     plugins: {
       promise: promisePlugin,
+    },
+    languageOptions: {
+      parserOptions: {
+        // --- THIS IS THE FIX ---
+        projectService: {
+          allowDefaultProject: ["types/*.ts", "*.js", "*.mjs"],
+        },
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     rules: {
       // --- Complexity limits ---
