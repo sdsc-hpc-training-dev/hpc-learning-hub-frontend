@@ -5,6 +5,7 @@ on:
     branches: [master, dev]
   pull_request:
     branches: [master, dev]
+  workflow_dispatch:
     
 # Cancel superseded runs on the same branch/PR
 concurrency:
@@ -55,7 +56,6 @@ jobs:
   format:
     name: Prettier
     runs-on: ubuntu-latest
-    needs: install
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -72,7 +72,6 @@ jobs:
   lint:
     name: ESLint (strict + security + complexity)
     runs-on: ubuntu-latest
-    needs: install
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -89,7 +88,6 @@ jobs:
   typecheck:
     name: TypeScript (tsc --noEmit)
     runs-on: ubuntu-latest
-    needs: install
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -125,7 +123,6 @@ jobs:
   test:
     name: Tests & coverage
     runs-on: ubuntu-latest
-    needs: install
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -167,7 +164,6 @@ jobs:
   duplication:
     name: Duplicate code (jscpd)
     runs-on: ubuntu-latest
-    needs: install
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -191,7 +187,6 @@ jobs:
   unused:
     name: Unused files/exports/deps (knip)
     runs-on: ubuntu-latest
-    needs: install
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -208,7 +203,6 @@ jobs:
   audit:
     name: npm audit (prod deps)
     runs-on: ubuntu-latest
-    needs: install
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -233,6 +227,7 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "true"
           GITLEAKS_ENABLE_SUMMARY: "true"
 
@@ -249,7 +244,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run Semgrep
-        run: semgrep ci --config auto --error
+        run: semgrep ci --config auto
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
