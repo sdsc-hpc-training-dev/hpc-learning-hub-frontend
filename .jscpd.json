@@ -1,0 +1,18 @@
+{
+  "threshold": 5,
+  "reporters": ["html", "json", "console"],
+  "output": "./report/jscpd",
+  "absolute": true,
+  "gitignore": true,
+  "format": ["typescript", "tsx", "javascript", "jsx"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/out/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/report/**",
+    "**/*.test.*",
+    "**/*.spec.*"
+  ]
+}

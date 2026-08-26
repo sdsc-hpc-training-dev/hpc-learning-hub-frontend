@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "next.config.{js,ts,mjs}",
+    "app/**/{page,layout,loading,error,not-found,route}.{ts,tsx}",
+    "pages/**/*.{ts,tsx}",
+    "middleware.ts"
+  ],
+  "project": ["**/*.{ts,tsx}"],
+  "ignore": [
+    "**/*.test.{ts,tsx}",
+    "**/*.spec.{ts,tsx}",
+    ".next/**",
+    "coverage/**",
+    "report/**"
+  ],
+  "ignoreDependencies": ["eslint-config-prettier"]
+}
