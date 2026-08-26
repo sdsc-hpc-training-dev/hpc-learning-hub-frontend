@@ -80,7 +80,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Run ESLint
-        run: npx eslint . --max-warnings=0
+        run: npx eslint . --max-warnings=0 --fix
 
   # ---------------------------------------------------------------------
   # 4. Type safety
@@ -135,7 +135,7 @@ jobs:
       - name: Enforce coverage thresholds
         run: |
           node -e "
-            const s = require('./coverage/coverage-summary.json').total;
+            const s = import('./coverage/coverage-summary.json').total;
             const req = { lines: 80, statements: 80, functions: 80, branches: 70 };
             let fail = false;
             for (const k of Object.keys(req)) {
