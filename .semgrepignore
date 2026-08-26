@@ -1,0 +1,2 @@
+# Ignore Semgrep mutable tag warnings for GitHub Actions
+.github/workflows/*.yml
