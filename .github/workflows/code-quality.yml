@@ -1,0 +1,288 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
+    
+# Cancel superseded runs on the same branch/PR
+concurrency:
+  group: frontend-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pin the exact Node.js version used across every job for reproducibility
+  NODE_VERSION: "20.18.0"
+
+permissions:
+  contents: read
+  security-events: write # required for CodeQL/Trivy SARIF upload
+  actions: read
+
+jobs:
+  # ---------------------------------------------------------------------
+  # 1. Installation + lockfile consistency
+  # ---------------------------------------------------------------------
+  install:
+    name: Install & verify lockfile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies (frozen lockfile)
+        run: npm ci
+
+      - name: Verify package-lock.json matches package.json
+        run: |
+          cp package-lock.json /tmp/package-lock.before.json
+          npm install --package-lock-only
+          if ! diff -q package-lock.json /tmp/package-lock.before.json > /dev/null; then
+            echo "::error::package-lock.json is out of sync with package.json. Run 'npm install' and commit the lockfile."
+            git diff package-lock.json
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------
+  # 2. Formatting
+  # ---------------------------------------------------------------------
+  format:
+    name: Prettier
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Check formatting
+        run: npx prettier --check .
+
+  # ---------------------------------------------------------------------
+  # 3. Linting, code smells, and TypeScript strictness
+  # ---------------------------------------------------------------------
+  lint:
+    name: ESLint (strict + security + complexity)
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Run ESLint
+        run: npx eslint . --max-warnings=0
+
+  # ---------------------------------------------------------------------
+  # 4. Type safety
+  # ---------------------------------------------------------------------
+  typecheck:
+    name: TypeScript (tsc --noEmit)
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit
+
+  # ---------------------------------------------------------------------
+  # 5. Build
+  # ---------------------------------------------------------------------
+  build:
+    name: Next.js build
+    runs-on: ubuntu-latest
+    needs: [format, lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  # ---------------------------------------------------------------------
+  # 6. Tests + coverage
+  # ---------------------------------------------------------------------
+  test:
+    name: Tests & coverage
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Run tests with coverage
+        run: npm run test:coverage
+      - name: Enforce coverage thresholds
+        run: |
+          node -e "
+            const s = require('./coverage/coverage-summary.json').total;
+            const req = { lines: 80, statements: 80, functions: 80, branches: 70 };
+            let fail = false;
+            for (const k of Object.keys(req)) {
+              if (s[k].pct < req[k]) {
+                console.error('Coverage for ' + k + ' is ' + s[k].pct + '%, below required ' + req[k] + '%');
+                fail = true;
+              }
+            }
+            if (fail) process.exit(1);
+          "
+      - name: Upload coverage reports (HTML/JSON/LCOV)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage/lcov-report/**
+            coverage/coverage-final.json
+            coverage/coverage-summary.json
+            coverage/lcov.info
+          retention-days: 14
+
+  # ---------------------------------------------------------------------
+  # 7. Duplicate code
+  # ---------------------------------------------------------------------
+  duplication:
+    name: Duplicate code (jscpd)
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Run jscpd (fail above 5% duplication)
+        run: npx jscpd . --config .jscpd.json
+      - name: Upload jscpd report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jscpd-report
+          path: report/jscpd/**
+          retention-days: 14
+
+  # ---------------------------------------------------------------------
+  # 8. Unused code and dependencies
+  # ---------------------------------------------------------------------
+  unused:
+    name: Unused files/exports/deps (knip)
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Run knip
+        run: npx knip
+
+  # ---------------------------------------------------------------------
+  # 9. Dependency vulnerabilities
+  # ---------------------------------------------------------------------
+  audit:
+    name: npm audit (prod deps)
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+  # ---------------------------------------------------------------------
+  # 10. Secret scanning
+  # ---------------------------------------------------------------------
+  secrets:
+    name: Secret scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "true"
+          GITLEAKS_ENABLE_SUMMARY: "true"
+
+  # ---------------------------------------------------------------------
+  # 11. Static security analysis
+  #     This job runs Semgrep as a local, license-free
+  #     fallback so SAST still runs on private repos without Advanced Security.
+  # ---------------------------------------------------------------------
+  semgrep:
+    name: Static analysis (Semgrep)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep
+        run: semgrep ci --config auto --error
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+
+  # ---------------------------------------------------------------------
+  # 12. Container scanning (only if a Dockerfile exists)
+  # ---------------------------------------------------------------------
+  container-scan:
+    name: Docker image scan (Trivy)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for Dockerfile
+        id: dockerfile
+        run: |
+          if [ -f Dockerfile ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build image
+        if: steps.dockerfile.outputs.exists == 'true'
+        run: docker build -t frontend:ci .
+
+      - name: Scan image with Trivy
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "frontend:ci"
+          format: "table"
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"
+          ignore-unfixed: true
