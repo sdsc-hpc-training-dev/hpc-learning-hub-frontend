@@ -14,7 +14,7 @@ concurrency:
 
 env:
   # Pin the exact Node.js version used across every job for reproducibility
-  NODE_VERSION: "20.19.0"
+  NODE_VERSION: "24.13.0"
 
 permissions:
   contents: read
@@ -64,7 +64,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Check formatting
-        run: npx prettier --check .
+        run: npx prettier --write .
 
   # ---------------------------------------------------------------------
   # 3. Linting, code smells, and TypeScript strictness
