@@ -20,6 +20,7 @@ permissions:
   contents: read
   security-events: write # required for CodeQL/Trivy SARIF upload
   actions: read
+  pull-requests: read
 
 jobs:
   # ---------------------------------------------------------------------
@@ -135,7 +136,7 @@ jobs:
       - name: Enforce coverage thresholds
         run: |
           node -e "
-            const s = import('./coverage/coverage-summary.json').total;
+            const s = require('./coverage/coverage-summary.json').total;
             const req = { lines: 80, statements: 80, functions: 80, branches: 70 };
             let fail = false;
             for (const k of Object.keys(req)) {
