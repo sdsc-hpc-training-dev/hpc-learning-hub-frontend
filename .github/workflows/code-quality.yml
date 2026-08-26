@@ -80,7 +80,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Run ESLint
-        run: npx eslint . --max-warnings=0 --fix
+        run: npx eslint . --max-warnings=0
 
   # ---------------------------------------------------------------------
   # 4. Type safety

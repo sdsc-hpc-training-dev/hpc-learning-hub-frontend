@@ -20,6 +20,7 @@ export default tseslint.config(
       "**/*.d.ts",
       "*.config.js",
       "*.config.mjs",
+      "*.config.cjs",
       "types/validator.ts"
     ],
   },

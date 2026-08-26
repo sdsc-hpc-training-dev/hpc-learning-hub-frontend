@@ -6,12 +6,13 @@ const createJestConfig = (nextJest.default || nextJest)({ dir: "./" });
 /** @type {import('jest').Config} */
 const customJestConfig = {
   testEnvironment: "jsdom",
-  setupFilesAfterEnv: [],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   collectCoverage: true,
   collectCoverageFrom: [
     "app/**/*.{ts,tsx}",
     "components/**/*.{ts,tsx}",
     "lib/**/*.{ts,tsx}",
+    "!app/layout.tsx",
     "!**/*.d.ts",
     "!**/*.stories.{ts,tsx}",
     "!**/node_modules/**",
