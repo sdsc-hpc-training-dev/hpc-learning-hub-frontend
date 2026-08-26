@@ -1,18 +1,24 @@
 {
-  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "$schema": "https://unpkg.com/knip@5/schemas/knip.json",
   "entry": [
-    "next.config.{js,ts,mjs}",
-    "app/**/{page,layout,loading,error,not-found,route}.{ts,tsx}",
-    "pages/**/*.{ts,tsx}",
-    "middleware.ts"
+    "app/**/*.{ts,tsx}",
+    "src/**/*.{ts,tsx}"
   ],
-  "project": ["**/*.{ts,tsx}"],
+  "project": [
+    "**/*.{js,jsx,ts,tsx}"
+  ],
   "ignore": [
-    "**/*.test.{ts,tsx}",
-    "**/*.spec.{ts,tsx}",
+    "types/validator.ts",
     ".next/**",
     "coverage/**",
     "report/**"
   ],
-  "ignoreDependencies": ["eslint-config-prettier"]
+  "ignoreDependencies": [
+    "@emnapi/core",
+    "@emnapi/runtime",
+    "@next/eslint-plugin-next",
+    "eslint-config-next",
+    "tailwindcss",
+    "ts-jest"
+  ]
 }
