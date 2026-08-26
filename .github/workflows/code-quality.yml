@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [master, dev]
   workflow_dispatch:
-
+    
 # Cancel superseded runs on the same branch/PR
 concurrency:
   group: frontend-quality-${{ github.ref }}
@@ -29,10 +29,10 @@ jobs:
     name: Install & verify lockfile
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@39370e3970a6d050c3800040652e737110222ab5 # v4.1.0
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -57,8 +57,8 @@ jobs:
     name: Prettier
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@39370e3970a6d050c3800040652e737110222ab5 # v4.1.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -73,8 +73,8 @@ jobs:
     name: ESLint (strict + security + complexity)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@39370e3970a6d050c3800040652e737110222ab5 # v4.1.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -89,8 +89,8 @@ jobs:
     name: TypeScript (tsc --noEmit)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@39370e3970a6d050c3800040652e737110222ab5 # v4.1.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -106,8 +106,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [format, lint, typecheck]
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@39370e3970a6d050c3800040652e737110222ab5 # v4.1.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -124,8 +124,8 @@ jobs:
     name: Tests & coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@39370e3970a6d050c3800040652e737110222ab5 # v4.1.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -148,7 +148,7 @@ jobs:
           "
       - name: Upload coverage reports (HTML/JSON/LCOV)
         if: always()
-        uses: actions/upload-artifact@6f51ac03b9356f520e9dd1b1edb5d2ed058607a7 # v4.5.0
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: |
@@ -165,8 +165,8 @@ jobs:
     name: Duplicate code (jscpd)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@39370e3970a6d050c3800040652e737110222ab5 # v4.1.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -175,7 +175,7 @@ jobs:
         run: npx jscpd . --config .jscpd.json
       - name: Upload jscpd report
         if: always()
-        uses: actions/upload-artifact@6f51ac03b9356f520e9dd1b1edb5d2ed058607a7 # v4.5.0
+        uses: actions/upload-artifact@v4
         with:
           name: jscpd-report
           path: report/jscpd/**
@@ -188,8 +188,8 @@ jobs:
     name: Unused files/exports/deps (knip)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@39370e3970a6d050c3800040652e737110222ab5 # v4.1.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -204,8 +204,8 @@ jobs:
     name: npm audit (prod deps)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@39370e3970a6d050c3800040652e737110222ab5 # v4.1.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -220,11 +220,11 @@ jobs:
     name: Secret scanning (Gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@850021c7d23fcf930960fd158f1a8ee481a5e1cf # v2.3.7
+        uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
@@ -233,18 +233,22 @@ jobs:
 
   # ---------------------------------------------------------------------
   # 11. Static security analysis
+  #     This job runs Semgrep as a local, license-free
+  #     fallback so SAST still runs on private repos without Advanced Security.
   # ---------------------------------------------------------------------
+  
   semgrep:
     name: Static analysis (Semgrep)
     runs-on: ubuntu-latest
     container:
       image: semgrep/semgrep
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
       - name: Run Semgrep
         run: semgrep ci --config auto
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
 
   # ---------------------------------------------------------------------
   # 12. Container scanning (only if a Dockerfile exists)
@@ -254,7 +258,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
 
       - name: Check for Dockerfile
         id: dockerfile
@@ -271,7 +275,7 @@ jobs:
 
       - name: Scan image with Trivy
         if: steps.dockerfile.outputs.exists == 'true'
-        uses: aquasecurity/trivy-action@18f2510ee396bbf400dbea44c77ea919b2dd617c # v0.29.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: "frontend:ci"
           format: "table"
