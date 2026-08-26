@@ -1,5 +1,4 @@
 // ESLint flat config for the Next.js frontend.
-//
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import security from "eslint-plugin-security";
@@ -8,9 +7,11 @@ import promisePlugin from "eslint-plugin-promise";
 import prettierConfig from "eslint-config-prettier";
 import { FlatCompat } from "@eslint/eslintrc";
 
-const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
+const compat = new FlatCompat({ 
+  baseDirectory: import.meta.dirname,
+});
 
-export default tseslint.config()(
+export default tseslint.config(
   {
     ignores: [
       "node_modules/**",
@@ -29,8 +30,8 @@ export default tseslint.config()(
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
 
-  // Next.js core-web-vitals rules (via legacy-config compat shim)
-  ...compat.extends("next/core-web-vitals"),
+  // Next.js core-web-vitals rules (compat compatibility)
+  ...compat.extends("plugin:@next/next/core-web-vitals"),
 
   security.configs.recommended,
   sonarjs.configs.recommended,
@@ -38,7 +39,7 @@ export default tseslint.config()(
   {
     languageOptions: {
       parserOptions: {
-        project: true,
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
