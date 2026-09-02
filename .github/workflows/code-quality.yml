@@ -1,10 +1,13 @@
 name: Code Quality
 
 on:
-  push:
-    branches: [master, dev]
   pull_request:
-    branches: [master, dev]
+    # will run on the following merges: 
+    # [ feature/* -> dev, dev -> release/*, release/* -> master, hotfix/* -> master ]
+    branches: 
+      - master
+      - dev
+      - 'release/**'
   workflow_dispatch:
     
 # Cancel superseded runs on the same branch/PR
