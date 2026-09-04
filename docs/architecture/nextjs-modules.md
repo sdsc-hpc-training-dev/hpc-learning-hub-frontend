@@ -1,26 +1,29 @@
 # HPC Learning Hub: Next.js Feature Architecture
 
-**Status:** Proposed architecture, independently reviewed with one final author pass.
-Documentation only; this is not a record of implemented features or a delivery
-schedule. See the [author handoff](review/nextjs-author-handoff.md) for evidence.
+**Shared design revision: `feature-boundaries-2026-09-04`.** Proposed structure,
+not implemented features or approval of candidate contracts. The canonical
+[shared feature mapping and naming decisions](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/main/docs/architecture/feature-module-mapping.md)
+connects this document to the [NestJS MD](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/main/docs/architecture/nestjs-modules.md)
+and [SVG](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/main/docs/architecture/assets/nestjs-modules.svg).
 
-Next.js has no Angular-style `NgModule`. Here, a **feature area** is a small group
-of React components, hooks, and API helpers for one learner task. Routes compose
-those pieces. There is no service/controller/module class for each database table.
+**Build View Training Library and View Material Detail first.** Both belong in
+`features/training-library/`. Next.js has routes, React components, hooks and
+transport helpers, not NestJS module/controller classes. Share feature vocabulary
+with Gateway without forcing the same folder tree or one backend module per page.
 
-## Dependency Overview
+## Feature Overview
 
-Arrows mean **imports/uses**, not redirects, response flow, or data ownership.
-The arrows from the feature group apply to each feature as needed. Only the
-Gateway arrow represents an external API dependency. S = Server Component;
-C = Client Component. A feature can contain both, not one blanket client bundle.
+Arrows mean **imports/uses**; only the final arrow is external HTTP. Arrows from
+the feature group apply to each feature as needed, not a dependency on every
+other feature. S = Server Component; C = Client Component. LATER means increments
+after the two initial views, not removal of other MVP capabilities.
 
 ```mermaid
 ---
 config:
   theme: base
   deterministicIds: true
-  deterministicIDSeed: hpc-nextjs-modules-v1
+  deterministicIDSeed: hpc-nextjs-feature-boundaries-2026-09-04
   themeVariables:
     fontFamily: Arial
     fontSize: 17px
@@ -28,331 +31,251 @@ config:
     lineColor: '#46545e'
   flowchart:
     htmlLabels: false
+    wrappingWidth: 360
     curve: linear
-    nodeSpacing: 24
+    nodeSpacing: 26
     rankSpacing: 48
 ---
 flowchart LR
-  accTitle: HPC Learning Hub Next.js feature dependencies
-  accDescr: Thin routes and shell compose four feature areas. Features use reusable UI and one typed client. Only the client calls the external NestJS Gateway. There are no reverse dependencies.
-  SHELL["app/ routes and shell<br/>S: pages and layouts<br/>C: small interactive boundaries"]
-  subgraph FEATURES["features/ - learner-facing areas"]
-    CATALOG["catalog/<br/>Materials and resources<br/>Programs, events, curated paths<br/>S: content; C: filters"]
-    AUTH["auth/<br/>CILogon entry and account<br/>C: session-aware controls"]
-    LEARNING["learning/<br/>Saved materials and progress<br/>C: personal path editing"]
-    AIDA["aida/<br/>C: drawer and owned history<br/>Answers, evidence and links"]
+  accTitle: HPC Learning Hub Next.js features, 2026-09-04
+  accDescr: Routes compose the first Training Library and Material Detail views in one training-library folder. Later public discovery, account, personal learning and AIDA features use shared UI and Gateway transport. Only transport calls NestJS.
+  SHELL["app/ routes and shell<br/>S: pages and layouts<br/>C: interactive composition"]
+  subgraph FEATURES["features/ - frontend organization"]
+    LIB["FIRST: View Training Library<br/>training-library/<br/>S: TrainingLibraryView.tsx<br/>C: TrainingLibraryFilters.tsx"]
+    DETAIL["FIRST: View Material Detail<br/>training-library/<br/>S: MaterialDetail.tsx<br/>Metadata and resource links"]
+    DISCOVERY["LATER: public discovery<br/>learning-paths/ - Learning Paths<br/>events/ - Events & Recordings<br/>programs/ - Programs & Series<br/>start-here/ - Start Here"]
+    ACCOUNT["LATER: account and continuity<br/>auth/ - Sign in / Create account<br/>my-learning/ - saved, progress, paths"]
+    AIDA["LATER: Ask AIDA<br/>aida/ - drawer and owned history<br/>C: answers, evidence and feedback"]
   end
-  UI["components/ui/<br/>Reusable presentation<br/>No API or session ownership"]
-  CLIENT["lib/gateway/<br/>Typed HTTP client and DTOs<br/>Public server reads; browser calls"]
-  GATEWAY["External NestJS Gateway<br/>/api/v1<br/>Auth, catalog, learning, AIDA"]
-  SHELL --> CATALOG
-  SHELL --> AUTH
-  SHELL --> LEARNING
+  UI["components/ui/<br/>Reusable presentation<br/>No API ownership"]
+  CLIENT["lib/gateway/<br/>HTTP transport and checked DTOs<br/>Public server reads; browser calls"]
+  GATEWAY["External NestJS Gateway<br/>FIRST: TrainingLibraryController<br/>TrainingLibraryService<br/>Public relational reads"]
+  SHELL --> LIB
+  SHELL --> DETAIL
+  SHELL --> DISCOVERY
+  SHELL --> ACCOUNT
   SHELL --> AIDA
   SHELL --> UI
   FEATURES --> UI
   FEATURES --> CLIENT
   CLIENT --> GATEWAY
-  classDef shell fill:#eef2f5,stroke:#526673,color:#172026
-  classDef feature fill:#eff8f3,stroke:#35765c,color:#172026
-  classDef shared fill:#fff8df,stroke:#927329,color:#172026
+  classDef first fill:#e5f5ec,stroke:#237650,stroke-width:2px,color:#172026
+  classDef later fill:#eef3fa,stroke:#60748b,color:#172026
+  classDef shared fill:#fff4d8,stroke:#8e733c,color:#172026
   classDef external fill:#f9edf0,stroke:#a15c70,color:#172026
-  class SHELL shell
-  class CATALOG,AUTH,LEARNING,AIDA feature
+  class LIB,DETAIL first
+  class DISCOVERY,ACCOUNT,AIDA later
   class UI,CLIENT shared
   class GATEWAY external
 ```
 
-[Open the rendered SVG](assets/nextjs-modules.svg) for a zoomable view. On narrow
-screens, use zoom or the prose and folder layout below; a documentation host
-should retain direct SVG access and allow zoom or horizontal viewing instead of
-forcing a fit-to-width thumbnail. Read left to right: routes
-choose features, features reuse UI and transport, transport calls the Gateway.
-Shared UI and the client never import features or `app/`. The four features do
-not import each other: compose save controls into material views and AIDA entry
-points at the route/shell level using props or React slots. This keeps public
-browsing independent of personal data and of AIDA availability.
+[Open the zoomable SVG](assets/nextjs-modules.svg). The two FIRST boxes are
+views in **one feature folder**, not two frontend modules. LATER boxes group
+small folders for readability; they are not new umbrella folders. Use this
+table/folder layout on narrow screens rather than a fit-to-width thumbnail.
 
-## Proposed Folder Layout
+## First Two Feature Paths
 
-Keep the existing root-level `app/` and `@/*` alias. Do not add `src/`, route
-groups, or another routing system just to organize this small application.
-`[E]` means present at the source revision; every unmarked entry is **proposed**.
-The tree lists representative files, not files to create all at once. Square
-brackets in route names represent dynamic IDs, not a feature status marker.
+Route folders below are **proposed portal URLs**, not new API endpoints. The
+existing baseline/candidate operation inventory uses Gateway `/api/v1` with
+`GET /materials`, `GET /materials/{materialId}` and
+`GET /materials/{materialId}/resources`. These are target operations, not
+implemented routes or complete DTOs. Resolve query names, pagination, missing
+records and resource serialization under
+[HTTP-01/02 and D-02/D-11](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/main/docs/contracts/system-contracts-v0.2-candidate.md#HTTP-01)
+before integration; do not infer wire contracts from prototype JavaScript.
+
+| Screen                       | Proposed Next.js path                                                                                                                                  | Gateway path                                                                           | Existing persistence responsibility                                                                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **1. View Training Library** | `app/materials/page.tsx` -> `features/training-library/TrainingLibraryView.tsx` + `TrainingLibraryFilters.tsx` -> feature `api.ts` -> shared transport | `TrainingLibraryController` -> `TrainingLibraryService` -> `TrainingLibraryRepository` | Read active-snapshot `TrainingMaterial`, vocabularies/aliases and explicit material joins for results/filters/counts. Worker writes imported records; Gateway owns migrations. |
+| **2. View Material Detail**  | `app/materials/[materialId]/page.tsx` -> `features/training-library/MaterialDetail.tsx` -> same API helper/transport                                   | Same controller/service/repository, canonical material and resource lookup             | Read `TrainingMaterial`, `MaterialResource`, `ContentResource`, `ContentResourceFile` and related metadata joins. Same ownership, no new tables.                               |
+
+Both are public and remain usable **without login, AIDA, vector retrieval or S3
+reads at request time**. Preserve opaque material/resource IDs, filter context
+on return, useful loading/empty/error/not-found states and accessible canonical
+links. Do not invent publication dates, resource links, transcript timestamps,
+related-material endpoints or player/resume behavior from the prototype.
+
+## Proposed Folders
+
+Keep the existing root `app/` and `@/*` alias. `[E]` means existing; every other
+entry is proposed. Create only the first increment's files initially.
 
 ```text
-hpc-learning-hub-frontend/
-|-- app/
-|   |-- layout.tsx                         [E] shared shell; compose AIDA entry
-|   |-- page.tsx                           [E] / public starting points
-|   |-- globals.css                        [E]
-|   |-- loading.tsx                        route loading fallback
-|   |-- error.tsx                          C: route render failure + retry
-|   |-- not-found.tsx                      missing public record/page
-|   |-- materials/
-|   |   |-- page.tsx                       /materials; search and filters
-|   |   `-- [materialId]/page.tsx          details + typed resource links
-|   |-- programs/page.tsx                 programs/series and selected collection
-|   |-- events/page.tsx                   upcoming/past list and selected event
-|   |-- learning-paths/
-|   |   |-- page.tsx                       curated paths
-|   |   `-- [pathId]/page.tsx              ordered curated steps
-|   |-- account/page.tsx                  CILogon entry + /me profile display
-|   |-- my-learning/
-|   |   |-- layout.tsx                     personal navigation, not an auth guard
-|   |   |-- page.tsx                       saved materials, progress, personal paths
-|   |   `-- conversations/page.tsx        AIDA history list/detail/delete
-|   |-- maintainer/page.tsx               authorization smoke page only
-|   `-- __tests__/sanity.test.tsx          [E] existing home heading test
-|-- features/
-|   |-- catalog/
-|   |   |-- CatalogView.tsx                S: public results
-|   |   |-- MaterialDetail.tsx             S: metadata/resources; action slots
-|   |   |-- CatalogFilters.tsx             C: input and URL filter state
-|   |   |-- ProgramsView.tsx               S: series/collection presentation
-|   |   |-- EventsView.tsx                 S: dated events and linked materials
-|   |   |-- CuratedPathView.tsx            S: ordered public steps
-|   |   |-- api.ts                        typed catalog calls, no local search engine
-|   |   |-- filters.ts                    UI-to-query mapping after OpenAPI agreement
-|   |   `-- __tests__/filters.test.ts      filter mapping and missing values
-|   |-- auth/
-|   |   |-- AccountPanel.tsx               C: sign-in entry and account states
-|   |   |-- SessionStatus.tsx              C: signed-in navigation presentation
-|   |   |-- MaintainerSmoke.tsx            C: authorized/denied smoke result
-|   |   |-- useSession.ts                 C: /me loading, expiry, sign-out refresh
-|   |   |-- api.ts                        /me and agreed Gateway auth entry points
-|   |   `-- __tests__/AccountPanel.test.tsx
-|   |-- learning/
-|   |   |-- MyLearning.tsx                C: saved/progress/path views
-|   |   |-- SaveMaterialButton.tsx         C: pending/success/failure
-|   |   |-- PersonalPathEditor.tsx         C: create, order, edit, delete
-|   |   |-- useLearning.ts                C: request and mutation state
-|   |   |-- api.ts                        /me/bookmarks, /me/progress, /me/learning-paths
-|   |   `-- __tests__/MyLearning.test.tsx
-|   `-- aida/
-|       |-- AidaDrawer.tsx                C: launcher, question, answer and citations
-|       |-- ConversationHistory.tsx       C: owned history and deletion
-|       |-- useConversation.ts            C: pending, answer, error and expiry
-|       |-- api.ts                        /aida requests through shared client
-|       |-- types.ts                      UI state only, not duplicate response DTOs
-|       `-- __tests__/AidaDrawer.test.tsx  answer modes, citations, keyboard focus
-|-- components/ui/
-|   |-- StatusMessage.tsx                 loading/empty/error/unauthorized presentation
-|   |-- ResourceLink.tsx                  accessible canonical link presentation
-|   `-- Dialog.tsx                        C: accessible dialog behavior
-|-- lib/gateway/
-|   |-- client.ts                         shared fetch/error/request-ID handling
-|   |-- types.ts                          generated or contract-checked OpenAPI DTOs
-|   `-- __tests__/client.test.ts           response/error fixtures and request scope
-|-- types/                                [E] Next-generated route/cache declarations
-|-- jest.config.cjs                       [E] retain current Jest/Testing Library setup
-`-- docs/architecture/                    this documentation, not application code
+app/
+  layout.tsx                            # [E] S: shell and navigation
+  page.tsx                              # [E] later composes StartHereView
+  globals.css                           # [E]
+  loading.tsx                           # route transition state
+  error.tsx                             # C: route render failure
+  not-found.tsx                         # missing record/page
+  materials/
+    page.tsx                            # FIRST: Training Library
+    [materialId]/page.tsx                # FIRST: Material Detail
+  learning-paths/
+    page.tsx                            # LATER: public curated paths
+    [pathId]/page.tsx                    # ordered curated steps
+  events/page.tsx                       # Events & Recordings
+  programs/page.tsx                     # Programs & Series
+  account/page.tsx                      # sign-in/signup and account state
+  my-learning/
+    page.tsx                            # saved, progress, personal paths
+    conversations/page.tsx              # composes AIDA-owned history UI
+  maintainer/page.tsx                   # role smoke page only
+features/
+  training-library/
+    TrainingLibraryView.tsx              # S: material results
+    TrainingLibraryFilters.tsx           # C: input and URL filter state
+    MaterialDetail.tsx                   # S: metadata/resources, action slots
+    api.ts                              # public material/filter operations
+    filters.ts                          # UI mapping after DTO agreement
+    __tests__/filters.test.ts
+  learning-paths/
+    LearningPathsView.tsx                # S: list and ordered curated steps
+    api.ts                              # public path operations
+  events/
+    EventsView.tsx                       # S: editions and linked recordings
+    api.ts                              # Gateway Training Library queries
+  programs/
+    ProgramsView.tsx                     # S: series and selected collection
+    api.ts                              # Gateway Training Library queries
+  start-here/
+    StartHereView.tsx                    # S: intro/navigation, content slots
+  auth/
+    AccountPanel.tsx                     # C: sign-in and account states
+    SessionStatus.tsx                    # C: navigation presentation
+    MaintainerSmoke.tsx                  # C: authorized/denied result
+    useSession.ts                       # C: /me lifecycle, expiry, sign-out
+    api.ts                              # agreed Gateway auth operations
+  my-learning/
+    MyLearningView.tsx                   # C: saved materials and progress
+    SaveMaterialButton.tsx               # C: local mutation states
+    PersonalPathEditor.tsx               # C: create/order/edit/delete
+    useMyLearning.ts                     # C: request/mutation state
+    api.ts                              # owner-scoped Gateway operations
+  aida/
+    AidaDrawer.tsx                       # C: question, answer, citations
+    ConversationHistory.tsx              # C: owned list/read/delete
+    useConversation.ts                   # C: request and feedback states
+    api.ts                              # Gateway AIDA operations
+components/ui/
+  MaterialCard.tsx                       # receives display data/link props
+  ResourceLink.tsx                       # accessible link presentation
+  StatusMessage.tsx                      # loading/empty/error presentation
+  Dialog.tsx                            # C: accessible dialog behavior
+lib/gateway/
+  client.ts                             # shared fetch/error/request-ID handling
+  types.ts                              # generated or contract-checked DTOs
+  __tests__/client.test.ts
+types/                                  # [E] Next-generated declarations
 ```
 
-`page.tsx` exposes a URL; `layout.tsx` composes shared presentation. `loading.tsx`
-and `error.tsx` cover route transitions and render failures, not every in-flight
-button or chat request. Add narrower boundaries only when a journey needs them.
-An error in the root layout itself is not caught by `app/error.tsx`; a future
-`global-error.tsx` would be a separate decision. These conventions were checked
-against Next 16.3.3's bundled docs; see also the official
-[project structure](https://nextjs.org/docs/app/getting-started/project-structure)
-and [error boundary](https://nextjs.org/docs/app/api-reference/file-conventions/error)
-references. In 16.3.3, the documented boundary recovery prop is `retry`.
+`page.tsx` exposes a URL; `layout.tsx` composes shared presentation. Feature
+folders hold views/hooks and named API helpers; `components/ui/` owns reusable
+presentation without requests. `lib/gateway/` owns HTTP mechanics, not search,
+authorization or business rules. Existing `types/` is not the domain DTO home.
+Do not introduce Next.js `/api` business endpoints, token callbacks or an ORM.
 
-Do not create a frontend `/api` directory, token callback route, Server Action
-business API, or table-shaped services. `api.ts` files name feature operations;
-`client.ts` owns HTTP mechanics. Existing `types/` files are generated framework
-artifacts, not a home for Gateway entities. Keep API DTOs together under
-`lib/gateway/`; introduce local feature types only for genuinely UI-only state.
+Routes/shell compose features through props/slots, without feature-to-feature
+imports. For Start Here, `app/page.tsx` supplies Library/Path content to
+`StartHereView`; no new API is needed. The material route may later compose a
+My Learning save control or AIDA entry without coupling public content to them.
 
-## Responsibilities
+## Later Features And Backend Reuse
 
-| Area | Learner responsibility | Gateway dependency and limits |
-| --- | --- | --- |
-| Routes and shell | Public navigation, route composition, account navigation, consistent Ask AIDA entry. | Compose feature entry components/helpers; do not implement business endpoints or gate the public shell on `/me`. |
-| Catalog | Search/filter, material details/resources, programs/series, events, curated paths. Covers FUS-01 to FUS-09 and FUS-13. | `/materials`, material detail/resources, `/topics`, `/tools`, `/systems`, `/event-series`, `/event-editions`, `/learning-paths` and path detail. Public reads. |
-| Auth/account | Start CILogon sign-in/signup, show account/session state and maintainer smoke result. | `/me`; login/logout and smoke-check endpoint details still need OpenAPI. No password form, role editor, or account CRUD assumption. |
-| Personal learning | Save/remove materials, show/update progress, create/edit/order/delete personal paths. FUS-14/15 and the prototype My Learning journey. | `/me/bookmarks`, `/me/progress`, `/me/learning-paths`; Gateway enforces user ownership. Increment after public catalog. |
-| AIDA | Ask in material/resource context, render supported answers and links, revisit/delete owned conversations; feedback when contracted. FUS-10/11/12/16. | `/aida/conversations`, conversation detail/messages/delete, `/aida/messages`, message feedback. History belongs here even though its route is under My Learning. |
-| Shared UI/client | Reusable accessible presentation; one transport and DTO vocabulary. | UI makes no API calls. Transport uses only Gateway `/api/v1`; no feature or database knowledge. |
+| Learner feature          | Backend dependency and limit                                                                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Learning Paths           | `LearningPathsController` / `LearningPathsService`; ordered public curated records, separate from personal paths. Source/IDs/population remain D-12, not hard-coded curriculum or LLM path generation. |
+| Events & Recordings      | `TrainingLibraryController` / `TrainingLibraryService`: `EventEdition`, event/material joins and recording resources. No implied event-detail endpoint or separate recordings catalog.                 |
+| Programs & Series        | Same Training Library boundary: `EventSeries` and series/edition joins. No new `/programs` API/table.                                                                                                  |
+| Start Here               | Compose Training Library and Learning Paths selections. No StartHereModule or new persistence.                                                                                                         |
+| Sign in / Create account | `AuthController` / `AuthService` -> `UsersService`; one Gateway CILogon flow, not a password form or role editor. Maintainer surface is a smoke page only.                                             |
+| My Learning              | `MyLearningController` / `MyLearningService`: owned bookmarks, progress and personal path CRUD/order. Gateway enforces ownership. No path-visibility feature or precise video resume promise.          |
+| Ask AIDA / history       | `AidaController` / `AidaService`: context-aware questions, canonical citations, owned history/read/delete and contracted feedback. History stays in `aida/` even under a My Learning URL.              |
 
-Programs are a user-facing view of **event series**, not a new `/programs` API
-or table. Events are dated editions and their materials. The proposed programs
-and events pages can show selection within the page; this document does not
-invent event-detail endpoints. Confirm series/edition relationships, selection,
-pagination and query parameters in OpenAPI before integrating. Topic, tool,
-system, instructor and resource-type discovery belong to catalog filters, not
-separate feature modules. Recordings are material resources, not a second catalog.
+Training Library/Detail cover FUS-03/04/05/06/07/13; Start Here/curated paths
+cover FUS-01/02; Events cover FUS-08/09; AIDA covers FUS-10/11/12/16;
+My Learning covers FUS-14/15 and personal paths. Historical submissions,
+moderation and unsupported freshness features are not restored by this mapping.
 
-Curated paths use Gateway catalog data, not an LLM path generator or a permanent
-frontend hard-coded copy. Personal paths are separate user-owned records. Show
-only resource types, links, dates and status actually supplied by the contract:
-the persistence source does not promise material publication/freshness fields.
-Do not turn a missing date into an upcoming event, or a missing resource into a
-fabricated link. Interactive-video/player integration and timestamp resume are
-not established by this folder layout.
+## Server, Client And Session Boundaries
 
-## Server, Client and Authentication Boundaries
+- Pages/layouts default to Server Components. Use small `use client` boundaries
+  for filters, session controls, mutations and AIDA. Do not import server-only
+  helpers into client graphs. Route loading/error boundaries do not replace
+  local mutation/chat states, and `app/error.tsx` does not catch root-layout errors.
+- Proposed starting point: public server reads without user credentials;
+  session/personal interactions call Gateway from the browser. The shared fetch
+  core accepts explicit base URL/options, with no ambient cookies or global
+  current user. Rendering time, caching/revalidation and hosting are undecided.
+  Never put private responses in shared public caches.
+- Gateway owns CILogon code exchange, local account/role rules and secure
+  HttpOnly session cookies. No browser tokens/password storage, provider secrets
+  or CILogon token calls. `/me` controls presentation, not authorization. The
+  Gateway guards every private operation; a hidden link is not access control.
+- D-04 still gates origin/cookie/SameSite/CORS/CSRF/logout/allowed-return policy.
+  Shell composition passes identity changes to My Learning and AIDA. On expiry,
+  sign-out or account switch, clear private state and ignore old-session results.
+  Do not gate public navigation or Library/Detail availability on `/me`.
+- Preserve local pending/success/failure, unauthorized/forbidden and honest
+  retry states. Do not blindly replay ambiguous mutations/question POSTs;
+  D-02 governs idempotency. Use semantic navigation, labeled keyboard controls,
+  visible focus, announced results, accessible dialog focus and small-screen layouts.
 
-- Pages/layouts default to Server Components. Public catalog helpers may call
-  Gateway from server-rendered views and pass serializable data into small
-  interactive controls. Filters, saved actions, personal editors, session
-  controls and the AIDA drawer/history need Client Components. Use `use client`
-  at those boundaries, not at the root layout. A client boundary's imports enter
-  its client graph; never import a server-only helper into it. This does not
-  mean Client Components can only produce HTML in the browser. See the official
-  [server/client guide](https://nextjs.org/docs/app/getting-started/server-and-client-components).
-- The minimal proposal uses server reads for public data and browser-to-Gateway
-  requests for session/personal interactions. The shared fetch core stays
-  environment-neutral: explicit Gateway base URL and request options, no
-  ambient cookie store or module-global current user. Public server requests
-  send no user credentials. Browser session requests use the agreed cookie
-  credentials policy. A future authenticated server read needs an explicit,
-  server-only adapter and session-forwarding review, not a blanket copy of
-  incoming headers. No such adapter is promised here.
-- Rendering time, static versus request-time fetching, caching/revalidation,
-  and hosting are **not decided**. Never put personal/session responses into a
-  shared public cache. URL filter state is useful for back navigation and
-  shareable discovery; exact parameter names are still a contract decision.
-- Sign-in and signup use the same Gateway-owned CILogon flow. The browser
-  navigates to the Gateway login entry and follows its identity-provider
-  redirect; Gateway owns callback/code exchange, local learner creation,
-  session issuance, logout and roles. New users become `LEARNER`. The frontend
-  does not call CILogon token endpoints or handle access/refresh tokens.
-- Use the Gateway's secure, HttpOnly, SameSite application session cookie.
-  JavaScript does not read it or persist tokens/passwords in localStorage.
-  `/me` supplies display identity/role, not frontend authorization authority.
-  Gateway checks every personal request and the maintainer smoke operation.
-  Hiding a link, a layout, or a browser role check is not an authorization gate.
-- Deployment origin topology, cookie scope/SameSite value, CORS credentials,
-  mutation CSRF protection, logout and allowed return URLs must be agreed with
-  the Gateway owner before auth integration. This document does not invent
-  endpoint names or claim that credentialed cross-origin fetch alone solves it.
-  Handle expired sessions without leaving another user's private state visible.
-- A shell-level client composition passes session/identity changes to Learning
-  and AIDA through props or slots, without feature-to-feature imports. On sign-out,
-  session expiry or account switch, those features clear private state and ignore
-  late responses belonging to the previous session. Cover those transitions in
-  interaction tests. This is UI lifecycle coordination, not frontend session or
-  authorization authority, and requires no new state framework.
+Opening a canonical resource is navigation, not permission for the frontend
+to query S3, PostgreSQL, pgvector, NRP or the Python worker. Shared services
+and all migrations remain in Gateway; ingestion remains a separate Python job.
 
-Opening a validated public resource link in the learner's browser is intended
-navigation. It is not permission for frontend code to query S3, PostgreSQL,
-pgvector, NRP, or the ingestion worker. Catalog queries, auth/session/roles,
-personal persistence, AIDA inference/retrieval/history all remain Gateway-owned.
-No classifier loading, embeddings, ingestion, duplicate business API, Angular
-modules, Docusaurus integration, state framework, or microfrontend is proposed.
+## AIDA Presentation And Open Decisions
 
-## AIDA and Experience States
+Keep Ask AIDA optional to public browsing. Pass canonical material/resource
+context through route/shell composition; do not infer IDs from titles or prefixes.
+`catalog_api`, `general_rag`, `transcript_rag`, `abstain` are internal Gateway
+strategies, not frontend modules. Render `answerMode` (`grounded`, `partial`,
+`general`, `abstained`) separately from `route`, with honest limitations and
+canonical citations. Material-only citations may have null resource/chunk IDs;
+abstentions may have no citations. Never invent timestamp links or evidence.
 
-The shell keeps the catalog usable if AIDA is disabled or unavailable. AIDA
-receives canonical `contextMaterialId` / `contextResourceId` when the learner
-asks about a selected material/recording; IDs are opaque, not inferred from
-titles or parsed for entity type. A route/shell-owned client composition can
-pass the selected context into the drawer without coupling catalog to AIDA.
+Guest one-turn AIDA is D-03, not promised guest history. Streaming/turn completion
+is D-07; owned-history deletion/retention is D-06; context and video-to-transcript
+association are D-10. Classifier promotion (D-08), embeddings (D-09) and chunk
+uniqueness (D-05) stay backend/worker gates, not frontend implementation choices.
+No GraphRAG/Neo4j, submission/draft/moderation or path-visibility workflow.
 
-The four MVP strategies (`catalog_api`, `general_rag`, `transcript_rag`, `abstain`)
-are internal Gateway implementations, not feature folders or learner modes.
-The response can contain a `route` field; that is not the support level. Render
-`answerMode` (`grounded`, `partial`, `general`, `abstained`), limitations and
-canonical citations/links honestly. Material-only citations are valid when
-resource/chunk IDs are null; abstentions can have no citations. Do not fabricate
-transcript timestamps or present a retrieval failure as proof that no material
-exists. Conversation summaries and suggested follow-ups are not evidence.
+Read the [candidate entrypoint](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/main/docs/contracts/agent-entrypoint.md)
+and [decision register](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/main/docs/contracts/decisions-needed.md).
+Published v0.2 remains CANDIDATE, not an approved replacement for v0.1. Library
+and Detail can proceed with source-grounded components/fixtures, but integration
+waits on their operation's reviewed DTOs, resource policy and catalog mappings.
 
-Authenticated history is Gateway-persisted and owner-scoped, with list, read
-and delete UI. Guest AIDA enablement needs confirmation: the persistence notes
-describe transient public AIDA, while system contract section 7.1 says it
-**may** be supported. Neither supports durable guest history. Streaming versus
-synchronous delivery and retention/deletion periods are unresolved; do not
-promise streaming, browser-persisted guest history, or a retention duration.
+## Evidence, Rendering And Checks
 
-Preserve loading, empty, error, unauthorized/forbidden, partial and abstained
-states. Keep mutation/chat failures local to the control, retain honest retry
-feedback and the Gateway request ID when safe, and distinguish no results from
-unavailable service. Do not blindly replay a save or question POST after an
-ambiguous failure; use the Gateway's agreed request/idempotency contract.
-Accessibility belongs to every area: semantic navigation/headings and labels,
-keyboard-operable filters, visible focus, dialog focus entry/return and escape,
-announced status/results, readable errors, contrast and small-screen usability.
-These are implementation/test duties, not claims that the prototype passed them.
+Frontend `master` was fetched at `30c9dbced5adc48248fcef6ae1d4a681015fa2d5`:
+root `app/`, empty home heading, layout/CSS and starter tests, no feature folders
+or Gateway client. Manifest pins Next 16.3.3 / React 19.2.8. The retained exact
+Next package's bundled project-structure guide was consulted; no app installation
+or code/config changes are needed for this documentation revision.
 
-## Existing Versus Proposed
+The [shared mapping](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/main/docs/architecture/feature-module-mapping.md)
+pins the unchanged design v1.0.0 remote, Gateway sources and September 4 screen
+evidence. Prototype navigation is evidence of vocabulary, not v3 DTO/schema
+authority. Yesterday's [author handoff](review/nextjs-author-handoff.md),
+[independent review](review/nextjs-independent-review.md) and
+[dispositions](review/nextjs-final-dispositions.md) apply to the **prior revision**;
+they remain historical, unchanged. One bounded cross-diagram self-review checked
+the shared mapping, initial paths and ownership; label wrapping and backend group
+headings were corrected for readability. No new independent review was performed.
 
-At frontend `67cbb3f24cbe3ca1f671e647d86421356a93c7ff`, the app has a root layout,
-an effectively empty home page, global CSS, a heading smoke test, TypeScript,
-Jest/Testing Library, Tailwind/PostCSS, ESLint and CI configuration. There are
-**no implemented catalog, auth, personal-learning or AIDA features**, no Gateway
-client, and no additional application routes. The checked-in `types/` directory
-contains generated Next declarations; it is not an implemented domain model.
+Render the single Mermaid fence with the cached Mermaid CLI 11.17.0 / Mermaid
+11.17.2 / Puppeteer 24.43.1 and Chrome/Arial documented in that handoff. Extract
+to a temporary `.mmd`, then use `mmdc -i source.mmd -o output.svg -p puppeteer.json
+-w 1600 -H 1000 -b white -I hpc-nextjs-modules` (Gateway uses
+`-I hpc-nestjs-modules`). Keep extraction/QA tools outside the repos; do not
+hand-edit generated SVGs. Check rendering, label containment, arrows, links,
+folder/matrix consistency, formatting and docs-only diff before publication.
 
-Both package manifest and lockfile pin **Next 16.3.3 / React 19.2.8**. No installed
-`node_modules/next` was present in the inspected shared checkout or new worktree.
-The author inspected the exact npm `next@16.3.3` package's bundled docs in an
-isolated tools directory instead of installing application dependencies. Online
-Next docs already showed 16.3.4, so the exact package docs govern version claims.
-
-## Incremental Adoption
-
-1. Agree public DTOs and query parameters with Gateway; add the shared client
-   and one material/resources route using canonical IDs. Preserve useful public
-   loading, empty and error states before adding more journeys.
-2. Grow catalog discovery, programs/events and curated paths from that contract.
-   Translate the prototype's journeys, not its global scripts, local search
-   ranking, fake data, password storage or maintainer submission form.
-3. Confirm the cookie/origin/CSRF contract, then add account state and the
-   maintainer smoke check. Add personal learning and owned history as their
-   endpoints become available. Wire AIDA independently without making catalog
-   availability depend on model availability.
-4. Keep the existing testing stack for pure mappings, client transport and
-   synchronous component interactions; add fixtures checked against OpenAPI.
-   Existing Jest coverage globs and `knip.json` do not include `features/`, so
-   update those configurations in the eventual implementation change, not this
-   documentation change. Jest does not currently test async Server Components;
-   agree an integration/browser test approach for those journeys before claiming
-   coverage. No new test library is selected here.
-
-## Source Revisions
-
-Precedence: the user's narrowed scope and fixed Gateway contracts govern this
-proposal. Prototype stories and UI provide journey evidence, not authority to
-restore deferred features. Historical documents call the project SDSC Learning
-Hub; this document uses the requested name **HPC Learning Hub**.
-
-- **Frontend:** fetched remote default `master`, exact base
-  [`67cbb3f24cbe3ca1f671e647d86421356a93c7ff`](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-frontend/tree/67cbb3f24cbe3ca1f671e647d86421356a93c7ff).
-  Inspected `AGENTS.md`, `package.json`, lockfile, README, `app/`, `types/`, tests,
-  and configuration. The shared local `master` was left at `9a59ec48d41d65f77117f9cfdb450fc3800bca28`.
-- **Prototype current remote default:** `main`,
-  [`deaf8e5371dd46fd525c0d668c49e3b50aa0aa46`](https://github.com/sdsc-hpc-training-dev/training-landing-page/tree/deaf8e5371dd46fd525c0d668c49e3b50aa0aa46).
-  Includes `v1.0.0` and the merged auth prototype. This is newer design evidence,
-  not proof of new product approval. Its account/QA notes still say `v0.0.6`.
-- **Prototype working branch:** `codex/v0.0.6-auth-prototype`,
-  [`4e318f39d2208bfc5dc99239d67445db70174e77`](https://github.com/sdsc-hpc-training-dev/training-landing-page/tree/4e318f39d2208bfc5dc99239d67445db70174e77),
-  examined for `v0.0.6/PROTOTYPE_ACCOUNT_NOTES.md` and `v0.0.6/QA_NOTES.md`.
-  Local `origin/main` was stale at `f6bfa6a`; current remote content was fetched
-  only into a separate read-only source snapshot, not into the prototype checkout.
-- **Gateway fixed baseline:**
-  [`fda21d619dcc5119f1133501bafa8cc7e800c7cf`](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/tree/fda21d619dcc5119f1133501bafa8cc7e800c7cf).
-  No concurrent module-diagram work was used or modified.
-
-| Evidence at the exact revisions above | Use in this architecture |
-| --- | --- |
-| [Functional stories](https://github.com/sdsc-hpc-training-dev/training-landing-page/blob/deaf8e5371dd46fd525c0d668c49e3b50aa0aa46/docs/functional-user-stories.md), [personas](https://github.com/sdsc-hpc-training-dev/training-landing-page/blob/deaf8e5371dd46fd525c0d668c49e3b50aa0aa46/docs/user-personas.md), [design decisions](https://github.com/sdsc-hpc-training-dev/training-landing-page/blob/deaf8e5371dd46fd525c0d668c49e3b50aa0aa46/docs/design-decisions.md) | Public discovery and optional continuity; submission and other old scope are excluded. |
-| [Architecture/quality scenarios](https://github.com/sdsc-hpc-training-dev/training-landing-page/blob/deaf8e5371dd46fd525c0d668c49e3b50aa0aa46/docs/architectural-user-stories-and-quality-scenarios.md), [July 16 UX findings](https://github.com/sdsc-hpc-training-dev/training-landing-page/blob/deaf8e5371dd46fd525c0d668c49e3b50aa0aa46/docs/ux-testing/2026-07-16-first-time-user-landing-page/findings-and-action-items.md) | Clear navigation, canonical evidence, optional sign-in, accessibility and failure states; no unmeasured latency promise. |
-| [July 28 review decisions](https://github.com/sdsc-hpc-training-dev/training-landing-page/blob/deaf8e5371dd46fd525c0d668c49e3b50aa0aa46/docs/meeting-notes/2026-07-28-mary-mai-portal-architecture-review/meeting-summary-and-decisions.md) | Curated first, catalog useful without AIDA. Historical Docusaurus/admin assumptions are superseded. |
-| [v1.0.0 journey code](https://github.com/sdsc-hpc-training-dev/training-landing-page/tree/deaf8e5371dd46fd525c0d668c49e3b50aa0aa46/v1.0.0), [account notes](https://github.com/sdsc-hpc-training-dev/training-landing-page/blob/deaf8e5371dd46fd525c0d668c49e3b50aa0aa46/v1.0.0/PROTOTYPE_ACCOUNT_NOTES.md), [QA notes](https://github.com/sdsc-hpc-training-dev/training-landing-page/blob/deaf8e5371dd46fd525c0d668c49e3b50aa0aa46/v1.0.0/QA_NOTES.md) | `programs.js`, `material.js`, `learning-paths.js`, `saved.js` inform journeys, not production data/auth logic. |
-| [System contracts](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/fda21d619dcc5119f1133501bafa8cc7e800c7cf/docs/system-contracts-v0.1.md), [persistence model](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/fda21d619dcc5119f1133501bafa8cc7e800c7cf/docs/sdsc-learning-hub-persistence-class-diagram.md) | API ownership, IDs, cookies, answer modes, user-owned records and canonical resources. OpenAPI remains the eventual HTTP schema authority. |
-| [Implementation brief](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/fda21d619dcc5119f1133501bafa8cc7e800c7cf/docs/intern-implementation-brief.md), [ingestion spec](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/fda21d619dcc5119f1133501bafa8cc7e800c7cf/docs/specs/ingestion-worker.md), [router verdict](https://github.com/sdsc-hpc-training-dev/hpc-learning-hub-apigateway/blob/fda21d619dcc5119f1133501bafa8cc7e800c7cf/docs/aida-router-architecture-verdict.md) | Frontend-only presentation, staged personal features, no ingestion or router implementation in Next.js. |
-
-## Decisions Still Open
-
-Confirm with the Gateway/product owners before implementation: exact OpenAPI
-schemas and filter/pagination names; event/series selection and relationship
-DTOs; auth/logout/smoke endpoints and cookie/origin/CSRF/return-URL policy;
-progress update/reset semantics (no precise video resume promise); guest AIDA
-availability; answer delivery transport; retention/deletion policy; and
-rendering/caching/hosting choices. The guest availability wording differs across
-fixed sources and is deliberately left open. None of these choices is silently
-implemented by a folder name or dependency arrow.
+Eventual implementation tests should cover public Library -> Detail -> return,
+empty/error/unavailable resources, filter mapping and later session transitions.
+Use existing Jest/Testing Library where appropriate; current coverage/Knip globs
+need adjustment when `features/` is implemented, not in this docs change. Async
+Server Component/browser coverage needs an agreed integration test approach.
