@@ -22,6 +22,12 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Learn More
 
+### HPC Learning Hub Architecture
+
+See the proposed [Next.js feature and route architecture](docs/architecture/nextjs-modules.md)
+and its [rendered dependency diagram](docs/architecture/assets/nextjs-modules.svg).
+This is documentation for review, not an inventory of implemented features.
+
 To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
