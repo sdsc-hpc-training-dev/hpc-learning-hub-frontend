@@ -1,6 +1,6 @@
 # HPC Learning Hub: Next.js Feature Architecture
 
-**Status:** Proposed architecture, frozen author draft for independent review.
+**Status:** Proposed architecture, independently reviewed with one final author pass.
 Documentation only; this is not a record of implemented features or a delivery
 schedule. See the [author handoff](review/nextjs-author-handoff.md) for evidence.
 
@@ -63,7 +63,10 @@ flowchart LR
   class GATEWAY external
 ```
 
-[Open the rendered SVG](assets/nextjs-modules.svg). Read left to right: routes
+[Open the rendered SVG](assets/nextjs-modules.svg) for a zoomable view. On narrow
+screens, use zoom or the prose and folder layout below; a documentation host
+should retain direct SVG access and allow zoom or horizontal viewing instead of
+forcing a fit-to-width thumbnail. Read left to right: routes
 choose features, features reuse UI and transport, transport calls the Gateway.
 Shared UI and the client never import features or `app/`. The four features do
 not import each other: compose save controls into material views and AIDA entry
@@ -227,6 +230,12 @@ not established by this folder layout.
   the Gateway owner before auth integration. This document does not invent
   endpoint names or claim that credentialed cross-origin fetch alone solves it.
   Handle expired sessions without leaving another user's private state visible.
+- A shell-level client composition passes session/identity changes to Learning
+  and AIDA through props or slots, without feature-to-feature imports. On sign-out,
+  session expiry or account switch, those features clear private state and ignore
+  late responses belonging to the previous session. Cover those transitions in
+  interaction tests. This is UI lifecycle coordination, not frontend session or
+  authorization authority, and requires no new state framework.
 
 Opening a validated public resource link in the learner's browser is intended
 navigation. It is not permission for frontend code to query S3, PostgreSQL,

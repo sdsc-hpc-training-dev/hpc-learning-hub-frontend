@@ -1,7 +1,9 @@
 # Next.js Architecture: Author Handoff
 
-**Stage:** Author draft, for one independent review and one final author
-correction pass. This report is author validation, not an independent verdict.
+**Stage:** One independent review and one final author clarification pass complete.
+This handoff records author validation; the independent verdict is preserved in
+[Singer's report](nextjs-independent-review.md), with per-note
+[author dispositions](nextjs-final-dispositions.md).
 No application code, dependency manifests/lockfiles, shared checkout contents,
 remote branches, cloud resources, pushes, PRs or merges were changed.
 
@@ -30,10 +32,10 @@ sources; both `v0.0.6` and `v1.0.0` account/QA notes; and current `programs.js`,
 
 **Local validation area:** `C:\Users\ofgar\.codex\tmp\nextjs-diagram-validation`
 
-The draft commit is the commit containing this handoff; resolve it with
-`git log -1 --format=%H -- docs/architecture/review/nextjs-author-handoff.md`
-before any subsequent correction. The exact SHA is also returned in the task
-handoff, avoiding a self-referential commit hash inside its own contents.
+The reviewed draft is `671c3719cab25a0d908b8939e2c858e4d40cef64`. The final
+local commit is returned to Portal in the task handoff; resolve the commit
+containing this final handoff with `git log -1 --format=%H --
+docs/architecture/review/nextjs-author-handoff.md` before release integration.
 
 ## Deliverables
 
@@ -129,19 +131,18 @@ conflicts to the user; do not choose a different model or silently settle them.
 Boundary: read-only draft/sources, report writes only in an assigned separate
 review area; no app edits, remote writes, cloud activity or shared-checkout edits.
 
-The current author environment exposes **no subagent-spawn tool** (including
-no `fork_context=false` capability). Independent review therefore has not run;
-it must not be represented by this author's checks. A new user-visible task
-has not been created as a substitute. The final correction pass is reserved
-until one fresh reviewer supplies its report. Draft completion does not mean
-the entire requested review/correction workflow is complete.
+The earlier missing-reviewer blocker is superseded. Portal supplied Singer's
+sole independent review (task `01a069bf-15b7-7680-b269-6d680daffb5f`):
+**acceptable, no required corrections**. Both optional notes were accepted as
+bounded clarifications: shell-level session-change propagation and preservation
+of zoomable SVG/prose access. No feature, API, dependency or diagram topology
+changed; the regenerated SVG remains byte-identical to the reviewed artifact.
+The report is preserved verbatim, with its references to the frozen draft,
+beside the final dispositions. No second review was requested.
 
-Give the reviewer the frozen draft SHA and the source paths/revisions above,
-not the author's reasoning history. Require direct reading of sources, SVG
-inspection, severity-ranked actionable findings with file/line references and
-an acceptable/needs-correction verdict. Check feature ownership, dependency
-cycles, tree/diagram agreement, auth/API/data boundaries, source-grounded scope,
-existing/proposed truthfulness, links and rendering. Preserve that report plus
-an evidence-based agree/disagree disposition for each finding in the final
-author pass; regenerate and inspect the SVG and locally commit once. No second
-review round or publication is authorized by this handoff.
+Portal, the task `Portal, FrontEnd and BackEnd`
+(`01a03f13-2e7b-7b40-afb0-b97f6fa5557c`), is the sole release coordinator.
+Publication was separately authorized by the user after review and final
+corrections, subject to repository protections/checks. This author only freezes
+local documentation commits and hands them to Portal; it does not push, create
+PRs, merge, publish, or edit another author's worktree.
