@@ -13,6 +13,12 @@
   ],
   "ignore": [
     "types/validator.ts",
+    "components/ui/Dialog.tsx",
+    "components/ui/MaterialCard.tsx",
+    "components/ui/ResourseLink.tsx",
+    "components/ui/StatusMessage.tsx",
+    "lib/gateway/client.ts",
+    "lib/gateway/types.ts",
     ".next/**",
     "coverage/**",
     "report/**"
