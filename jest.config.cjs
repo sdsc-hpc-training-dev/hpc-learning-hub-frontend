@@ -1,11 +1,16 @@
 // Jest config for the Next.js frontend.
-const nextJest = require("next/jest");
-
-const createJestConfig = (nextJest.default || nextJest)({ dir: "./" });
 
 /** @type {import('jest').Config} */
 const customJestConfig = {
   testEnvironment: "jsdom",
+  transform: {
+    "^.+\\.(ts|tsx)$": [
+      "ts-jest",
+      {
+        tsconfig: "tsconfig.json",
+      },
+    ],
+  },
   collectCoverage: true,
   collectCoverageFrom: [
     "app/**/*.{ts,tsx}",
@@ -28,4 +33,4 @@ const customJestConfig = {
   },
 };
 
-module.exports = createJestConfig(customJestConfig);
+module.exports = customJestConfig;
