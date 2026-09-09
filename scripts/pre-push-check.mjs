@@ -16,6 +16,18 @@ function formatColor(value, colorCode) {
   return `${colorCode}${value}${color.reset}`;
 }
 
+function createCheckEnvironment() {
+  const entries = Object.entries(process.env).filter(([key]) => {
+    return !key.startsWith("GIT_") && key !== "HUSKY";
+  });
+  const environment = Object.fromEntries(entries);
+
+  environment.INIT_CWD = repoRoot;
+  environment.PWD = repoRoot;
+
+  return environment;
+}
+
 const checks = [
   {
     name: "Prettier formatting",
@@ -71,6 +83,8 @@ for (const check of checks) {
   }
 
   const result = spawnSync(check.command, check.args, {
+    cwd: repoRoot,
+    env: createCheckEnvironment(),
     shell: process.platform === "win32",
     stdio: ["ignore", "inherit", "inherit"],
   });
