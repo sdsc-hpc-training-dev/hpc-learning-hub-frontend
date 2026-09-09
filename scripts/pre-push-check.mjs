@@ -72,7 +72,7 @@ for (const check of checks) {
 
   const result = spawnSync(check.command, check.args, {
     shell: process.platform === "win32",
-    stdio: "inherit",
+    stdio: ["ignore", "inherit", "inherit"],
   });
 
   if (result.status !== 0) {
