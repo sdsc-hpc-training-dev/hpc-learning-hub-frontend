@@ -1,7 +1,6 @@
 {
   "threshold": 3,
-  "reporters": ["html", "json", "console"],
-  "output": "./report/jscpd",
+  "reporters": ["console"],
   "absolute": true,
   "gitignore": true,
   "format": ["typescript", "tsx", "javascript", "jsx"],
