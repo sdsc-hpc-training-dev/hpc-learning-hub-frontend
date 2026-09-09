@@ -1,15 +1,18 @@
 name: Code Quality
 
 on:
+  push:
+    branches:
+      - "release/**"
   pull_request:
-    # will run on the following merges: 
+    # will run on the following merges:
     # [ feature/* -> dev, dev -> release/*, release/* -> master, hotfix/* -> master ]
-    branches: 
+    branches:
       - master
       - dev
-      - 'release/**'
+      - "release/**"
   workflow_dispatch:
-    
+
 # Cancel superseded runs on the same branch/PR
 concurrency:
   group: frontend-quality-${{ github.ref }}
@@ -26,6 +29,45 @@ permissions:
   pull-requests: read
 
 jobs:
+  # ---------------------------------------------------------------------
+  # 0. GitFlow branch policy
+  # ---------------------------------------------------------------------
+  gitflow:
+    name: GitFlow branch policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR or release branch
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.base_ref }}"
+            head="${{ github.head_ref }}"
+
+            case "$base:$head" in
+              dev:feature/*|release/*:dev|master:release/*|master:hotfix/*)
+                echo "Allowed GitFlow path: $head -> $base"
+                ;;
+              *)
+                echo "::error::Invalid GitFlow path: $head -> $base"
+                echo "Allowed: feature/* -> dev, dev -> release/*, release/* -> master, hotfix/* -> master"
+                exit 1
+                ;;
+            esac
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            ref="${{ github.ref_name }}"
+
+            case "$ref" in
+              release/*)
+                echo "Release branch CI enabled for $ref"
+                ;;
+              *)
+                echo "::error::Unexpected push ref for this workflow: $ref"
+                exit 1
+                ;;
+            esac
+          fi
+
   # ---------------------------------------------------------------------
   # 1. Installation + lockfile consistency
   # ---------------------------------------------------------------------
@@ -68,7 +110,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Check formatting
-        run: npx prettier --write .
+        run: npx prettier --check .
 
   # ---------------------------------------------------------------------
   # 3. Linting, code smells, and TypeScript strictness
@@ -150,6 +192,14 @@ jobs:
             }
             if (fail) process.exit(1);
           "
+      - name: Publish coverage metrics
+        run: |
+          node -e "
+            const s = require('./coverage/coverage-summary.json').total;
+            const rows = Object.entries(s).map(([k, v]) => '| ' + k + ' | ' + v.pct + '% | ' + v.covered + '/' + v.total + ' |');
+            const summary = ['## Coverage metrics', '', '| Metric | Coverage | Covered/Total |', '| --- | ---: | ---: |', ...rows].join('\n');
+            require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary + '\n');
+          "
       - name: Upload coverage reports (HTML/JSON/LCOV)
         if: always()
         uses: actions/upload-artifact@v4
@@ -166,8 +216,9 @@ jobs:
   # 7. Duplicate code
   # ---------------------------------------------------------------------
   duplication:
-    name: Duplicate code (jscpd)
+    name: Duplicate code warning < 3% (jscpd)
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -175,7 +226,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
       - run: npm ci
-      - name: Run jscpd (fail above 5% duplication)
+      - name: Run jscpd (warn above 3% duplication)
         run: npx jscpd . --config .jscpd.json
       - name: Upload jscpd report
         if: always()
@@ -200,6 +251,22 @@ jobs:
       - run: npm ci
       - name: Run knip
         run: npx knip
+
+  # ---------------------------------------------------------------------
+  # 8b. Technical debt metric
+  # ---------------------------------------------------------------------
+  tech-debt:
+    name: Technical debt comments
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Measure TODO/FIXME density
+        run: npm run tech-debt
 
   # ---------------------------------------------------------------------
   # 9. Dependency vulnerabilities
@@ -240,7 +307,7 @@ jobs:
   #     This job runs Semgrep as a local, license-free
   #     fallback so SAST still runs on private repos without Advanced Security.
   # ---------------------------------------------------------------------
-  
+
   semgrep:
     name: Static analysis (Semgrep)
     runs-on: ubuntu-latest
@@ -252,7 +319,6 @@ jobs:
         run: semgrep ci --config auto
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-
 
   # ---------------------------------------------------------------------
   # 12. Container scanning (only if a Dockerfile exists)

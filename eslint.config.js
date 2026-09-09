@@ -21,7 +21,7 @@ export default tseslint.config(
       "*.config.js",
       "*.config.mjs",
       "*.config.cjs",
-      "types/validator.ts"
+      "types/validator.ts",
     ],
   },
 
@@ -89,6 +89,21 @@ export default tseslint.config(
       "security/detect-non-literal-fs-filename": "warn",
       "security/detect-unsafe-regex": "error",
       "security/detect-eval-with-expression": "error",
+    },
+  },
+
+  {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/restrict-template-expressions": "off",
+      "security/detect-non-literal-fs-filename": "off",
     },
   },
 

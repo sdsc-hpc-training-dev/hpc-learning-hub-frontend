@@ -1,9 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schemas/knip.json",
-  "entry": [
-    "app/**/*.{ts,tsx}",
-    "src/**/*.{ts,tsx}"
-  ],
+  "entry": ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}"],
   "project": [
     "app/**/*.{ts,tsx}",
     "components/**/*.{ts,tsx}",
@@ -11,12 +8,7 @@
     "types/**/*.ts",
     "*.config.{js,cjs,mjs,ts}"
   ],
-  "ignore": [
-    "types/validator.ts",
-    ".next/**",
-    "coverage/**",
-    "report/**"
-  ],
+  "ignore": ["types/validator.ts", ".next/**", "coverage/**", "report/**"],
   "ignoreDependencies": [
     "@emnapi/core",
     "@emnapi/runtime",

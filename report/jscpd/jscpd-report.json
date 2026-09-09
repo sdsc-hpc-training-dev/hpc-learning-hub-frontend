@@ -1,0 +1,93 @@
+{
+  "duplicates": [
+    {
+      "firstFile": {
+        "end": 32,
+        "endLoc": {
+          "column": 2,
+          "line": 32,
+          "position": 1051
+        },
+        "name": "/Users/shing/HPC intern/hpc-learning-hub-frontend/types/validator.ts",
+        "start": 12,
+        "startLoc": {
+          "column": 57,
+          "line": 12,
+          "position": 514
+        }
+      },
+      "format": "typescript",
+      "fragment": "        props: { params: Promise<ParamMap[Route]> } & any,\n      ) =>\n        | React.ReactNode\n        | Promise<React.ReactNode>\n        | never\n        | void\n        | Promise<void>);\n  generateStaticParams?: (props: {\n    params: ParamMap[Route];\n  }) => Promise<any[]> | any[];\n  generateMetadata?: (\n    props: { params: Promise<ParamMap[Route]> } & any,\n    parent: ResolvingMetadata,\n  ) => Promise<any> | any;\n  generateViewport?: (\n    props: { params: Promise<ParamMap[Route]> } & any,\n    parent: ResolvingViewport,\n  ) => Promise<any> | any;\n  metadata?: any;\n  viewport?: any;\n};",
+      "lines": 21,
+      "secondFile": {
+        "end": 58,
+        "endLoc": {
+          "column": 2,
+          "line": 58,
+          "position": 1754
+        },
+        "name": "/Users/shing/HPC intern/hpc-learning-hub-frontend/types/validator.ts",
+        "start": 38,
+        "startLoc": {
+          "column": 33,
+          "line": 38,
+          "position": 1217
+        }
+      },
+      "tokens": 131
+    }
+  ],
+  "statistics": {
+    "detectionDate": "2026-09-09T14:44:29.416Z",
+    "formats": {
+      "javascript": {
+        "clones": 0,
+        "duplicatedLines": 0,
+        "duplicatedTokens": 0,
+        "lines": 321,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.0,
+        "percentageTokens": 0.0,
+        "sources": 4,
+        "tokens": 1296
+      },
+      "tsx": {
+        "clones": 0,
+        "duplicatedLines": 0,
+        "duplicatedTokens": 0,
+        "lines": 29,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.0,
+        "percentageTokens": 0.0,
+        "sources": 1,
+        "tokens": 133
+      },
+      "typescript": {
+        "clones": 1,
+        "duplicatedLines": 20,
+        "duplicatedTokens": 131,
+        "lines": 282,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 7.092198581560284,
+        "percentageTokens": 16.624365482233504,
+        "sources": 3,
+        "tokens": 788
+      }
+    },
+    "total": {
+      "clones": 1,
+      "duplicatedLines": 20,
+      "duplicatedTokens": 131,
+      "lines": 632,
+      "newClones": 0,
+      "newDuplicatedLines": 0,
+      "percentage": 3.1645569620253164,
+      "percentageTokens": 5.9088858818222825,
+      "sources": 8,
+      "tokens": 2217
+    }
+  }
+}
