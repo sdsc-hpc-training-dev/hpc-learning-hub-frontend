@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -22,6 +23,8 @@ function createCheckEnvironment() {
   const environment = Object.fromEntries(entries);
 
   environment.INIT_CWD = repoRoot;
+  environment.NODE_PATH = path.join(repoRoot, "node_modules");
+  environment.PATH = `${path.join(repoRoot, "node_modules", ".bin")}${path.delimiter}${environment.PATH ?? ""}`;
   environment.PWD = repoRoot;
 
   return environment;
