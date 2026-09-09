@@ -1,7 +1,5 @@
+import StartHereView from "@/features/start-here/StartHereView";
+
 export default function Home() {
-    return (
-    <main>
-      <h1></h1>
-    </main>
-  );
+  return <StartHereView />;
 }
