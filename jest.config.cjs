@@ -7,7 +7,7 @@ const createJestConfig = (nextJest.default || nextJest)({ dir: "./" });
 /** @type {import('jest').Config} */
 const customJestConfig = {
   testEnvironment: "jsdom",
-  setupFilesAfterEnv: [path.join(__dirname, "jest.setup.ts")],
+  setupFilesAfterEnv: [path.join(__dirname, "jest.setup.js")],
   collectCoverage: true,
   collectCoverageFrom: [
     "app/**/*.{ts,tsx}",

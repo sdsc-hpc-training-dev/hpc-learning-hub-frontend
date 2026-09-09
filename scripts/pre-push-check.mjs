@@ -61,12 +61,12 @@ let warnings = 0;
 for (const check of checks) {
   console.log(`\n==> ${check.name}`);
 
-  if (check.name === "Tests and coverage" && !existsSync("jest.setup.ts")) {
+  if (check.name === "Tests and coverage" && !existsSync("jest.setup.js")) {
     console.error(
       formatColor("\nPush blocked: Jest setup file is missing.", color.red),
     );
     console.error(formatColor(`Repo root: ${process.cwd()}`, color.red));
-    console.error(formatColor("Expected: jest.setup.ts", color.red));
+    console.error(formatColor("Expected: jest.setup.js", color.red));
     process.exit(1);
   }
 

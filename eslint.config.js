@@ -53,7 +53,7 @@ export default tseslint.config(
       parserOptions: {
         // --- THIS IS THE FIX ---
         projectService: {
-          allowDefaultProject: ["types/*.ts", "*.js", "*.mjs"],
+          allowDefaultProject: ["types/*.ts", "*.mjs"],
         },
         tsconfigRootDir: import.meta.dirname,
       },
