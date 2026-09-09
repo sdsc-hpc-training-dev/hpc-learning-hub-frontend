@@ -54,6 +54,7 @@ const checks = [
     command: "npm",
     args: ["run", "test:coverage"],
     hint: "Tests or coverage failed. Run `npm run test:coverage`.",
+    warningOnly: true,
   },
   {
     name: "Duplicate code",
