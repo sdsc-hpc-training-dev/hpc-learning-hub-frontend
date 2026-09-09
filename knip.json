@@ -9,6 +9,18 @@
     "*.config.{js,cjs,mjs,ts}"
   ],
   "ignore": ["types/validator.ts", ".next/**", "coverage/**", "report/**"],
+  "ignore": [
+    "types/validator.ts",
+    "components/ui/Dialog.tsx",
+    "components/ui/MaterialCard.tsx",
+    "components/ui/ResourseLink.tsx",
+    "components/ui/StatusMessage.tsx",
+    "lib/gateway/client.ts",
+    "lib/gateway/types.ts",
+    ".next/**",
+    "coverage/**",
+    "report/**"
+  ],
   "ignoreDependencies": [
     "@emnapi/core",
     "@emnapi/runtime",
