@@ -35,12 +35,16 @@ describe("route components", () => {
     unmountLoading();
 
     render(<NotFound />);
-    expect(screen.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Page not found" }),
+    ).toBeInTheDocument();
   });
 
   it("renders the error state and retries", () => {
     const reset = jest.fn();
-    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const consoleError = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
 
     render(<ErrorPage error={new Error("test error")} reset={reset} />);
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));

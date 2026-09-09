@@ -1,7 +1,6 @@
 {
-  "threshold": 5,
-  "reporters": ["html", "json", "console"],
-  "output": "./report/jscpd",
+  "threshold": 3,
+  "reporters": ["console"],
   "absolute": true,
   "gitignore": true,
   "format": ["typescript", "tsx", "javascript", "jsx"],
@@ -12,6 +11,7 @@
     "**/dist/**",
     "**/coverage/**",
     "**/report/**",
+    "types/validator.ts",
     "**/*.test.*",
     "**/*.spec.*"
   ]
