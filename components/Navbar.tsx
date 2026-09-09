@@ -76,7 +76,7 @@ export default function Navbar() {
             </Link>
           ))}
 
-          <button className="nav-aida" type="button" title="Ask AIDA" onClick={closeMenus}>
+          <button className="nav-button" type="button" title="Ask AIDA" onClick={closeMenus}>
             Ask AIDA
           </button>
 
@@ -84,7 +84,7 @@ export default function Navbar() {
             <Link className="nav-signin" href="/account">
               Sign in
             </Link>
-            <Link className="nav-create-account" href="/account?mode=create">
+            <Link className="nav-button" href="/account?mode=create">
               Create account
             </Link>
           </div>
