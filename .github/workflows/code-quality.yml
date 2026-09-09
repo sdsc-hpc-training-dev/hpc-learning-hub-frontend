@@ -86,15 +86,8 @@ jobs:
       - name: Install dependencies (frozen lockfile)
         run: npm ci
 
-      - name: Verify package-lock.json matches package.json
-        run: |
-          cp package-lock.json /tmp/package-lock.before.json
-          npm install --package-lock-only
-          if ! diff -q package-lock.json /tmp/package-lock.before.json > /dev/null; then
-            echo "::error::package-lock.json is out of sync with package.json. Run 'npm install' and commit the lockfile."
-            git diff package-lock.json
-            exit 1
-          fi
+      - name: Verify lockfile consistency
+        run: npm ci --dry-run
 
   # ---------------------------------------------------------------------
   # 2. Formatting
@@ -309,9 +302,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run Semgrep
-        run: semgrep ci --config auto
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+        run: semgrep scan --config auto --error .
 
   # ---------------------------------------------------------------------
   # 12. Container scanning (only if a Dockerfile exists)
