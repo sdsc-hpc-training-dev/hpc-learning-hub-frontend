@@ -12,6 +12,7 @@
     "**/dist/**",
     "**/coverage/**",
     "**/report/**",
+    "types/validator.ts",
     "**/*.test.*",
     "**/*.spec.*"
   ]

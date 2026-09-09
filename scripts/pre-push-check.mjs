@@ -1,4 +1,8 @@
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const repoRoot = fileURLToPath(new URL("..", import.meta.url));
+process.chdir(repoRoot);
 
 const color = {
   yellow: "\u001b[33m",
