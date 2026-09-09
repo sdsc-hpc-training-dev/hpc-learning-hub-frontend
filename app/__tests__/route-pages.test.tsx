@@ -9,6 +9,9 @@ import MaterialPage from "../materials/[materialId]/page";
 import MaterialsPage from "../materials/page";
 import MyLearningPage from "../my-learning/page";
 import NotFound from "../not-found";
+import AccountsPage from "../account/page";
+import ConversationsPage from "../my-learning/conversations/page";
+import ProgramsPage from "../programs/page";
 
 describe("route components", () => {
   it("renders the route pages", () => {
@@ -20,6 +23,9 @@ describe("route components", () => {
       MaterialPage,
       MaterialsPage,
       MyLearningPage,
+      AccountsPage,
+      ConversationsPage,
+      ProgramsPage,
     ];
 
     pages.forEach((Page) => {

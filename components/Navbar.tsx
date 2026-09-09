@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -18,55 +19,32 @@ const NAV_LINKS: NavLink[] = [
   { key: "programs", href: "/programs", label: "Programs & Series" },
 ];
 
+function getCurrentPage(pathname: string): string {
+  if (pathname.includes("training") || pathname.includes("materials")) return "catalog";
+  if (pathname.includes("learning")) return "learning";
+  if (pathname.includes("events")) return "events";
+  if (pathname.includes("programs")) return "programs";
+  return "home";
+}
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const pathname = usePathname();
-
-  // Determine current page for active styling
-  const getCurrentPage = () => {
-    if (pathname === "/") return "home";
-    if (pathname.includes("training")) return "catalog";
-    if (pathname.includes("learning")) return "learning";
-    if (pathname.includes("events")) return "events";
-    if (pathname.includes("programs")) return "programs";
-    return "";
-  };
-
-  const currentPage = getCurrentPage();
-
-  const handleMenuClick = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-  const handleAccountClick = () => {
-    setAccountMenuOpen(!accountMenuOpen);
-  };
+  const currentPage = getCurrentPage(pathname);
 
   const closeMenus = () => {
     setMenuOpen(false);
-    setAccountMenuOpen(false);
   };
 
   return (
     <header className="site-header">
       <div className="header-shell">
         <Link className="site-brand" href="/" aria-label="HPC Learning Hub home">
-          <img
-            src="/SDSC-logo.svg"
-            alt="San Diego Supercomputer Center"
-            width={170}
-            height="auto"
-          />
+          <Image src="/SDSC-logo.svg" alt="San Diego Supercomputer Center" width={170} height={48} priority />
           <span>HPC Learning Hub</span>
         </Link>
 
-        <button
-          className="mobile-aida"
-          type="button"
-          aria-label="Open Ask AIDA"
-          title="Ask AIDA"
-        >
+        <button className="mobile-aida" type="button" aria-label="Open Ask AIDA" title="Ask AIDA">
           <span aria-hidden="true">A</span>
         </button>
 
@@ -75,7 +53,9 @@ export default function Navbar() {
           type="button"
           aria-expanded={menuOpen}
           aria-controls="primary-navigation"
-          onClick={handleMenuClick}
+          onClick={() => {
+            setMenuOpen(!menuOpen);
+          }}
         >
           Menu
         </button>
@@ -96,12 +76,7 @@ export default function Navbar() {
             </Link>
           ))}
 
-          <button
-            className="nav-aida"
-            type="button"
-            title="Ask AIDA"
-            onClick={closeMenus}
-          >
+          <button className="nav-aida" type="button" title="Ask AIDA" onClick={closeMenus}>
             Ask AIDA
           </button>
 
