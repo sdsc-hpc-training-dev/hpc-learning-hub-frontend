@@ -1,5 +1,4 @@
 // Jest config for the Next.js frontend.
-const path = require("node:path");
 const nextJest = require("next/jest");
 
 const createJestConfig = (nextJest.default || nextJest)({ dir: "./" });
@@ -7,7 +6,7 @@ const createJestConfig = (nextJest.default || nextJest)({ dir: "./" });
 /** @type {import('jest').Config} */
 const customJestConfig = {
   testEnvironment: "jsdom",
-  setupFilesAfterEnv: [path.join(__dirname, "jest.setup.js")],
+  setupFilesAfterEnv: ["@testing-library/jest-dom"],
   collectCoverage: true,
   collectCoverageFrom: [
     "app/**/*.{ts,tsx}",

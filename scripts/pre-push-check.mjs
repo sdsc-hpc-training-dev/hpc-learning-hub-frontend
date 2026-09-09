@@ -1,5 +1,4 @@
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -72,15 +71,6 @@ let warnings = 0;
 
 for (const check of checks) {
   console.log(`\n==> ${check.name}`);
-
-  if (check.name === "Tests and coverage" && !existsSync("jest.setup.js")) {
-    console.error(
-      formatColor("\nPush blocked: Jest setup file is missing.", color.red),
-    );
-    console.error(formatColor(`Repo root: ${process.cwd()}`, color.red));
-    console.error(formatColor("Expected: jest.setup.js", color.red));
-    process.exit(1);
-  }
 
   const result = spawnSync(check.command, check.args, {
     cwd: repoRoot,
