@@ -1,0 +1,217 @@
+name: "PR: Feature to Dev"
+
+on:
+  pull_request:
+    branches:
+      - dev
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: feature-to-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24.13.0"
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  pull-requests: read
+
+jobs:
+  validate-branch:
+    name: Validate Source Branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure PR source branch is feature/*
+        run: |
+          HEAD_REF="${{ github.head_ref }}"
+          echo "PR Head: $HEAD_REF"
+          if [[ ! "$HEAD_REF" =~ ^feature/ ]]; then
+            echo "::error::Only PRs coming from 'feature/*' branches are allowed into 'dev'."
+            exit 1
+          fi
+
+  install:
+    name: Install & verify lockfile
+    runs-on: ubuntu-latest
+    needs: [validate-branch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Verify package-lock.json matches package.json
+        run: |
+          cp package-lock.json /tmp/package-lock.before.json
+          npm install --package-lock-only
+          if ! diff -q package-lock.json /tmp/package-lock.before.json > /dev/null; then
+            echo "::error::package-lock.json is out of sync with package.json."
+            exit 1
+          fi
+
+  format:
+    name: Prettier
+    runs-on: ubuntu-latest
+    needs: [validate-branch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx prettier --write .
+
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    needs: [validate-branch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx eslint . --max-warnings=0
+
+  typecheck:
+    name: TypeScript (tsc --noEmit)
+    runs-on: ubuntu-latest
+    needs: [validate-branch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  build:
+    name: Next.js build
+    runs-on: ubuntu-latest
+    needs: [validate-branch, format, lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  test:
+    name: Tests & coverage
+    runs-on: ubuntu-latest
+    needs: [validate-branch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run test:coverage
+      - run: |
+          node -e "
+            const s = require('./coverage/coverage-summary.json').total;
+            const req = { lines: 80, statements: 80, functions: 80, branches: 70 };
+            let fail = false;
+            for (const k of Object.keys(req)) {
+              if (s[k].pct < req[k]) {
+                console.error('Coverage for ' + k + ' is ' + s[k].pct + '%, below required ' + req[k] + '%');
+                fail = true;
+              }
+            }
+            if (fail) process.exit(1);
+          "
+
+  duplication:
+    name: Duplicate code (jscpd)
+    runs-on: ubuntu-latest
+    needs: [validate-branch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx jscpd . --config .jscpd.json
+
+  unused:
+    name: Unused code (knip)
+    runs-on: ubuntu-latest
+    needs: [validate-branch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx knip
+
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    needs: [validate-branch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+
+  secrets:
+    name: Secret scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    needs: [validate-branch]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  semgrep:
+    name: Static analysis (Semgrep)
+    runs-on: ubuntu-latest
+    needs: [validate-branch]
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep ci --config auto
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+  container-scan:
+    name: Docker image scan (Trivy)
+    runs-on: ubuntu-latest
+    needs: [validate-branch, build]
+    steps:
+      - uses: actions/checkout@v4
+      - id: dockerfile
+        run: |
+          if [ -f Dockerfile ]; then echo "exists=true" >> "$GITHUB_OUTPUT"; else echo "exists=false" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.dockerfile.outputs.exists == 'true'
+        run: docker build -t frontend:ci .
+      - if: steps.dockerfile.outputs.exists == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "frontend:ci"
+          format: "table"
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"
+          ignore-unfixed: true

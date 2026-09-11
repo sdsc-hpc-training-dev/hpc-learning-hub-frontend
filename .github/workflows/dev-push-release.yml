@@ -1,0 +1,207 @@
+name: "Dev: Push & Create Release Branch"
+
+on:
+  push:
+    branches:
+      - dev
+
+concurrency:
+  group: dev-push-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24.13.0"
+
+permissions:
+  contents: write
+  security-events: write
+  actions: read
+
+jobs:
+  install:
+    name: Install & verify lockfile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+
+  format:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx prettier --write .
+
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx eslint . --max-warnings=0
+
+  typecheck:
+    name: TypeScript (tsc --noEmit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  build:
+    name: Next.js build
+    runs-on: ubuntu-latest
+    needs: [format, lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  test:
+    name: Tests & coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run test:coverage
+
+  duplication:
+    name: Duplicate code (jscpd)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx jscpd . --config .jscpd.json
+
+  unused:
+    name: Unused code (knip)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx knip
+
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+
+  secrets:
+    name: Secret scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  semgrep:
+    name: Static analysis (Semgrep)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep ci --config auto
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+  container-scan:
+    name: Docker image scan (Trivy)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - id: dockerfile
+        run: |
+          if [ -f Dockerfile ]; then echo "exists=true" >> "$GITHUB_OUTPUT"; else echo "exists=false" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.dockerfile.outputs.exists == 'true'
+        run: docker build -t frontend:ci .
+      - if: steps.dockerfile.outputs.exists == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "frontend:ci"
+          format: "table"
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"
+          ignore-unfixed: true
+
+  create-release-branch:
+    name: Create Release Branch
+    runs-on: ubuntu-latest
+    needs: [install, format, lint, typecheck, build, test, duplication, unused, audit, secrets, semgrep, container-scan]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create release branch if commit message matches RELEASE-*
+        run: |
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          echo "Commit message: $COMMIT_MSG"
+
+          # Extract RELEASE-* tag from commit message
+          RAW_MATCH=$(echo "$COMMIT_MSG" | grep -oE "RELEASE-[a-zA-Z0-9.\_-]+" | head -n 1 || true)
+
+          if [ -n "$RAW_MATCH" ]; then
+            # Format: RELEASE-v1.0.0 -> release/v1.0.0
+            VERSION="${RAW_MATCH#RELEASE-}"
+            BRANCH_NAME="release/${VERSION}"
+            echo "Target Branch Name: $BRANCH_NAME"
+
+            if git ls-remote --exit-code --heads origin "$BRANCH_NAME"; then
+              echo "Branch '$BRANCH_NAME' already exists on remote."
+            else
+              echo "Creating release branch: $BRANCH_NAME"
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git checkout -b "$BRANCH_NAME"
+              git push origin "$BRANCH_NAME"
+            fi
+          else
+            echo "No 'RELEASE-*' pattern found in commit message. Skipping branch creation."
+          fi
