@@ -44,15 +44,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
           <div>
             <h2>Explore</h2>
-            <a href="training-catalog.html">Training Library</a>
-            <a href="learning-paths.html">Learning Paths</a>
-            <a href="events.html">Events & Recordings</a>
-            <a href="programs.html">Programs & Series</a>
+            <a href="materials">Training Library</a>
+            <a href="learning-paths">Learning Paths</a>
+            <a href="events">Events & Recordings</a>
+            <a href="programs">Programs & Series</a>
           </div>
           <div id="contribute">
             <h2>Contribute</h2>
             <p>SDSC instructors and coordinators can request that training or recordings be added.</p>
-            <a href="https://www.sdsc.edu/about/contact_us.html" target="_blank" rel="noopener">Contact SDSC</a>
+            <a href="https://www.sdsc.edu/contact.html" target="_blank" rel="noopener">Contact SDSC</a>
           </div>
           <div>
             <h2>About</h2>
