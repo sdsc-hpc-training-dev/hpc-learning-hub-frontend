@@ -42,10 +42,12 @@ export default function StartHereView() {
 							<strong>New to HPC? Start here</strong>
 							<span>Follow a short, guided learning path.</span>
 						</Link>
+						{/*
 						<Link className="route-action" href="/my-learning/conversations">
 							<strong>Ask AIDA</strong>
 							<span>Don't know where to start? Ask our AI discovery agent for help.</span>
 						</Link>
+						*/}
 					</div>
 				</div>
 			</section>
@@ -98,7 +100,7 @@ export default function StartHereView() {
 					<EmptyCollection {...emptyCollections[3]} />
 				</div>
 			</section>
-
+{/*
 			<section className="section aida-band" aria-labelledby="aida-heading">
 				<div className="section-shell aida-band__layout">
 					<div>
@@ -115,7 +117,7 @@ export default function StartHereView() {
 					</div>
 				</div>
 			</section>
-
+*/}
 			<section className="section section--sand" aria-labelledby="programs-heading">
 				<div className="section-shell">
 					<div className="section-heading">
@@ -126,7 +128,7 @@ export default function StartHereView() {
 					<EmptyCollection {...emptyCollections[4]} />
 				</div>
 			</section>
-
+{/*
 			<section className="section section--compact section--blue" id="account-access" aria-labelledby="account-heading">
 				<div className="section-shell account-band">
 					<div>
@@ -140,6 +142,7 @@ export default function StartHereView() {
 					</div>
 				</div>
 			</section>
+*/}
 		</div>
 	);
 }

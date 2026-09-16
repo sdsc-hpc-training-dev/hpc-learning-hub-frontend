@@ -43,10 +43,11 @@ export default function Navbar() {
           <Image src="/SDSC-logo.svg" alt="San Diego Supercomputer Center" width={170} height={48} priority />
           <span>HPC Learning Hub</span>
         </Link>
-
+        {/*
         <button className="mobile-aida" type="button" aria-label="Open Ask AIDA" title="Ask AIDA">
           <span aria-hidden="true">A</span>
         </button>
+        
 
         <button
           className="menu-toggle"
@@ -59,7 +60,7 @@ export default function Navbar() {
         >
           Menu
         </button>
-
+        */}
         <nav
           className={`primary-nav ${menuOpen ? "is-open" : ""}`}
           id="primary-navigation"
@@ -75,7 +76,7 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-
+{/*
           <button className="nav-button" type="button" title="Ask AIDA" onClick={closeMenus}>
             Ask AIDA
           </button>
@@ -88,6 +89,7 @@ export default function Navbar() {
               Create account
             </Link>
           </div>
+*/}
         </nav>
       </div>
     </header>
