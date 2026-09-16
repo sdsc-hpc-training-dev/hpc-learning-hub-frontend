@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { gatewayFetch } from "@/lib/gateway/client";
 import type {
 	GatewayEvent,
@@ -45,26 +46,40 @@ function toMaterial(material: GatewayMaterial): StartHereMaterial | null {
 	};
 }
 
+function randomItems(items: string[], count: number): string[] {
+	const shuffled = [...items];
+	for (let index = shuffled.length - 1; index > 0; index -= 1) {
+		const randomIndex = randomInt(index + 1);
+		[shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+	}
+	return shuffled.slice(0, count);
+}
+
 export async function getStartHereData(): Promise<StartHereData> {
 	const [materials, events, learningPaths, programs] = await Promise.all([
-		optionalList<GatewayMaterial>("/api/v1/materials?limit=6"),
+		optionalList<GatewayMaterial>("/api/v1/materials"),
 		optionalList<GatewayEvent>("/api/v1/events?status=upcoming&limit=3"),
-		optionalList<GatewayLearningPath>("/api/v1/learning-paths?limit=3"),
+		optionalList<GatewayLearningPath>("/api/v1/learning-paths"),
 		optionalList<GatewayProgram>("/api/v1/programs?limit=3"),
 	]);
 
 	const materialCards = materials.map(toMaterial).filter((material): material is StartHereMaterial => material !== null);
-	const browseOptions = [...new Set(materials.flatMap((material) => [
+	const browseOptions = randomItems([...new Set(materials.flatMap((material) => [
 		...(material.topics ?? []),
 		...(material.systems ?? []),
 		...(material.tools ?? []),
-	]))].slice(0, 12);
+	]))], 4);
+	const recordings = materials
+		.filter((material) => (material.content_type ?? material.contentType)?.toLowerCase() === "recording")
+		.map(toMaterial)
+		.filter((material): material is StartHereMaterial => material !== null)
+		.slice(0, 3);
 
 	return {
 		browseOptions,
-		featuredMaterials: materialCards,
+		featuredMaterials: materialCards.slice(0, 3),
 		upcomingEvents: events,
-		learningPaths,
+		learningPaths: learningPaths.slice(0, 3),
 		programs,
 	};
 }

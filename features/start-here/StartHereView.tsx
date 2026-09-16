@@ -126,7 +126,7 @@ export default function StartHereView({ data }: Readonly<{ data?: StartHereData 
 						<div className="empty-collection" aria-label="Learning paths">
 							{viewData.learningPaths.map((path) => <span key={path.id}>{path.title ?? path.name ?? path.id}</span>)}
 						</div>
-					) : <EmptyCollection {...emptyCollections[3]} />}
+					) : <EmptyCollection {...emptyCollections[2]} />}
 				</div>
 			</section>
 {/*
@@ -158,7 +158,7 @@ export default function StartHereView({ data }: Readonly<{ data?: StartHereData 
 						<div className="empty-collection" aria-label="Programs and series">
 							{viewData.programs.map((program) => <span key={program.id}>{program.name}</span>)}
 						</div>
-					) : <EmptyCollection {...emptyCollections[4]} />}
+					) : <EmptyCollection {...emptyCollections[3]} />}
 				</div>
 			</section>
 {/*
