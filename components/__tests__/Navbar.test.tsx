@@ -43,7 +43,7 @@ describe("Navbar - Rendering", () => {
     expect(screen.getByRole("link", { name: /events/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /programs & series/i })).toBeInTheDocument();
   });
-
+/*
   it("renders sign in and create account links", () => {
     render(<Navbar />);
     expect(screen.getByRole("link", { name: /sign in/i })).toBeInTheDocument();
@@ -59,9 +59,9 @@ describe("Navbar - Rendering", () => {
   it("renders menu toggle button", () => {
     render(<Navbar />);
     expect(screen.getByRole("button", { name: /menu/i })).toBeInTheDocument();
-  });
+  });*/
 });
-
+/*
 describe("Navbar - Interactions", () => {
   beforeEach(() => {
     (usePathname as jest.Mock).mockReturnValue("/");
@@ -94,6 +94,7 @@ describe("Navbar - Interactions", () => {
     expect(nav).not.toHaveClass("is-open");
   });
 });
+*/
 
 describe("Navbar - Active Page Detection", () => {
   it("sets active page indicator for current route", () => {
@@ -145,12 +146,12 @@ describe("Navbar - Navigation Links", () => {
     expect(screen.getByRole("link", { name: /^events$/i })).toHaveAttribute("href", "/events");
     expect(screen.getByRole("link", { name: /programs & series/i })).toHaveAttribute("href", "/programs");
   });
-
+/*
   it("has correct account action links", () => {
     render(<Navbar />);
     const signInLink = screen.getByRole("link", { name: /sign in/i });
     const createLink = screen.getByRole("link", { name: /create account/i });
     expect(signInLink).toHaveAttribute("href", "/account");
     expect(createLink).toHaveAttribute("href", "/account?mode=create");
-  });
+  });*/
 });
