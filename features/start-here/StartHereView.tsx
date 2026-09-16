@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { StartHereData } from "./api";
 
 const emptyCollections = [
 	{ label: "Browse tiles", message: "Browse options will appear here when the catalog is connected." },
@@ -19,7 +20,15 @@ function EmptyCollection({ label, message }: Readonly<(typeof emptyCollections)[
 
 // The landing page intentionally keeps its reference sections together for a stable reading order.
 // eslint-disable-next-line max-lines-per-function
-export default function StartHereView() {
+export default function StartHereView({ data }: Readonly<{ data?: StartHereData }>) {
+	const viewData = data ?? {
+		browseOptions: [],
+		featuredMaterials: [],
+		upcomingEvents: [],
+		learningPaths: [],
+		programs: [],
+	};
+
 	return (
 		<div className="home-page">
 			<section className="hero" aria-labelledby="hero-header">
@@ -62,7 +71,11 @@ export default function StartHereView() {
 						</div>
 						<Link className="text-link" href="/materials">See the full Training Library →</Link>
 					</div>
-					<EmptyCollection {...emptyCollections[0]} />
+					{viewData.browseOptions.length ? (
+						<div className="empty-collection" aria-label="Browse options">
+							{viewData.browseOptions.map((option) => <span key={option}>{option}</span>)}
+						</div>
+					) : <EmptyCollection {...emptyCollections[0]} />}
 				</div>
 			</section>
 
@@ -73,7 +86,15 @@ export default function StartHereView() {
 						<h2 id="featured-heading">Featured training</h2>
 						<p>See the most popular and useful training materials in the library.</p>
 					</div>
-					<EmptyCollection {...emptyCollections[1]} />
+					{viewData.featuredMaterials.length ? (
+						<div className="empty-collection" aria-label="Featured training">
+							{viewData.featuredMaterials.map((material) => (
+								<Link key={material.id} href={material.href}>
+									<strong>{material.title}</strong>
+								</Link>
+							))}
+						</div>
+					) : <EmptyCollection {...emptyCollections[1]} />}
 				</div>
 			</section>
 
@@ -86,7 +107,11 @@ export default function StartHereView() {
 						</div>
 						<Link className="text-link" href="/events">Browse Events →</Link>
 					</div>
-					<EmptyCollection {...emptyCollections[2]} />
+					{viewData.upcomingEvents.length ? (
+						<div className="empty-collection" aria-label="Upcoming events">
+							{viewData.upcomingEvents.map((event) => <span key={event.id}>{event.title ?? event.name ?? event.id}</span>)}
+						</div>
+					) : <EmptyCollection {...emptyCollections[2]} />}
 				</div>
 			</section>
 
@@ -97,7 +122,11 @@ export default function StartHereView() {
 						<h2 id="paths-heading">Learning paths when a catalog feels like too much.</h2>
 						<p>Paths organize existing SDSC materials into a suggested sequence. They are prototypes for future curriculum design.</p>
 					</div>
-					<EmptyCollection {...emptyCollections[3]} />
+					{viewData.learningPaths.length ? (
+						<div className="empty-collection" aria-label="Learning paths">
+							{viewData.learningPaths.map((path) => <span key={path.id}>{path.title ?? path.name ?? path.id}</span>)}
+						</div>
+					) : <EmptyCollection {...emptyCollections[3]} />}
 				</div>
 			</section>
 {/*
@@ -125,7 +154,11 @@ export default function StartHereView() {
 						<h2 id="programs-heading">Understand the collections behind the material.</h2>
 						<p>Programs and series connect individual sessions to a recognizable learning context.</p>
 					</div>
-					<EmptyCollection {...emptyCollections[4]} />
+					{viewData.programs.length ? (
+						<div className="empty-collection" aria-label="Programs and series">
+							{viewData.programs.map((program) => <span key={program.id}>{program.name}</span>)}
+						</div>
+					) : <EmptyCollection {...emptyCollections[4]} />}
 				</div>
 			</section>
 {/*
