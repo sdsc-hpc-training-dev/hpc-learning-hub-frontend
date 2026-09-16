@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
+import Image from "next/image";
 import localFont from "next/font/local";
 import Navbar from "@/components/Navbar";
 import "./globals.css";
@@ -38,7 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="site-footer">
         <div className="footer-shell">
           <div className="footer-brand">
-            <img src="SDSC-logo.svg" alt="San Diego Supercomputer Center" />
+            <Image src="/SDSC-logo.svg" alt="San Diego Supercomputer Center" width={170} height={48} priority />
             <p>Public training, practical learning paths, and grounded discovery across SDSC resources.</p>
           </div>
           <div>
