@@ -649,3 +649,42 @@ main#main-content {
     text-align: left;
   }
 }
+
+/* FOOTER */
+
+.site-footer {
+  padding: 58px 0 42px;
+  color: #d7e2e9;
+  background: var(--navy-deep);
+}
+
+.footer-shell {
+  width: min(calc(100% - 40px), var(--content));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: 48px;
+}
+
+.footer-shell h2 {
+  margin-bottom: 14px;
+  color: white;
+  font-size: 1rem;
+}
+
+.footer-shell a {
+  display: block;
+  margin-bottom: 9px;
+  color: #d7e2e9;
+  text-decoration: underline;
+}
+
+.footer-shell p {
+  font-size: 0.91rem;
+}
+
+.footer-brand img {
+  width: 210px;
+  margin-bottom: 20px;
+  filter: brightness(0) invert(1);
+}
