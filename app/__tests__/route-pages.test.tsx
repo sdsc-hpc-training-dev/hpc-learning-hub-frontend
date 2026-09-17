@@ -35,6 +35,12 @@ describe("route components", () => {
     });
   });
 
+  it("renders the catalog page with the public library hero text", () => {
+    render(<MaterialsPage />);
+    expect(screen.getByRole("heading", { name: /Search by what you want to learn or use\./i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/training filters/i)).toBeInTheDocument();
+  });
+
   it("renders the loading and not-found states", () => {
     const { unmount: unmountLoading } = render(<Loading />);
     expect(screen.getByText("Loading...")).toBeInTheDocument();
