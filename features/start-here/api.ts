@@ -46,6 +46,16 @@ function toMaterial(material: GatewayMaterial): StartHereMaterial | null {
 	};
 }
 
+function toLabel(value: unknown): string | null {
+	if (typeof value === "string") return value.trim() || null;
+	if (!value || typeof value !== "object") return null;
+	const candidate = value as Record<string, unknown>;
+	for (const field of ["name", "label", "title", "value", "id"]) {
+		if (typeof candidate[field] === "string" && candidate[field].trim()) return candidate[field].trim();
+	}
+	return null;
+}
+
 function randomItems(items: string[], count: number): string[] {
 	const shuffled = [...items];
 	for (let index = shuffled.length - 1; index > 0; index -= 1) {
@@ -68,7 +78,7 @@ export async function getStartHereData(): Promise<StartHereData> {
 		...(material.topics ?? []),
 		...(material.systems ?? []),
 		...(material.tools ?? []),
-	]))], 4);
+	]).map(toLabel).filter((label): label is string => label !== null))], 4);
 	const recordings = materials
 		.filter((material) => (material.content_type ?? material.contentType)?.toLowerCase() === "recording")
 		.map(toMaterial)

@@ -8,7 +8,6 @@ describe("Start Here data", () => {
 		await expect(getStartHereData()).resolves.toEqual({
 			browseOptions: [],
 			featuredMaterials: [],
-			recordings: [],
 			upcomingEvents: [],
 			learningPaths: [],
 			programs: [],
@@ -22,7 +21,7 @@ describe("Start Here data", () => {
 		const originalGatewayUrl = process.env.GATEWAY_URL;
 		process.env.GATEWAY_URL = "https://gateway.test";
 		const materials = [
-			{ id: "material-1", title: "Material 1", topics: ["MPI"], systems: ["Expanse"], tools: ["Slurm"], content_type: "tutorial" },
+			{ id: "material-1", title: "Material 1", topics: [{ name: "MPI" }], systems: [{ label: "Expanse" }], tools: [{ value: "Slurm" }], content_type: "tutorial" },
 			{ id: "material-2", title: "Material 2", topics: ["Python"], systems: ["Comet"], tools: ["Jupyter"], content_type: "recording" },
 			{ id: "material-3", title: "Material 3", topics: ["GPU"], systems: ["Expanse"], tools: ["CUDA"], content_type: "recording" },
 			{ id: "material-4", title: "Material 4", topics: ["Data"], content_type: "recording" },
@@ -50,7 +49,6 @@ describe("Start Here data", () => {
 			const data = await getStartHereData();
 			expect(data.browseOptions).toHaveLength(4);
 			expect(data.featuredMaterials.map((material) => material.id)).toEqual(["material-1", "material-2", "material-3"]);
-			expect(data.recordings.map((material) => material.id)).toEqual(["material-2", "material-3", "material-4"]);
 			expect(data.learningPaths.map((path) => path.id)).toEqual(["path-1", "path-2", "path-3"]);
 		} finally {
 			global.fetch = originalFetch;
