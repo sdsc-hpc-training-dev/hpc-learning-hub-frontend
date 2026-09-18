@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import ErrorPage from "../error";
 import EventsPage from "../events/page";
+import EventsLoading from "../events/loading";
 import LearningPathsError from "../learning-paths/error";
 import LearningPathPage from "../learning-paths/[pathId]/page";
 import LearningPathsLoading from "../learning-paths/loading";
@@ -15,11 +16,19 @@ import AccountsPage from "../account/page";
 import ConversationsPage from "../my-learning/conversations/page";
 import ProgramsPage from "../programs/page";
 import { fallbackMaterials } from "@/features/training-library/api";
+import { getEventsData } from "@/features/events/api";
 import {
   getLearningPath,
   getLearningPaths,
 } from "@/features/learning-paths/api";
 import { notFound } from "next/navigation";
+
+jest.mock("@/features/events/api", () => ({
+  getEventsData: jest.fn().mockResolvedValue({
+    upcomingEvents: [],
+    recordings: [],
+  }),
+}));
 
 jest.mock("@/features/learning-paths/api", () => ({
   getLearningPaths: jest.fn().mockResolvedValue([]),
@@ -54,6 +63,7 @@ const samplePath = {
 
 const getLearningPathsMock = jest.mocked(getLearningPaths);
 const getLearningPathMock = jest.mocked(getLearningPath);
+const getEventsDataMock = jest.mocked(getEventsData);
 const notFoundMock = jest.mocked(notFound);
 
 describe("static route components", () => {
@@ -94,6 +104,26 @@ describe("static route components", () => {
     expect(
       screen.getByRole("heading", { name: "Page not found" }),
     ).toBeInTheDocument();
+  });
+
+  it("renders the events loading state", () => {
+    render(<EventsLoading />);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Loading events and recordings…",
+    );
+  });
+});
+
+describe("events route components", () => {
+  beforeEach(() => {
+    getEventsDataMock.mockResolvedValue({ upcomingEvents: [], recordings: [] });
+  });
+
+  it("propagates gateway failures", async () => {
+    const error = new Error("events request failed");
+    getEventsDataMock.mockRejectedValueOnce(error);
+
+    await expect(EventsPage()).rejects.toThrow(error);
   });
 });
 
