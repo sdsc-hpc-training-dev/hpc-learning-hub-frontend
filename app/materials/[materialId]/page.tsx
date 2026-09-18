@@ -1,44 +1,17 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import MaterialDetail from "@/features/training-library/MaterialDetail";
 import { fallbackMaterials, getMaterialById, getTrainingLibraryData } from "@/features/training-library/api";
-import type { CatalogMaterial } from "@/lib/gateway/types";
 
 interface MaterialPageProps {
 	params?: Promise<{ materialId: string }>;
 }
 
-export default function MaterialPage({ params = Promise.resolve({ materialId: fallbackMaterials[0].id }) }: Readonly<MaterialPageProps>) {
-	const [materialId, setMaterialId] = useState(fallbackMaterials[0].id);
-	const [material, setMaterial] = useState<CatalogMaterial | null>(fallbackMaterials[0]);
-	const [materials, setMaterials] = useState<CatalogMaterial[]>(fallbackMaterials);
-
-	useEffect(() => {
-		let active = true;
-
-		const loadMaterial = async () => {
-			const resolvedParams = await params;
-
-			setMaterialId(resolvedParams.materialId);
-			const [result, catalog] = await Promise.all([
-				getMaterialById(resolvedParams.materialId),
-				getTrainingLibraryData(),
-			]);
-
-			if (active) {
-				setMaterial(result);
-				setMaterials(catalog.materials);
-			}
-		};
-
-		void loadMaterial();
-
-		return () => {
-			active = false;
-		};
-	}, [params]);
+export default async function MaterialPage({ params = Promise.resolve({ materialId: fallbackMaterials[0].id }) }: Readonly<MaterialPageProps>) {
+	const { materialId } = await params;
+	const [material, catalog] = await Promise.all([
+		getMaterialById(materialId),
+		getTrainingLibraryData(),
+	]);
 
 	if (!material) {
 		return (
@@ -55,5 +28,5 @@ export default function MaterialPage({ params = Promise.resolve({ materialId: fa
 		);
 	}
 
-	return <MaterialDetail key={materialId} material={material} relatedMaterials={materials} />;
+	return <MaterialDetail material={material} relatedMaterials={catalog.materials} />;
 }

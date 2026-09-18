@@ -5,6 +5,7 @@ import MaterialCard from "./MaterialCard";
 interface MaterialDetailProps {
   material: CatalogMaterial;
   relatedMaterials: CatalogMaterial[];
+  relatedMaterialsLoading?: boolean;
 }
 
 function formatDate(value?: string | null) {
@@ -44,7 +45,7 @@ export function rankRelatedMaterials(material: CatalogMaterial, candidates: Cata
     .map(({ candidate }) => candidate);
 }
 
-export default function MaterialDetail({ material, relatedMaterials }: Readonly<MaterialDetailProps>) {
+export default function MaterialDetail({ material, relatedMaterials, relatedMaterialsLoading = false }: Readonly<MaterialDetailProps>) {
   const resources = material.resources.filter((resource) => resource.url);
   const tags = [...material.topics, ...material.tools, ...material.systems].slice(0, 8);
   const related = rankRelatedMaterials(material, relatedMaterials);
@@ -104,13 +105,15 @@ export default function MaterialDetail({ material, relatedMaterials }: Readonly<
             <h2 id="related-heading">Related materials</h2>
             <p>Related items are chosen from overlapping topics, tools, systems, and programs in the prototype subset.</p>
           </div>
-          {related.length ? (
+          {relatedMaterialsLoading ? <div className="loading-indicator" role="status" aria-live="polite">Loading recommended materials...</div> : null}
+          {!relatedMaterialsLoading && related.length > 0 ? (
             <div className="related-materials-grid">
               {related.map((candidate) => (
                 <MaterialCard key={candidate.id} material={candidate} compact />
               ))}
             </div>
-          ) : <p>No related materials were identified in the curated subset.</p>}
+          ) : null}
+          {!relatedMaterialsLoading && related.length === 0 ? <p>No related materials were identified in the curated subset.</p> : null}
         </div>
       </section>
 

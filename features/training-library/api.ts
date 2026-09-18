@@ -1,5 +1,8 @@
-import { gatewayFetch } from "@/lib/gateway/client";
-import type { CatalogMaterial, GatewayEnvelope } from "@/lib/gateway/types";
+import { gatewayFetch, GatewayRequestError } from "@/lib/gateway/client";
+import type { CatalogMaterial, GatewayMaterial, GatewayMaterialPage } from "@/lib/gateway/types";
+
+const MATERIALS_ENDPOINT = "/api/v1/materials";
+const MATERIALS_PAGE_SIZE = 100;
 
 export const fallbackMaterials: CatalogMaterial[] = [
   {
@@ -84,24 +87,70 @@ export type MaterialListFilters = {
   date?: string;
 };
 
+function namedValues(items: { name: string }[] | undefined) {
+  return Array.isArray(items) ? items.map((item) => item.name) : [];
+}
+
+function normalizeMaterial(material: GatewayMaterial): CatalogMaterial {
+  return {
+    id: material.id,
+    title: material.title ?? "Untitled material",
+    description: material.description,
+    summary: material.description,
+    topics: namedValues(material.topics),
+    tools: namedValues(material.tools),
+    systems: namedValues(material.systems),
+    instructors: namedValues(material.instructors),
+    resources: Array.isArray(material.resources) ? material.resources : [],
+  };
+}
+
+function queryForFilters(filters: MaterialListFilters, page: number) {
+  const params = new URLSearchParams();
+  const queryMap: Record<string, string | undefined> = {
+    search: filters.query,
+    topic: filters.topic,
+    tool: filters.tool,
+    system: filters.system,
+    eventSeries: filters.program,
+    resourceType: filters.resource,
+  };
+
+  Object.entries(queryMap).forEach(([key, value]) => {
+    if (value?.trim()) params.set(key, value.trim());
+  });
+
+  params.set("page", String(page));
+  params.set("pageSize", String(MATERIALS_PAGE_SIZE));
+
+  return params;
+}
+
 export async function getTrainingLibraryData(
   filters: MaterialListFilters = {},
 ): Promise<{ materials: CatalogMaterial[]; total: number }> {
-  const params = new URLSearchParams();
-
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value && value.trim()) {
-      params.set(key, value.trim());
-    }
-  });
-
   try {
-    const response = await gatewayFetch<GatewayEnvelope<CatalogMaterial[]>>(`/materials${params.toString() ? `?${params.toString()}` : ""}`);
-    const materials = response?.data ?? response?.items ?? [];
+    const firstPage = await gatewayFetch<GatewayMaterialPage>(
+      `${MATERIALS_ENDPOINT}?${queryForFilters(filters, 1)}`,
+      { cache: "no-store" },
+    );
+    const materials = Array.isArray(firstPage.items) ? firstPage.items.map(normalizeMaterial) : [];
+    const totalPages = Math.max(firstPage.totalPages, 1);
+
+    for (let page = 2; page <= totalPages; page += 1) {
+      const response = await gatewayFetch<GatewayMaterialPage>(
+        `${MATERIALS_ENDPOINT}?${queryForFilters(filters, page)}`,
+        { cache: "no-store" },
+      );
+
+      if (Array.isArray(response.items)) {
+        materials.push(...response.items.map(normalizeMaterial));
+      }
+    }
 
     return {
-      materials: Array.isArray(materials) ? materials : [],
-      total: typeof response?.total === "number" ? response.total : Array.isArray(materials) ? materials.length : 0,
+      materials,
+      total: firstPage.total,
     };
   } catch {
     return {
@@ -115,17 +164,17 @@ export async function getMaterialById(materialId: string): Promise<CatalogMateri
   const normalizedMaterialId = decodeURIComponent(materialId);
 
   try {
-    const response = await gatewayFetch<GatewayEnvelope<CatalogMaterial>>(
-      `/materials/${encodeURIComponent(normalizedMaterialId)}`,
-    );
-    const material = response?.data ?? response?.items;
-
-    if (material && !Array.isArray(material)) {
-      return material;
+    return await gatewayFetch<GatewayMaterial>(
+      `${MATERIALS_ENDPOINT}/${encodeURIComponent(normalizedMaterialId)}`,
+      { cache: "no-store" },
+    ).then(normalizeMaterial);
+  } catch (error) {
+    if (error instanceof GatewayRequestError && error.status === 404) {
+      return fallbackMaterials.find((material) => material.id === normalizedMaterialId) ?? null;
     }
-  } catch {
-    // Use the local subset while the Gateway is unavailable.
-  }
 
-  return fallbackMaterials.find((material) => material.id === normalizedMaterialId) ?? null;
+    const fallback = fallbackMaterials.find((material) => material.id === normalizedMaterialId);
+    if (fallback) return fallback;
+    throw error;
+  }
 }

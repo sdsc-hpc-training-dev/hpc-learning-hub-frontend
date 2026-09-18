@@ -6,6 +6,31 @@ export type GatewayEnvelope<T> = {
   error?: string;
 };
 
+export type NamedCatalogItem = {
+  id: string;
+  name: string;
+};
+
+export type GatewayMaterial = {
+  id: string;
+  title: string | null;
+  description: string | null;
+  eventEditions: unknown[];
+  topics: NamedCatalogItem[];
+  tools: NamedCatalogItem[];
+  systems: NamedCatalogItem[];
+  instructors: NamedCatalogItem[];
+  resources: CatalogResource[];
+};
+
+export type GatewayMaterialPage = {
+  items: GatewayMaterial[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
 export type CatalogResource = {
   id: string;
   title: string;
