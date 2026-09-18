@@ -12,31 +12,37 @@ import NotFound from "../not-found";
 import AccountsPage from "../account/page";
 import ConversationsPage from "../my-learning/conversations/page";
 import ProgramsPage from "../programs/page";
+import { fallbackMaterials } from "@/features/training-library/api";
+
+jest.mock("next/navigation", () => ({
+  usePathname: () => "/materials",
+  useRouter: () => ({ replace: jest.fn() }),
+}));
 
 describe("route components", () => {
-  it("renders the route pages", () => {
+  it("renders the route pages", async () => {
     const pages = [
-      EventsPage,
-      LearningPathPage,
-      LearningPathsPage,
-      MaintainerPage,
-      MaterialPage,
-      MaterialsPage,
-      MyLearningPage,
-      AccountsPage,
-      ConversationsPage,
-      ProgramsPage,
+      () => EventsPage(),
+      () => LearningPathPage(),
+      () => LearningPathsPage(),
+      () => MaintainerPage(),
+      () => MaterialPage({ params: Promise.resolve({ materialId: fallbackMaterials[0].id }) }),
+      () => MaterialsPage({}),
+      () => MyLearningPage(),
+      () => AccountsPage(),
+      () => ConversationsPage(),
+      () => ProgramsPage(),
     ];
 
-    pages.forEach((Page) => {
-      const { unmount } = render(<Page />);
+    for (const Page of pages) {
+      const { unmount } = render(await Page());
       expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
       unmount();
-    });
+    }
   });
 
-  it("renders the catalog page with the public library hero text", () => {
-    render(<MaterialsPage />);
+  it("renders the catalog page with the public library hero text", async () => {
+    render(await MaterialsPage({}));
     expect(screen.getByRole("heading", { name: /Search by what you want to learn or use\./i })).toBeInTheDocument();
     expect(screen.getByLabelText(/training filters/i)).toBeInTheDocument();
   });

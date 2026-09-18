@@ -24,12 +24,11 @@ export async function gatewayFetch<T>(path: string, init: RequestInit = {}): Pro
   }
 
   const url = `${baseUrl.replace(/\/$/, "")}${gatewayPath(path)}`;
+  const headers = new Headers(init.headers);
+  headers.set("Accept", "application/json");
   const response = await fetch(url, {
     ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init.headers ?? {}),
-    },
+    headers,
   });
 
   if (!response.ok) {

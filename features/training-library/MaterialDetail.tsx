@@ -45,6 +45,8 @@ export function rankRelatedMaterials(material: CatalogMaterial, candidates: Cata
     .map(({ candidate }) => candidate);
 }
 
+// This page intentionally keeps its detail sections together for a single material view.
+// eslint-disable-next-line complexity, max-lines-per-function
 export default function MaterialDetail({ material, relatedMaterials, relatedMaterialsLoading = false }: Readonly<MaterialDetailProps>) {
   const resources = material.resources.filter((resource) => resource.url);
   const tags = [...material.topics, ...material.tools, ...material.systems].slice(0, 8);

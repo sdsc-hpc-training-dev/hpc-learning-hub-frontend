@@ -2,12 +2,12 @@
 
 import { useMemo } from "react";
 
-export type FilterOption = {
+export interface FilterOption {
   label: string;
   value: string;
-};
+}
 
-export type TrainingLibraryFiltersProps = {
+export interface TrainingLibraryFiltersProps {
   options: {
     topics: FilterOption[];
     tools: FilterOption[];
@@ -26,78 +26,58 @@ export type TrainingLibraryFiltersProps = {
   };
   onChange: (key: string, value: string) => void;
   onReset: () => void;
-};
+}
+
+interface SelectControlProps {
+  id: string;
+  label: string;
+  emptyLabel: string;
+  value: string;
+  options: FilterOption[];
+  onChange: (value: string) => void;
+}
+
+function SelectControl({ id, label, emptyLabel, value, options, onChange }: Readonly<SelectControlProps>) {
+  const controlClassName = "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200";
+
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1 block text-sm font-semibold text-slate-700">{label}</label>
+      <select id={id} className={controlClassName} value={value} onChange={(event) => { onChange(event.target.value); }}>
+        <option value="">{emptyLabel}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 export default function TrainingLibraryFilters({
   options,
   values,
   onChange,
   onReset,
-}: TrainingLibraryFiltersProps) {
+}: Readonly<TrainingLibraryFiltersProps>) {
   const resourceOptions = useMemo(() => [{ label: "All resource types", value: ""}, ...options.resourceTypes], [options.resourceTypes]);
-
-  const controlClassName = "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200";
 
   return (
     <aside className="w-full max-w-sm rounded-xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
       <div className="space-y-4">
-        <div>
-          <label htmlFor="catalog-topic" className="mb-1 block text-sm font-semibold text-slate-700">Topic</label>
-          <select id="catalog-topic" className={controlClassName} value={values.topic} onChange={(event) => onChange("topic", event.target.value)}>
-            <option value="">All topics</option>
-            {options.topics.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="catalog-tool" className="mb-1 block text-sm font-semibold text-slate-700">Tool</label>
-          <select id="catalog-tool" className={controlClassName} value={values.tool} onChange={(event) => onChange("tool", event.target.value)}>
-            <option value="">All tools</option>
-            {options.tools.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="catalog-system" className="mb-1 block text-sm font-semibold text-slate-700">SDSC system</label>
-          <select id="catalog-system" className={controlClassName} value={values.system} onChange={(event) => onChange("system", event.target.value)}>
-            <option value="">All systems</option>
-            {options.systems.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="catalog-program" className="mb-1 block text-sm font-semibold text-slate-700">Program or series</label>
-          <select id="catalog-program" className={controlClassName} value={values.program} onChange={(event) => onChange("program", event.target.value)}>
-            <option value="">All programs</option>
-            {options.programs.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="catalog-resource" className="mb-1 block text-sm font-semibold text-slate-700">Available resource</label>
-          <select id="catalog-resource" className={controlClassName} value={values.resource} onChange={(event) => onChange("resource", event.target.value)}>
-            {resourceOptions.map((option) => (
-              <option key={option.value || "all-resource"} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </div>
+        <SelectControl id="catalog-topic" label="Topic" emptyLabel="All topics" value={values.topic} options={options.topics} onChange={(value) => { onChange("topic", value); }} />
+        <SelectControl id="catalog-tool" label="Tool" emptyLabel="All tools" value={values.tool} options={options.tools} onChange={(value) => { onChange("tool", value); }} />
+        <SelectControl id="catalog-system" label="SDSC system" emptyLabel="All systems" value={values.system} options={options.systems} onChange={(value) => { onChange("system", value); }} />
+        <SelectControl id="catalog-program" label="Program or series" emptyLabel="All programs" value={values.program} options={options.programs} onChange={(value) => { onChange("program", value); }} />
+        <SelectControl id="catalog-resource" label="Available resource" emptyLabel="All resource types" value={values.resource} options={resourceOptions.slice(1)} onChange={(value) => { onChange("resource", value); }} />
 
         <div>
           <label htmlFor="catalog-date" className="mb-1 block text-sm font-semibold text-slate-700">Date</label>
           <input
             id="catalog-date"
             type="date"
-            className={controlClassName}
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200"
             value={values.date}
-            onChange={(event) => onChange("date", event.target.value)}
+            onChange={(event) => { onChange("date", event.target.value); }}
           />
         </div>
 

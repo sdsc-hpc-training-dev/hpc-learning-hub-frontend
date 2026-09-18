@@ -1,17 +1,17 @@
-export type GatewayEnvelope<T> = {
+export interface GatewayEnvelope<T> {
   data?: T;
   items?: T;
   total?: number;
   message?: string;
   error?: string;
-};
+}
 
-export type NamedCatalogItem = {
+export interface NamedCatalogItem {
   id: string;
   name: string;
-};
+}
 
-export type GatewayMaterial = {
+export interface GatewayMaterial {
   id: string;
   title: string | null;
   description: string | null;
@@ -21,25 +21,25 @@ export type GatewayMaterial = {
   systems: NamedCatalogItem[];
   instructors: NamedCatalogItem[];
   resources: CatalogResource[];
-};
+}
 
-export type GatewayMaterialPage = {
+export interface GatewayMaterialPage {
   items: GatewayMaterial[];
   page: number;
   pageSize: number;
   total: number;
   totalPages: number;
-};
+}
 
-export type CatalogResource = {
+export interface CatalogResource {
   id: string;
   title: string;
   type: string;
   url?: string | null;
   verificationStatus?: string | null;
-};
+}
 
-export type CatalogMaterial = {
+export interface CatalogMaterial {
   id: string;
   title: string;
   description?: string | null;
@@ -53,4 +53,4 @@ export type CatalogMaterial = {
   series?: string | null;
   resources: CatalogResource[];
   primaryUrl?: string | null;
-};
+}

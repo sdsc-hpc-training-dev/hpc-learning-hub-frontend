@@ -77,7 +77,7 @@ export const fallbackMaterials: CatalogMaterial[] = [
   },
 ];
 
-export type MaterialListFilters = {
+export interface MaterialListFilters {
   topic?: string;
   tool?: string;
   system?: string;
@@ -85,7 +85,7 @@ export type MaterialListFilters = {
   resource?: string;
   query?: string;
   date?: string;
-};
+}
 
 function namedValues(items: { name: string }[] | undefined) {
   return Array.isArray(items) ? items.map((item) => item.name) : [];
