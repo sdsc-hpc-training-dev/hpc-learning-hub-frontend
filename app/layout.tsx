@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import Image from "next/image";
+import Link from "next/link";
 import localFont from "next/font/local";
 import Navbar from "@/components/Navbar";
 import "./globals.css";
@@ -44,10 +45,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
           <div>
             <h2>Explore</h2>
-            <a href="materials">Training Library</a>
-            <a href="learning-paths">Learning Paths</a>
-            <a href="events">Events & Recordings</a>
-            <a href="programs">Programs & Series</a>
+            <Link href="/materials">Training Library</Link>
+            <Link href="/learning-paths">Learning Paths</Link>
+            <Link href="/events">Events & Recordings</Link>
+            <Link href="/programs">Programs & Series</Link>
           </div>
           <div id="contribute">
             <h2>Contribute</h2>

@@ -1,3 +1,5 @@
+import "server-only";
+
 export class GatewayRequestError extends Error {
   status: number;
 
@@ -17,7 +19,10 @@ function gatewayPath(path: string) {
   return normalizedPath.startsWith("/api/v1/") ? normalizedPath : `/api/v1${normalizedPath}`;
 }
 
-export async function gatewayFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function gatewayFetch<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
   const baseUrl = gatewayBaseUrl();
   if (!baseUrl) {
     throw new GatewayRequestError("Gateway URL is not configured");
@@ -33,7 +38,10 @@ export async function gatewayFetch<T>(path: string, init: RequestInit = {}): Pro
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new GatewayRequestError(errorText || "Gateway request failed", response.status);
+    throw new GatewayRequestError(
+      errorText || "Gateway request failed",
+      response.status,
+    );
   }
 
   return (await response.json()) as T;
