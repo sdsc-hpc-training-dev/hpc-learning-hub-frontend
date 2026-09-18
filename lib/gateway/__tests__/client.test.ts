@@ -6,7 +6,7 @@ describe("gateway client", () => {
 	beforeEach(() => {
 		delete process.env.GATEWAY_URL;
 		delete process.env.NEXT_PUBLIC_GATEWAY_URL;
-		fetchMock = jest.fn<typeof fetch>();
+		fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
 		global.fetch = fetchMock;
 	});
 
