@@ -54,3 +54,24 @@ export interface CatalogMaterial {
   resources: CatalogResource[];
   primaryUrl?: string | null;
 }
+
+export interface LearningPathMaterial {
+  id: string;
+  title: string | null;
+  description: string | null;
+}
+
+export interface LearningPathItem {
+  position: number;
+  material: LearningPathMaterial;
+}
+
+export interface LearningPath {
+  id: string;
+  title: string;
+  description: string | null;
+  audience: string | null;
+  prerequisites: string | null;
+  estimatedScope: string | null;
+  items: LearningPathItem[];
+}
