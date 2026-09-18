@@ -1486,3 +1486,95 @@ main#main-content {
     flex-direction: column;
   }
 }
+
+/* ========== EVENTS ========== */
+
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.event-card {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  padding: 25px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.event-card__date {
+  margin-bottom: 14px;
+  color: var(--blue);
+  font-weight: 800;
+}
+
+.event-card__type {
+  display: inline-block;
+  margin-bottom: 15px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.event-card h3 {
+  margin-bottom: 10px;
+}
+
+.event-card h3 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.event-card h3 a:hover {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+.event-card p {
+  color: var(--muted);
+}
+
+.event-card__location {
+  margin-top: auto;
+  padding-top: 18px;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.event-card__link {
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.events-status {
+  padding: 30px;
+  border: 1px dashed #9eafbf;
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  text-align: center;
+}
+
+.events-status > :last-child {
+  margin-bottom: 0;
+}
+
+main#main-content > .events-status {
+  width: min(calc(100% - 40px), var(--content));
+  margin: 64px auto;
+}
+
+@media (max-width: 900px) {
+  .event-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .event-grid {
+    grid-template-columns: 1fr;
+  }
+}

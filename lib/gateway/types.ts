@@ -11,11 +11,21 @@ export interface NamedCatalogItem {
   name: string;
 }
 
+export interface GatewayEventEdition {
+  id: string;
+  title: string | null;
+  description: string | null;
+  startAt: string | null;
+  endAt: string | null;
+  format: string | null;
+  location: string | null;
+}
+
 export interface GatewayMaterial {
   id: string;
   title: string | null;
   description: string | null;
-  eventEditions: unknown[];
+  eventEditions: GatewayEventEdition[];
   topics: NamedCatalogItem[];
   tools: NamedCatalogItem[];
   systems: NamedCatalogItem[];
