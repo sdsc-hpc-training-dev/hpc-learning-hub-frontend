@@ -1,7 +1,7 @@
 import { gatewayFetch } from "@/lib/gateway/client";
 import type { CatalogMaterial, GatewayEnvelope } from "@/lib/gateway/types";
 
-const fallbackMaterials: CatalogMaterial[] = [
+export const fallbackMaterials: CatalogMaterial[] = [
   {
     id: "material:202403-batch-computing-part-1:37a37537278b",
     title: "Batch Computing: Getting Started with Batch Job Scheduling - Slurm Edition (COMPLECS)",
@@ -109,4 +109,23 @@ export async function getTrainingLibraryData(
       total: fallbackMaterials.length,
     };
   }
+}
+
+export async function getMaterialById(materialId: string): Promise<CatalogMaterial | null> {
+  const normalizedMaterialId = decodeURIComponent(materialId);
+
+  try {
+    const response = await gatewayFetch<GatewayEnvelope<CatalogMaterial>>(
+      `/materials/${encodeURIComponent(normalizedMaterialId)}`,
+    );
+    const material = response?.data ?? response?.items;
+
+    if (material && !Array.isArray(material)) {
+      return material;
+    }
+  } catch {
+    // Use the local subset while the Gateway is unavailable.
+  }
+
+  return fallbackMaterials.find((material) => material.id === normalizedMaterialId) ?? null;
 }

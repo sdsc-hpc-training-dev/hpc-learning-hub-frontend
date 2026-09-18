@@ -1,5 +1,5 @@
-import Link from "next/link";
 import TrainingLibraryFilters from "./TrainingLibraryFilters";
+import MaterialCard from "./MaterialCard";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 
 export type TrainingLibraryViewProps = {
@@ -28,21 +28,6 @@ export type TrainingLibraryViewProps = {
   };
   onChange: (key: string, value: string) => void;
 };
-
-function formatDate(value?: string | null) {
-  if (!value) return "Date not listed";
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Date not listed";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-}
 
 export default function TrainingLibraryView({
   materials,
@@ -118,38 +103,7 @@ export default function TrainingLibraryView({
               </div>
             ) : (
               <div className="catalog-results">
-                {materials.map((material) => {
-                  const resourceTypes = [...new Set(material.resources.map((resource) => resource.type))];
-                  const meta = [
-                    material.date ? formatDate(material.date) : null,
-                    material.series,
-                    material.systems[0],
-                    material.instructors.length ? `Instructor: ${material.instructors.join(", ")}` : null,
-                  ].filter(Boolean);
-
-                  return (
-                    <article key={material.id} className="material-card card--clickable" data-card-href={`/materials/${encodeURIComponent(material.id)}`} tabIndex={0}>
-                      <div className="material-card__body">
-                        <div className="material-card__meta">{meta.join(" | ") || "SDSC training material"}</div>
-                        <h3>
-                          <Link href={`/materials/${encodeURIComponent(material.id)}`}>{material.title}</Link>
-                        </h3>
-                        <p>{material.summary || material.description || "No summary available."}</p>
-                        <div className="tag-row" aria-label="Topics and tools">
-                          {[...(material.topics ?? []), ...(material.tools ?? [])].slice(0, 3).map((item) => (
-                            <span className="tag" key={`${material.id}-${item}`}>{item}</span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="material-card__footer">
-                        <span>{resourceTypes.length ? resourceTypes.join(" + ") : "Catalog entry"}</span>
-                        <Link className="text-link" href={`/materials/${encodeURIComponent(material.id)}`}>
-                          View material <span aria-hidden="true">→</span>
-                        </Link>
-                      </div>
-                    </article>
-                  );
-                })}
+                {materials.map((material) => <MaterialCard key={material.id} material={material} />)}
               </div>
             )}
           </div>

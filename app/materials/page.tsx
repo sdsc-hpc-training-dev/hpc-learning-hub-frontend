@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import TrainingLibraryFilters from "@/features/training-library/TrainingLibraryFilters";
 import TrainingLibraryView from "@/features/training-library/TrainingLibraryView";
 import { getTrainingLibraryData, type MaterialListFilters } from "@/features/training-library/api";
 import type { CatalogMaterial } from "@/lib/gateway/types";
