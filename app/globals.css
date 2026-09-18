@@ -1244,12 +1244,7 @@ main#main-content {
 
 .page-hero {
   color: white;
-  background: linear-gradient(
-    125deg,
-    var(--navy-deep),
-    var(--navy) 62%,
-    var(--blue-dark)
-  );
+  background: var(--navy);
 }
 
 .page-hero__shell {
