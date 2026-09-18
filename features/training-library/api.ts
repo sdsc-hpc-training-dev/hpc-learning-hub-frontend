@@ -4,7 +4,7 @@ import type { CatalogMaterial, GatewayEnvelope } from "@/lib/gateway/types";
 export const fallbackMaterials: CatalogMaterial[] = [
   {
     id: "material:202403-batch-computing-part-1:37a37537278b",
-    title: "Batch Computing: Getting Started with Batch Job Scheduling - Slurm Edition (COMPLECS)",
+    title: "Fallback Material 1",
     description:
       "High-performance computing systems are specialized resources in use and shared by many researchers across all domains of science, engineering, and beyond.",
     summary: "High-performance computing systems are specialized resources in use and shared by many researchers across all domains of science, engineering, and beyond.",
@@ -23,7 +23,7 @@ export const fallbackMaterials: CatalogMaterial[] = [
   },
   {
     id: "material:202302-sdscwebinar-batch-job-scheduling-slurm-ed:4265884af4d7",
-    title: "Getting Started with Batch Job Scheduling: Slurm Edition",
+    title: "Fallback Material 2",
     description: "Most high-performance computing systems are specialized resources in high demand and shared simultaneously by many researchers.",
     summary: "Most high-performance computing systems are specialized resources in high demand and shared simultaneously by many researchers.",
     date: "2023-02-16T19:00:00+00:00",
@@ -41,7 +41,7 @@ export const fallbackMaterials: CatalogMaterial[] = [
   },
   {
     id: "material:202310-sdscwebinar-gpu-computing-and-programming:d00d538c38d0",
-    title: "GPU Computing and Programming on Expanse",
+    title: "Fallback Material 3",
     description: "This webinar provides a brief introduction to massively parallel computing with graphics processing units on the SDSC Expanse supercomputer.",
     summary: "This webinar provides a brief introduction to massively parallel computing with graphics processing units on the SDSC Expanse supercomputer.",
     date: "2023-10-26T18:00:00+00:00",
@@ -56,7 +56,7 @@ export const fallbackMaterials: CatalogMaterial[] = [
   },
   {
     id: "material:202204-matlab:ad3ff1f2cb98",
-    title: "Parallel and GPU Computing with MATLAB",
+    title: "Fallback Material 4",
     description: "Learn how to solve and accelerate computationally and data-intensive problems that are becoming common in machine learning and deep learning.",
     summary: "Learn how to solve and accelerate computationally and data-intensive problems that are becoming common in machine learning and deep learning.",
     date: "2022-04-27T20:00:00+00:00",
