@@ -496,15 +496,6 @@ h3 {
   text-decoration: underline;
 }
 
-.card--clickable {
-  cursor: pointer;
-}
-
-.card--clickable:hover {
-  border-color: var(--blue);
-  box-shadow: var(--shadow);
-}
-
 @media (max-width: 900px) {
   .catalog-layout {
     grid-template-columns: 1fr;
@@ -1484,5 +1475,95 @@ main#main-content {
   .learning-path-card__footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+/* ========== PROGRAMS & SERIES ========== */
+
+.program-grid,
+.program-material-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.program-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.program-material-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.program-card {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.program-card--selected {
+  border-color: var(--blue);
+  box-shadow: var(--shadow);
+}
+
+.program-card h3 {
+  margin-bottom: 12px;
+  font-size: 1.65rem;
+}
+
+.program-card h3 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.program-card h3 a:hover {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+.program-card p {
+  color: var(--muted);
+}
+
+.program-card__link {
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.programs-status {
+  padding: 30px;
+  border: 1px dashed #9eafbf;
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+}
+
+.programs-status > :last-child {
+  margin-bottom: 0;
+}
+
+.programs-status--page {
+  width: min(calc(100% - 40px), var(--content));
+  margin: 64px auto;
+}
+
+@media (max-width: 900px) {
+  .program-material-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .program-grid,
+  .program-material-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .program-card {
+    min-height: 0;
+    padding: 24px;
   }
 }
