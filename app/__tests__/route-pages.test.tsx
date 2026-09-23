@@ -15,8 +15,10 @@ import NotFound from "../not-found";
 import AccountsPage from "../account/page";
 import ConversationsPage from "../my-learning/conversations/page";
 import ProgramsPage from "../programs/page";
+import ProgramsLoading from "../programs/loading";
 import { fallbackMaterials } from "@/features/training-library/api";
 import { getEventsData } from "@/features/events/api";
+import { getProgramsData } from "@/features/programs/api";
 import {
   getLearningPath,
   getLearningPaths,
@@ -27,6 +29,13 @@ jest.mock("@/features/events/api", () => ({
   getEventsData: jest.fn().mockResolvedValue({
     upcomingEvents: [],
     recordings: [],
+  }),
+}));
+
+jest.mock("@/features/programs/api", () => ({
+  getProgramsData: jest.fn().mockResolvedValue({
+    programs: [],
+    selectedProgram: null,
   }),
 }));
 
@@ -64,6 +73,7 @@ const samplePath = {
 const getLearningPathsMock = jest.mocked(getLearningPaths);
 const getLearningPathMock = jest.mocked(getLearningPath);
 const getEventsDataMock = jest.mocked(getEventsData);
+const getProgramsDataMock = jest.mocked(getProgramsData);
 const notFoundMock = jest.mocked(notFound);
 
 describe("static route components", () => {
@@ -124,6 +134,37 @@ describe("events route components", () => {
     getEventsDataMock.mockRejectedValueOnce(error);
 
     await expect(EventsPage()).rejects.toThrow(error);
+  });
+
+  it("renders the programs loading state", () => {
+    render(<ProgramsLoading />);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Loading training collections…",
+    );
+  });
+});
+
+describe("programs route components", () => {
+  beforeEach(() => {
+    getProgramsDataMock.mockResolvedValue({
+      programs: [],
+      selectedProgram: null,
+    });
+  });
+
+  it("passes the selected program query to the gateway adapter", async () => {
+    await ProgramsPage({
+      searchParams: Promise.resolve({ program: ["series-1", "series-2"] }),
+    });
+
+    expect(getProgramsDataMock).toHaveBeenCalledWith("series-1");
+  });
+
+  it("propagates gateway failures", async () => {
+    const error = new Error("program request failed");
+    getProgramsDataMock.mockRejectedValueOnce(error);
+
+    await expect(ProgramsPage()).rejects.toThrow(error);
   });
 });
 

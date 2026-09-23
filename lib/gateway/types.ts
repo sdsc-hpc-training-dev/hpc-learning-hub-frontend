@@ -21,6 +21,11 @@ export interface GatewayEventEdition {
   location: string | null;
 }
 
+export interface GatewayEventSeries {
+  id: string;
+  name: string;
+}
+
 export interface GatewayMaterial {
   id: string;
   title: string | null;

@@ -29,11 +29,13 @@ export default function MaterialCard({ material, compact = false }: Readonly<Mat
     material.instructors.length ? `Instructor: ${material.instructors.join(", ")}` : null,
   ].filter(Boolean);
   const href = `/materials/${encodeURIComponent(material.id)}`;
-  const cardClassName = compact ? "material-card card--clickable material-card--compact" : "material-card card--clickable";
+  const cardClassName = compact
+    ? "material-card material-card--compact"
+    : "material-card";
   const summary = truncate(material.summary ?? material.description ?? "No summary available.", compact ? 112 : 180);
 
   return (
-    <article className={cardClassName} data-card-href={href} tabIndex={0}>
+    <article className={cardClassName}>
       <div className="material-card__body">
         <div className="material-card__meta">{meta.join(" | ") || "SDSC training material"}</div>
         <h3>
