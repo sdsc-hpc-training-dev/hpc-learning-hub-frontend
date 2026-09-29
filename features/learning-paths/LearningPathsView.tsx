@@ -111,11 +111,11 @@ export function LearningPathsView({
   );
 }
 
-function PathStep({ item }: Readonly<{ item: LearningPathItem }>) {
+function PathStep({ item, stepNumber }: Readonly<{ item: LearningPathItem; stepNumber: number }>) {
   return (
     <li className="learning-path-step">
       <span className="learning-path-step__number" aria-hidden="true">
-        {item.position}
+        {stepNumber}
       </span>
       <div>
         <h2>
@@ -186,10 +186,11 @@ export function LearningPathDetail({
             </div>
             {orderedItems.length > 0 ? (
               <ol className="learning-path-steps">
-                {orderedItems.map((item) => (
+                {orderedItems.map((item, index) => (
                   <PathStep
                     key={`${String(item.position)}-${item.material.id}`}
                     item={item}
+                    stepNumber={index + 1}
                   />
                 ))}
               </ol>
