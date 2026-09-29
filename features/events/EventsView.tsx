@@ -33,7 +33,7 @@ function EmptyEvents({ children }: Readonly<{ children: string }>) {
   );
 }
 
-function UpcomingEventCard({ event }: Readonly<{ event: GatewayEventEdition }>) {
+export function UpcomingEventCard({ event }: Readonly<{ event: GatewayEventEdition }>) {
   return (
     <article className="event-card">
       <div className="event-card__date">{formatDate(event.startAt)}</div>

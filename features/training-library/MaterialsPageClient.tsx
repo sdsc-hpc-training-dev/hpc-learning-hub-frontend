@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import TrainingLibraryView from "./TrainingLibraryView";
 import type { CatalogMaterial } from "@/lib/gateway/types";
+import type { MaterialListFilters } from "./api";
 
 const emptyFilterValues = {
   query: "",
@@ -15,13 +16,29 @@ const emptyFilterValues = {
   date: "",
 };
 
+function initialFilterState(filters: MaterialListFilters = {}) {
+  return {
+    ...emptyFilterValues,
+    ...filters,
+    query: filters.query ?? "",
+    topic: filters.topic ?? "",
+    tool: filters.tool ?? "",
+    system: filters.system ?? "",
+    program: filters.program ?? "",
+    resource: filters.resource ?? "",
+    date: filters.date ?? "",
+  };
+}
+
 function normalizeMaterials(materials: CatalogMaterial[]) {
   return materials.map((material) => ({
     ...material,
     topics: Array.isArray(material.topics) ? material.topics : [],
     tools: Array.isArray(material.tools) ? material.tools : [],
     systems: Array.isArray(material.systems) ? material.systems : [],
-    instructors: Array.isArray(material.instructors) ? material.instructors : [],
+    instructors: Array.isArray(material.instructors)
+      ? material.instructors
+      : [],
     resources: Array.isArray(material.resources) ? material.resources : [],
   }));
 }
@@ -38,17 +55,24 @@ function matchesSearch(material: CatalogMaterial, query: string) {
     ...material.systems,
     ...material.instructors,
     ...material.resources.map((resource) => resource.title),
-  ].join(" ").toLowerCase();
+  ]
+    .join(" ")
+    .toLowerCase();
 
   return !query || haystack.includes(query);
 }
 
 function matchesDate(material: CatalogMaterial, date: string) {
-  const materialDate = material.date ? new Date(material.date).toISOString().slice(0, 10) : "";
+  const materialDate = material.date
+    ? new Date(material.date).toISOString().slice(0, 10)
+    : "";
   return !date || materialDate === date;
 }
 
-function matchesFilters(material: CatalogMaterial, filters: typeof emptyFilterValues) {
+function matchesFilters(
+  material: CatalogMaterial,
+  filters: typeof emptyFilterValues,
+) {
   const query = filters.query.trim().toLowerCase();
 
   return [
@@ -57,12 +81,17 @@ function matchesFilters(material: CatalogMaterial, filters: typeof emptyFilterVa
     !filters.tool || material.tools.includes(filters.tool),
     !filters.system || material.systems.includes(filters.system),
     !filters.program || (material.program ?? "") === filters.program,
-    !filters.resource || material.resources.some((resource) => resource.type === filters.resource),
+    !filters.resource ||
+      material.resources.some((resource) => resource.type === filters.resource),
     matchesDate(material, filters.date),
   ].every(Boolean);
 }
 
-function updateTopicQuery(pathname: string, value: string, router: ReturnType<typeof useRouter>) {
+function updateTopicQuery(
+  pathname: string,
+  value: string,
+  router: ReturnType<typeof useRouter>,
+) {
   const params = new URLSearchParams(window.location.search);
   if (value.trim()) {
     params.set("topic", value.trim());
@@ -74,26 +103,49 @@ function updateTopicQuery(pathname: string, value: string, router: ReturnType<ty
   router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
 }
 
+function filterOptions(materials: CatalogMaterial[]) {
+  const unique = <T extends string>(items: T[]) =>
+    Array.from(new Set(items.filter(Boolean))).sort((left, right) =>
+      left.localeCompare(right),
+    );
+
+  return {
+    topics: unique(materials.flatMap((material) => material.topics)).map(
+      (value) => ({ label: value, value }),
+    ),
+    tools: unique(materials.flatMap((material) => material.tools)).map(
+      (value) => ({ label: value, value }),
+    ),
+    systems: unique(materials.flatMap((material) => material.systems)).map(
+      (value) => ({ label: value, value }),
+    ),
+    programs: unique(
+      materials.map((material) => material.program ?? "").filter(Boolean),
+    ).map((value) => ({ label: value, value })),
+    resourceTypes: unique(
+      materials.flatMap((material) =>
+        material.resources.map((resource) => resource.type),
+      ),
+    ).map((value) => ({ label: value, value })),
+  };
+}
+
 export default function MaterialsPageClient({
   materials: initialMaterials,
-  initialQuery = "",
-}: Readonly<{ materials: CatalogMaterial[]; initialQuery?: string }>) {
+  initialFilters = {},
+}: Readonly<{
+  materials: CatalogMaterial[];
+  initialFilters?: MaterialListFilters;
+}>) {
   const pathname = usePathname();
   const router = useRouter();
-  const materials = useMemo(() => normalizeMaterials(initialMaterials), [initialMaterials]);
-  const [filters, setFilters] = useState({ ...emptyFilterValues, query: initialQuery });
+  const materials = useMemo(
+    () => normalizeMaterials(initialMaterials),
+    [initialMaterials],
+  );
+  const [filters, setFilters] = useState(initialFilterState(initialFilters));
 
-  const options = useMemo(() => {
-    const unique = <T extends string>(items: T[]) => Array.from(new Set(items.filter(Boolean))).sort((left, right) => left.localeCompare(right));
-
-    return {
-      topics: unique(materials.flatMap((material) => material.topics)).map((value) => ({ label: value, value })),
-      tools: unique(materials.flatMap((material) => material.tools)).map((value) => ({ label: value, value })),
-      systems: unique(materials.flatMap((material) => material.systems)).map((value) => ({ label: value, value })),
-      programs: unique(materials.map((material) => material.program ?? "").filter(Boolean)).map((value) => ({ label: value, value })),
-      resourceTypes: unique(materials.flatMap((material) => material.resources.map((resource) => resource.type))).map((value) => ({ label: value, value })),
-    };
-  }, [materials]);
+  const options = useMemo(() => filterOptions(materials), [materials]);
 
   const filteredMaterials = useMemo(() => {
     return materials.filter((material) => matchesFilters(material, filters));

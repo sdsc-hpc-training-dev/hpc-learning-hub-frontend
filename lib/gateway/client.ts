@@ -46,3 +46,4 @@ export async function gatewayFetch<T>(
 
   return (await response.json()) as T;
 }
+
