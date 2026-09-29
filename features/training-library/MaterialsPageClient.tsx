@@ -82,7 +82,17 @@ export default function MaterialsPageClient({
   const pathname = usePathname();
   const router = useRouter();
   const materials = useMemo(() => normalizeMaterials(initialMaterials), [initialMaterials]);
-  const [filters, setFilters] = useState({ ...emptyFilterValues, ...initialFilters });
+  const [filters, setFilters] = useState({
+    ...emptyFilterValues,
+    ...initialFilters,
+    query: initialFilters.query ?? "",
+    topic: initialFilters.topic ?? "",
+    tool: initialFilters.tool ?? "",
+    system: initialFilters.system ?? "",
+    program: initialFilters.program ?? "",
+    resource: initialFilters.resource ?? "",
+    date: initialFilters.date ?? "",
+  });
 
   const options = useMemo(() => {
     const unique = <T extends string>(items: T[]) => Array.from(new Set(items.filter(Boolean))).sort((left, right) => left.localeCompare(right));
