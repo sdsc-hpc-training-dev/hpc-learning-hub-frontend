@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import TrainingLibraryView from "./TrainingLibraryView";
 import type { CatalogMaterial } from "@/lib/gateway/types";
+import type { MaterialListFilters } from "./api";
 
 const emptyFilterValues = {
   query: "",
@@ -76,12 +77,12 @@ function updateTopicQuery(pathname: string, value: string, router: ReturnType<ty
 
 export default function MaterialsPageClient({
   materials: initialMaterials,
-  initialQuery = "",
-}: Readonly<{ materials: CatalogMaterial[]; initialQuery?: string }>) {
+  initialFilters = {},
+}: Readonly<{ materials: CatalogMaterial[]; initialFilters?: MaterialListFilters }>) {
   const pathname = usePathname();
   const router = useRouter();
   const materials = useMemo(() => normalizeMaterials(initialMaterials), [initialMaterials]);
-  const [filters, setFilters] = useState({ ...emptyFilterValues, query: initialQuery });
+  const [filters, setFilters] = useState({ ...emptyFilterValues, ...initialFilters });
 
   const options = useMemo(() => {
     const unique = <T extends string>(items: T[]) => Array.from(new Set(items.filter(Boolean))).sort((left, right) => left.localeCompare(right));

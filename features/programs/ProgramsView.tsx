@@ -12,7 +12,7 @@ function programHref(programId: string): string {
   return `/programs?program=${encodeURIComponent(programId)}#program-detail`;
 }
 
-function ProgramCard({
+export function ProgramCard({
   program,
   selected,
 }: Readonly<{ program: GatewayEventSeries; selected: boolean }>) {
