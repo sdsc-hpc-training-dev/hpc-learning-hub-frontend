@@ -5,7 +5,7 @@ on:
     branches:
       - master
       - dev
-      - 'release/**'
+      - "release/**"
   workflow_dispatch:
 
 concurrency:
@@ -23,8 +23,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24.13.0'
-          cache: 'npm'
+          node-version: "24.13.0"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci

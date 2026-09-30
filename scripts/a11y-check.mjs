@@ -9,7 +9,14 @@ import AxeBuilder from "@axe-core/playwright";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const reportDir = path.join(repoRoot, "a11y-artifacts");
-const routes = ["/", "/events", "/materials", "/learning-paths", "/my-learning", "/maintainer"];
+const routes = [
+  "/",
+  "/events",
+  "/materials",
+  "/learning-paths",
+  "/my-learning",
+  "/maintainer",
+];
 
 async function getFreePort() {
   return new Promise((resolve, reject) => {
@@ -26,7 +33,10 @@ async function getFreePort() {
 
 async function isServerReachable(url) {
   try {
-    const response = await fetch(url, { method: "GET", signal: AbortSignal.timeout(5000) });
+    const response = await fetch(url, {
+      method: "GET",
+      signal: AbortSignal.timeout(5000),
+    });
     return response.ok || response.status < 500;
   } catch {
     return false;
@@ -84,7 +94,9 @@ async function main() {
 
   const preferredPort = 3000;
   const existingBaseUrl = `http://127.0.0.1:${preferredPort}`;
-  const baseUrl = (await isServerReachable(existingBaseUrl)) ? existingBaseUrl : `http://127.0.0.1:${await getFreePort()}`;
+  const baseUrl = (await isServerReachable(existingBaseUrl))
+    ? existingBaseUrl
+    : `http://127.0.0.1:${await getFreePort()}`;
 
   const summary = {
     generatedAt: new Date().toISOString(),
@@ -99,15 +111,27 @@ async function main() {
 
   try {
     if (!(await isServerReachable(existingBaseUrl))) {
-      serverProcess = spawn("npm", ["run", "dev", "--", "--hostname", "127.0.0.1", "--port", String(baseUrl.split(":").pop())], {
-        cwd: repoRoot,
-        env: {
-          ...process.env,
-          NEXT_TELEMETRY_DISABLED: "1",
+      serverProcess = spawn(
+        "npm",
+        [
+          "run",
+          "dev",
+          "--",
+          "--hostname",
+          "127.0.0.1",
+          "--port",
+          String(baseUrl.split(":").pop()),
+        ],
+        {
+          cwd: repoRoot,
+          env: {
+            ...process.env,
+            NEXT_TELEMETRY_DISABLED: "1",
+          },
+          stdio: ["ignore", "pipe", "pipe"],
+          detached: process.platform !== "win32",
         },
-        stdio: ["ignore", "pipe", "pipe"],
-        detached: process.platform !== "win32",
-      });
+      );
 
       await waitForServer(serverProcess);
     }
@@ -118,10 +142,14 @@ async function main() {
 
     for (const route of routes) {
       const fullUrl = `${baseUrl}${route}`;
-      const routeName = route === "/" ? "index" : route.replace(/^\//, "").replace(/\//g, "-");
+      const routeName =
+        route === "/" ? "index" : route.replace(/^\//, "").replace(/\//g, "-");
       const resultPath = path.join(reportDir, `${routeName}.json`);
 
-      await page.goto(fullUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.goto(fullUrl, {
+        waitUntil: "domcontentloaded",
+        timeout: 60000,
+      });
       await page.waitForLoadState("load", { timeout: 60000 });
       const results = await new AxeBuilder({ page }).analyze();
       const violations = results.violations.map((violation) => ({
@@ -159,16 +187,27 @@ async function main() {
     console.log("\nSummary:");
     for (const route of summary.routes) {
       const count = route.violationCount;
-      console.log(`- ${route.route}: ${count} ${count === 1 ? "issue" : "issues"}`);
+      console.log(
+        `- ${route.route}: ${count} ${count === 1 ? "issue" : "issues"}`,
+      );
     }
-    console.log(`\nTotal: ${summary.totals.violations} accessibility violations across ${summary.totals.pagesScanned} pages`);
-    console.log(`Critical: ${severityCounts.critical} | Serious: ${severityCounts.serious} | Moderate: ${severityCounts.moderate} | Minor: ${severityCounts.minor}`);
+    console.log(
+      `\nTotal: ${summary.totals.violations} accessibility violations across ${summary.totals.pagesScanned} pages`,
+    );
+    console.log(
+      `Critical: ${severityCounts.critical} | Serious: ${severityCounts.serious} | Moderate: ${severityCounts.moderate} | Minor: ${severityCounts.minor}`,
+    );
 
     await browser.close();
-    await fs.writeFile(path.join(reportDir, "summary.json"), JSON.stringify(summary, null, 2));
+    await fs.writeFile(
+      path.join(reportDir, "summary.json"),
+      JSON.stringify(summary, null, 2),
+    );
 
     if (summary.totals.violations > 0) {
-      console.error(`\nAccessibility check failed: ${summary.totals.violations} violation(s) found across ${summary.totals.pagesScanned} page(s).`);
+      console.error(
+        `\nAccessibility check failed: ${summary.totals.violations} violation(s) found across ${summary.totals.pagesScanned} page(s).`,
+      );
       process.exit(1);
     }
 
