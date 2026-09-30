@@ -64,9 +64,7 @@ function EmptyPathMaterialsStatus() {
   );
 }
 
-export function LearningPathsView({
-  paths,
-}: Readonly<LearningPathsViewProps>) {
+export function LearningPathsView({ paths }: Readonly<LearningPathsViewProps>) {
   return (
     <div className="learning-paths-page">
       <section
@@ -111,7 +109,10 @@ export function LearningPathsView({
   );
 }
 
-function PathStep({ item, stepNumber }: Readonly<{ item: LearningPathItem; stepNumber: number }>) {
+function PathStep({
+  item,
+  stepNumber,
+}: Readonly<{ item: LearningPathItem; stepNumber: number }>) {
   return (
     <li className="learning-path-step">
       <span className="learning-path-step__number" aria-hidden="true">

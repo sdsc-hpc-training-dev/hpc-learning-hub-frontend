@@ -8,6 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "format": "prettier --write .",
+    "lint:check": "eslint .",
     "test:coverage": "jest --coverage --passWithNoTests",
     "a11y:check": "node scripts/a11y-check.mjs"
   },
