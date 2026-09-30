@@ -79,6 +79,18 @@ async function getAllMaterials(): Promise<GatewayMaterial[]> {
   }
 }
 
+function shuffleValues<T>(items: T[]): T[] {
+  const shuffled = [...items];
+
+  while (shuffled.length > 1) {
+    const randomIndex = randomInt(shuffled.length);
+    const [selected] = shuffled.splice(randomIndex, 1);
+    shuffled.unshift(selected);
+  }
+
+  return shuffled;
+}
+
 function sampleFilters(
   materials: GatewayMaterial[],
   count: number,
@@ -90,16 +102,7 @@ function sampleFilters(
     addFilterValues(options, material.systems, "system");
   }
 
-  const shuffled = [...options.values()];
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const randomIndex = randomInt(index + 1);
-    // Both indexes are bounded by the array length and crypto.randomInt.
-    // eslint-disable-next-line security/detect-object-injection
-    [shuffled[index], shuffled[randomIndex]] = [
-      shuffled[randomIndex],
-      shuffled[index],
-    ];
-  }
+  const shuffled = shuffleValues([...options.values()]);
   return shuffled.slice(0, count);
 }
 
