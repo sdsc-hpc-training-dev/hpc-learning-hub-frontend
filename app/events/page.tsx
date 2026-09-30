@@ -4,7 +4,8 @@ import { getEventsData } from "@/features/events/api";
 
 export const metadata: Metadata = {
   title: "Events | HPC Learning Hub",
-  description: "Upcoming SDSC events and recordings from past training sessions.",
+  description:
+    "Upcoming SDSC events and recordings from past training sessions.",
 };
 
 export const dynamic = "force-dynamic";

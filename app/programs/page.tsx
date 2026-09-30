@@ -4,7 +4,8 @@ import { getProgramsData } from "@/features/programs/api";
 
 export const metadata: Metadata = {
   title: "Programs & Series | HPC Learning Hub",
-  description: "Browse SDSC training programs, recurring series, and associated materials.",
+  description:
+    "Browse SDSC training programs, recurring series, and associated materials.",
 };
 
 export const dynamic = "force-dynamic";

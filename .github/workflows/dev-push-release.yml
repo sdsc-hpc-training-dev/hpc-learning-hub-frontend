@@ -177,7 +177,21 @@ jobs:
   create-release-branch:
     name: Create Release Branch
     runs-on: ubuntu-latest
-    needs: [install, format, lint, typecheck, build, test, duplication, unused, audit, secrets, semgrep, container-scan]
+    needs:
+      [
+        install,
+        format,
+        lint,
+        typecheck,
+        build,
+        test,
+        duplication,
+        unused,
+        audit,
+        secrets,
+        semgrep,
+        container-scan,
+      ]
     steps:
       - uses: actions/checkout@v4
         with:

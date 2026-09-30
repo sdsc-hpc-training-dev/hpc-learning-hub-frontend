@@ -18,14 +18,18 @@ export function ProgramCard({
 }: Readonly<{ program: GatewayEventSeries; selected: boolean }>) {
   const href = programHref(program.id);
   return (
-    <article className={`program-card${selected ? " program-card--selected" : ""}`}>
+    <article
+      className={`program-card${selected ? " program-card--selected" : ""}`}
+    >
       <span className="eyebrow">Training series</span>
       <h3>
         <Link href={href} aria-current={selected ? "page" : undefined}>
           {program.name}
         </Link>
       </h3>
-      <p>Explore representative training materials associated with this series.</p>
+      <p>
+        Explore representative training materials associated with this series.
+      </p>
       <Link className="text-link program-card__link" href={href}>
         View collection <span aria-hidden="true">→</span>
       </Link>
@@ -66,7 +70,9 @@ function ProgramOverview({
   );
 }
 
-function ProgramDetail({ program }: Readonly<{ program: SelectedProgram | null }>) {
+function ProgramDetail({
+  program,
+}: Readonly<{ program: SelectedProgram | null }>) {
   return (
     <section
       className="section section--soft"
@@ -82,8 +88,8 @@ function ProgramDetail({ program }: Readonly<{ program: SelectedProgram | null }
                 <h2 id="program-detail-heading">{program.name}</h2>
                 <p>
                   Showing {program.materials.length} representative{" "}
-                  {program.materials.length === 1 ? "material" : "materials"} from{" "}
-                  {program.total} associated with this series.
+                  {program.materials.length === 1 ? "material" : "materials"}{" "}
+                  from {program.total} associated with this series.
                 </p>
               </div>
               <Link className="text-link" href="/materials">
@@ -98,7 +104,9 @@ function ProgramDetail({ program }: Readonly<{ program: SelectedProgram | null }
               </div>
             ) : (
               <div className="programs-status" role="status">
-                <p>No training materials are currently connected to this series.</p>
+                <p>
+                  No training materials are currently connected to this series.
+                </p>
               </div>
             )}
           </>
@@ -108,7 +116,10 @@ function ProgramDetail({ program }: Readonly<{ program: SelectedProgram | null }
             <h2 id="program-detail-heading">
               Collections add context to individual materials.
             </h2>
-            <p>Select a program above to see training associated with that series.</p>
+            <p>
+              Select a program above to see training associated with that
+              series.
+            </p>
           </div>
         )}
       </div>
@@ -129,8 +140,8 @@ export default function ProgramsView({
             See how individual sessions fit into a larger program.
           </h1>
           <p>
-            Explore our various training programs and recurring series to find the
-            right fit for your learning goals.
+            Explore our various training programs and recurring series to find
+            the right fit for your learning goals.
           </p>
         </div>
       </section>

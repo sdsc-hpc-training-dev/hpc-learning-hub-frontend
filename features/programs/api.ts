@@ -79,8 +79,9 @@ function representativeMaterials(
 }
 
 function distinctTitleCount(materials: GatewayMaterial[]): number {
-  return new Set(materials.map((material) => materialTitle(material).toLowerCase()))
-    .size;
+  return new Set(
+    materials.map((material) => materialTitle(material).toLowerCase()),
+  ).size;
 }
 
 async function getRepresentativeMaterials(

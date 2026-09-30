@@ -101,7 +101,11 @@ describe("static route components", () => {
 
   it("renders the catalog page with the public library hero text", async () => {
     render(await MaterialsPage({}));
-    expect(screen.getByRole("heading", { name: /Search by what you want to learn or use\./i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: /Search by what you want to learn or use\./i,
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText(/training filters/i)).toBeInTheDocument();
   });
 

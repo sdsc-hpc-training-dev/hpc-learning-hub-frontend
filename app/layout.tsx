@@ -28,6 +28,94 @@ export const metadata: Metadata = {
   description: "",
 };
 
+function FooterBrand() {
+  return (
+    <div className="footer-brand">
+      <Image
+        src="/SDSC-logo.svg"
+        alt="San Diego Supercomputer Center"
+        width={170}
+        height={48}
+        priority
+      />
+      <p>
+        Public training, practical learning paths, and grounded discovery across
+        SDSC resources.
+      </p>
+    </div>
+  );
+}
+
+function FooterColumn({
+  heading,
+  links,
+  content,
+}: Readonly<{
+  heading: string;
+  links?: { href: string; label: string }[];
+  content?: React.ReactNode;
+}>) {
+  return (
+    <div>
+      <h2>{heading}</h2>
+      {links
+        ? links.map((link) => (
+            <Link key={link.href} href={link.href}>
+              {link.label}
+            </Link>
+          ))
+        : content}
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="site-footer">
+      <div className="footer-shell">
+        <FooterBrand />
+        <FooterColumn
+          heading="Explore"
+          links={[
+            { href: "/materials", label: "Training Library" },
+            { href: "/learning-paths", label: "Learning Paths" },
+            { href: "/events", label: "Events & Recordings" },
+            { href: "/programs", label: "Programs & Series" },
+          ]}
+        />
+        <FooterColumn
+          heading="Contribute"
+          content={
+            <>
+              <p>
+                SDSC instructors and coordinators can request that training or
+                recordings be added.
+              </p>
+              <a
+                href="https://www.sdsc.edu/contact.html"
+                target="_blank"
+                rel="noopener"
+              >
+                Contact SDSC
+              </a>
+            </>
+          }
+        />
+        <FooterColumn
+          heading="About"
+          links={[
+            { href: "https://www.sdsc.edu/", label: "SDSC home" },
+            {
+              href: "https://www.sdsc.edu/about/brand.html",
+              label: "Brand guidelines",
+            },
+          ]}
+        />
+      </div>
+    </footer>
+  );
+}
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -37,31 +125,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <Navbar />
         <main id="main-content">{children}</main>
-        <footer className="site-footer">
-        <div className="footer-shell">
-          <div className="footer-brand">
-            <Image src="/SDSC-logo.svg" alt="San Diego Supercomputer Center" width={170} height={48} priority />
-            <p>Public training, practical learning paths, and grounded discovery across SDSC resources.</p>
-          </div>
-          <div>
-            <h2>Explore</h2>
-            <Link href="/materials">Training Library</Link>
-            <Link href="/learning-paths">Learning Paths</Link>
-            <Link href="/events">Events & Recordings</Link>
-            <Link href="/programs">Programs & Series</Link>
-          </div>
-          <div id="contribute">
-            <h2>Contribute</h2>
-            <p>SDSC instructors and coordinators can request that training or recordings be added.</p>
-            <a href="https://www.sdsc.edu/contact.html" target="_blank" rel="noopener">Contact SDSC</a>
-          </div>
-          <div>
-            <h2>About</h2>
-            <a href="https://www.sdsc.edu/" target="_blank" rel="noopener">SDSC home</a>
-            <a href="https://www.sdsc.edu/about/brand.html" target="_blank" rel="noopener">Brand guidelines</a>
-          </div>
-        </div>
-      </footer>
+        <Footer />
       </body>
     </html>
   );
