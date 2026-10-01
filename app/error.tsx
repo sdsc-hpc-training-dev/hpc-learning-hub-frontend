@@ -1,24 +1,20 @@
-'use client'
+"use client";
 
-import { useEffect } from "react";
+import RouteError from "@/components/ui/RouteError";
 
 export default function ErrorPage({
-	error,
-	reset,
+  error,
+  retry,
 }: {
-	readonly error: Error & { digest?: string };
-	readonly reset: () => void;
+  readonly error: Error & { digest?: string };
+  readonly retry: () => void;
 }) {
-	useEffect(() => {
-		console.error(error);
-	}, [error]);
-
-	return (
-		<main>
-			<h1>Something went wrong</h1>
-			<button type="button" onClick={() => { reset(); }}>
-				Try again
-			</button>
-		</main>
-	);
+  return (
+    <RouteError
+      error={error}
+      title="This page could not load."
+      message="Please try again. If the problem continues, return to the Training Library."
+      retry={retry}
+    />
+  );
 }

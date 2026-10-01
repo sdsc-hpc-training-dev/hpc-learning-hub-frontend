@@ -1,32 +1,45 @@
-import Link from "next/link";
+import { notFound } from "next/navigation";
+import InlineError from "@/components/ui/InlineError";
 import MaterialDetail from "@/features/training-library/MaterialDetail";
-import { fallbackMaterials, getMaterialById, getTrainingLibraryData } from "@/features/training-library/api";
+import {
+  getMaterialById,
+  getTrainingLibraryData,
+} from "@/features/training-library/api";
+import type { CatalogMaterial } from "@/lib/gateway/types";
 
 interface MaterialPageProps {
-	params?: Promise<{ materialId: string }>;
+  params: Promise<{ materialId: string }>;
 }
 
-export default async function MaterialPage({ params = Promise.resolve({ materialId: fallbackMaterials[0].id }) }: Readonly<MaterialPageProps>) {
-	const { materialId } = await params;
-	const [material, catalog] = await Promise.all([
-		getMaterialById(materialId),
-		getTrainingLibraryData(),
-	]);
+export default async function MaterialPage({
+  params,
+}: Readonly<MaterialPageProps>) {
+  const { materialId } = await params;
+  let material: CatalogMaterial | null;
+  try {
+    material = await getMaterialById(materialId);
+  } catch (error) {
+    console.error("Failed to load training material", error);
+    return (
+      <InlineError
+        title="This training material is unavailable."
+        message="We could not reach the training catalog. Please try again."
+      />
+    );
+  }
 
-	if (!material) {
-		return (
-			<>
-				<section className="page-hero">
-					<div className="page-hero__shell">
-						<span className="eyebrow">Material not found</span>
-						<h1>This material is not part of the prototype subset.</h1>
-						<p>Return to the Training Library to choose one of the curated Snapshot v2 records.</p>
-					</div>
-				</section>
-				<section className="section"><div className="section-shell"><Link className="button button--primary" href="/materials">Open Training Library</Link></div></section>
-			</>
-		);
-	}
+  if (!material) notFound();
+  const catalog = await getTrainingLibraryData();
 
-	return <MaterialDetail material={material} relatedMaterials={catalog.materials} />;
+  return (
+    <MaterialDetail
+      material={material}
+      relatedMaterials={catalog.materials}
+      relatedMaterialsError={
+        catalog.error
+          ? "We could not load recommendations. Please try again."
+          : undefined
+      }
+    />
+  );
 }

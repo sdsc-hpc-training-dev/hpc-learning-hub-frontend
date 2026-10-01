@@ -1,8 +1,10 @@
 import Link from "next/link";
+import InlineError from "@/components/ui/InlineError";
 import type { LearningPath, LearningPathItem } from "@/lib/gateway/types";
 
 interface LearningPathsViewProps {
   paths: LearningPath[];
+  error?: string;
 }
 
 interface LearningPathDetailProps {
@@ -71,8 +73,28 @@ function EmptyPathMaterialsStatus() {
   );
 }
 
+function AvailablePaths({
+  paths,
+  error,
+}: Readonly<{ paths: LearningPath[]; error?: string }>) {
+  if (error) {
+    return (
+      <InlineError title="Learning paths are unavailable." message={error} />
+    );
+  }
+  if (paths.length === 0) return <EmptyPathsStatus />;
+  return (
+    <div className="learning-path-grid">
+      {paths.map((path) => (
+        <PathCard key={path.id} path={path} />
+      ))}
+    </div>
+  );
+}
+
 export function LearningPathsView({
   paths,
+  error,
 }: Readonly<LearningPathsViewProps>) {
   return (
     <div className="learning-paths-page">
@@ -103,22 +125,17 @@ export function LearningPathsView({
               progression.
             </p>
           </div>
-          {paths.length > 0 ? (
-            <div className="learning-path-grid">
-              {paths.map((path) => (
-                <PathCard key={path.id} path={path} />
-              ))}
-            </div>
-          ) : (
-            <EmptyPathsStatus />
-          )}
+          <AvailablePaths paths={paths} error={error} />
         </div>
       </section>
     </div>
   );
 }
 
-function PathStep({ item, stepNumber }: Readonly<{ item: LearningPathItem; stepNumber: number }>) {
+function PathStep({
+  item,
+  stepNumber,
+}: Readonly<{ item: LearningPathItem; stepNumber: number }>) {
   return (
     <li className="learning-path-step">
       <span className="learning-path-step__number" aria-hidden="true">

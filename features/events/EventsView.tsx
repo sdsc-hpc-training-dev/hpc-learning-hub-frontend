@@ -1,10 +1,12 @@
 import type { GatewayEventEdition } from "@/lib/gateway/types";
 import type { RecordedMaterial } from "./api";
 import PastRecordings from "./PastRecordings";
+import InlineError from "@/components/ui/InlineError";
 
 interface EventsViewProps {
   upcomingEvents: GatewayEventEdition[];
   recordings: RecordedMaterial[];
+  error?: string;
 }
 
 function formatDate(
@@ -82,6 +84,7 @@ function UpcomingEvents({
 export default function EventsView({
   upcomingEvents,
   recordings,
+  error,
 }: Readonly<EventsViewProps>) {
   return (
     <div className="events-page">
@@ -97,8 +100,14 @@ export default function EventsView({
           </p>
         </div>
       </section>
-      <UpcomingEvents events={upcomingEvents} />
-      <PastRecordings recordings={recordings} />
+      {error ? (
+        <InlineError title="Events are unavailable." message={error} />
+      ) : (
+        <>
+          <UpcomingEvents events={upcomingEvents} />
+          <PastRecordings recordings={recordings} />
+        </>
+      )}
     </div>
   );
 }

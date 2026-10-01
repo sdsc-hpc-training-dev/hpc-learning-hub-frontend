@@ -102,6 +102,120 @@ h3 {
   border: 0;
 }
 
+.toast-stack {
+  position: fixed;
+  z-index: 1000;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  gap: 10px;
+  width: min(420px, calc(100vw - 32px));
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--blue);
+  border-radius: var(--radius);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.toast--error {
+  border-left-color: #a62e2e;
+}
+
+.toast--success {
+  border-left-color: var(--green);
+}
+
+.toast p {
+  margin: 0;
+}
+
+.toast button {
+  flex: none;
+  padding: 0 3px;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.inline-error,
+.route-error,
+.not-found-page {
+  width: min(calc(100% - 40px), var(--content));
+  margin: 48px auto;
+  padding: 28px;
+  border: 1px solid #e3b5b5;
+  border-radius: var(--radius);
+  background: #fff8f7;
+}
+
+.inline-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.inline-error h2,
+.route-error h1,
+.not-found-page h1 {
+  margin-bottom: 10px;
+}
+
+.inline-error p,
+.route-error p,
+.not-found-page p {
+  margin-bottom: 0;
+}
+
+.route-error,
+.not-found-page {
+  max-width: 760px;
+  padding: clamp(28px, 6vw, 64px);
+}
+
+.route-error .eyebrow,
+.not-found-page .eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #8f2525;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.route-error .button,
+.not-found-page .button {
+  margin-top: 24px;
+}
+
+.not-found-page {
+  border-color: var(--line);
+  background: var(--surface-soft);
+}
+
+.not-found-page .eyebrow {
+  color: var(--blue);
+}
+
+.not-found-page__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
 .section,
 .page-hero {
   width: 100%;
@@ -1597,6 +1711,11 @@ main#main-content > .events-status {
   .event-pagination {
     flex-wrap: wrap;
     gap: 12px;
+  }
+
+  .inline-error {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 
