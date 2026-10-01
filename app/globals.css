@@ -1551,6 +1551,21 @@ main#main-content {
   padding-top: 18px;
 }
 
+.event-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 28px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.event-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .events-status {
   padding: 30px;
   border: 1px dashed #9eafbf;
@@ -1577,6 +1592,11 @@ main#main-content > .events-status {
 @media (max-width: 680px) {
   .event-grid {
     grid-template-columns: 1fr;
+  }
+
+  .event-pagination {
+    flex-wrap: wrap;
+    gap: 12px;
   }
 }
 
