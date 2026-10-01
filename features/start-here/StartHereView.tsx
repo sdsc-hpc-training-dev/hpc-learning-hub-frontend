@@ -2,6 +2,7 @@ import Link from "next/link";
 import MaterialCard from "@/features/training-library/MaterialCard";
 import { UpcomingEventCard } from "@/features/events/EventsView";
 import { ProgramCard } from "@/features/programs/ProgramsView";
+import InlineError from "@/components/ui/InlineError";
 import type { StartHereData } from "./api";
 
 function EmptyCollection({ message }: Readonly<{ message: string }>) {
@@ -40,6 +41,12 @@ export default function StartHereView({ data }: Readonly<{ data: StartHereData }
 					</div>
 				</div>
 			</section>
+			{data.errors.length > 0 ? (
+				<InlineError
+					title="Some sections could not be loaded."
+					message="One or more services are temporarily unavailable. Try again to refresh the page."
+				/>
+			) : null}
 
 			<section className="section section--compact section--blue" aria-labelledby="browse-heading">
 				<div className="section-shell">

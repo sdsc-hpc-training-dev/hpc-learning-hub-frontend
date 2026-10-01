@@ -133,9 +133,11 @@ function filterOptions(materials: CatalogMaterial[]) {
 export default function MaterialsPageClient({
   materials: initialMaterials,
   initialFilters = {},
+  initialError,
 }: Readonly<{
   materials: CatalogMaterial[];
   initialFilters?: MaterialListFilters;
+  initialError?: string;
 }>) {
   const pathname = usePathname();
   const router = useRouter();
@@ -170,6 +172,7 @@ export default function MaterialsPageClient({
     <TrainingLibraryView
       materials={filteredMaterials}
       total={filteredMaterials.length}
+      error={initialError}
       activeFilters={activeFilters}
       onRemoveFilter={(key) => {
         handleChange(key, "");
