@@ -132,7 +132,7 @@ export async function getStartHereData(): Promise<StartHereData> {
 	const [materials, learningPaths, upcomingEvents, programs] = await Promise.all([
 		getAllMaterials(),
 		getAllLearningPaths(),
-		getUpcomingEvents().catch(() => []),
+		getUpcomingEvents(new Date(), 3).catch(() => []),
 		getProgramsData().then((data) => data.programs).catch(() => []),
 	]);
 	const catalogMaterials = materials

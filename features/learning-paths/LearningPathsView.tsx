@@ -9,6 +9,13 @@ interface LearningPathDetailProps {
   path: LearningPath;
 }
 
+function truncateTrainingDescription(description: string): string {
+  const characters = Array.from(description.replace(/\s+/g, " ").trim());
+  return characters.length > 100
+    ? `${characters.slice(0, 99).join("").trimEnd()}…`
+    : characters.join("");
+}
+
 function PathCard({ path }: Readonly<{ path: LearningPath }>) {
   const stepLabel = `${String(path.items.length)} ${path.items.length === 1 ? "step" : "steps"}`;
 
@@ -123,7 +130,9 @@ function PathStep({ item, stepNumber }: Readonly<{ item: LearningPathItem; stepN
             {item.material.title ?? "Untitled training material"}
           </Link>
         </h2>
-        {item.material.description ? <p>{item.material.description}</p> : null}
+        {item.material.description ? (
+          <p>{truncateTrainingDescription(item.material.description)}</p>
+        ) : null}
         <Link
           className="text-link"
           href={`/materials/${encodeURIComponent(item.material.id)}`}
