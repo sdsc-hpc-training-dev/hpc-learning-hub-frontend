@@ -28,11 +28,13 @@ function eventTimestamp(event: GatewayEventEdition): number | null {
 }
 
 function latestEdition(material: GatewayMaterial): GatewayEventEdition | null {
-  return [...material.eventEditions].sort(
-    (left, right) =>
-      (eventTimestamp(right) ?? Number.NEGATIVE_INFINITY) -
-      (eventTimestamp(left) ?? Number.NEGATIVE_INFINITY),
-  )[0] ?? null;
+  return (
+    [...material.eventEditions].sort(
+      (left, right) =>
+        (eventTimestamp(right) ?? Number.NEGATIVE_INFINITY) -
+        (eventTimestamp(left) ?? Number.NEGATIVE_INFINITY),
+    )[0] ?? null
+  );
 }
 
 function toRecording(material: GatewayMaterial): RecordedMaterial {

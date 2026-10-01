@@ -24,7 +24,9 @@ function truncate(value: string | null, length = 180): string {
   return clean.length > length ? `${clean.slice(0, length).trim()}…` : clean;
 }
 
-function RecordingCard({ recording }: Readonly<{ recording: RecordedMaterial }>) {
+function RecordingCard({
+  recording,
+}: Readonly<{ recording: RecordedMaterial }>) {
   const href = `/materials/${encodeURIComponent(recording.id)}`;
   return (
     <article className="event-card">
@@ -38,6 +40,68 @@ function RecordingCard({ recording }: Readonly<{ recording: RecordedMaterial }>)
         Open recording or material <span aria-hidden="true">→</span>
       </Link>
     </article>
+  );
+}
+
+interface RecordingPaginationProps {
+  currentPage: number;
+  pageCount: number;
+  firstMaterial: number;
+  lastMaterial: number;
+  totalMaterials: number;
+  onPrevious: () => void;
+  onNext: () => void;
+}
+
+function RecordingPagination({
+  currentPage,
+  pageCount,
+  firstMaterial,
+  lastMaterial,
+  totalMaterials,
+  onPrevious,
+  onNext,
+}: Readonly<RecordingPaginationProps>) {
+  return (
+    <nav className="event-pagination" aria-label="Recording pages">
+      <button
+        className="button button--secondary"
+        type="button"
+        disabled={currentPage === 0}
+        onClick={onPrevious}
+      >
+        Previous
+      </button>
+      <span aria-live="polite">
+        Showing {firstMaterial}–{lastMaterial} of {totalMaterials}
+        {" · "}Page {currentPage + 1} of {pageCount}
+      </span>
+      <button
+        className="button button--secondary"
+        type="button"
+        disabled={currentPage >= pageCount - 1}
+        onClick={onNext}
+      >
+        Next
+      </button>
+    </nav>
+  );
+}
+
+function RecordingsHeading() {
+  return (
+    <div className="section-heading section-heading--split">
+      <div>
+        <span className="eyebrow">Training archive</span>
+        <h2 id="recordings-heading">Past sessions and recordings</h2>
+        <p>
+          Open a material to explore its recording and supporting resources.
+        </p>
+      </div>
+      <Link className="text-link" href="/materials">
+        Browse the Training Library <span aria-hidden="true">→</span>
+      </Link>
+    </div>
   );
 }
 
@@ -60,16 +124,7 @@ export default function PastRecordings({
   return (
     <section className="section" aria-labelledby="recordings-heading">
       <div className="section-shell">
-        <div className="section-heading section-heading--split">
-          <div>
-            <span className="eyebrow">Training archive</span>
-            <h2 id="recordings-heading">Past sessions and recordings</h2>
-            <p>Open a material to explore its recording and supporting resources.</p>
-          </div>
-          <Link className="text-link" href="/materials">
-            Browse the Training Library <span aria-hidden="true">→</span>
-          </Link>
-        </div>
+        <RecordingsHeading />
         {recordings.length > 0 ? (
           <>
             <div className="event-grid">
@@ -78,28 +133,19 @@ export default function PastRecordings({
               ))}
             </div>
             {pageCount > 1 ? (
-              <nav className="event-pagination" aria-label="Recording pages">
-                <button
-                  className="button button--secondary"
-                  type="button"
-                  disabled={currentPage === 0}
-                  onClick={() => setPage(currentPage - 1)}
-                >
-                  Previous
-                </button>
-                <span aria-live="polite">
-                  Showing {firstMaterial}–{lastMaterial} of {recordings.length}
-                  {" · "}Page {currentPage + 1} of {pageCount}
-                </span>
-                <button
-                  className="button button--secondary"
-                  type="button"
-                  disabled={currentPage >= pageCount - 1}
-                  onClick={() => setPage(currentPage + 1)}
-                >
-                  Next
-                </button>
-              </nav>
+              <RecordingPagination
+                currentPage={currentPage}
+                pageCount={pageCount}
+                firstMaterial={firstMaterial}
+                lastMaterial={lastMaterial}
+                totalMaterials={recordings.length}
+                onPrevious={() => {
+                  setPage(currentPage - 1);
+                }}
+                onNext={() => {
+                  setPage(currentPage + 1);
+                }}
+              />
             ) : null}
           </>
         ) : (

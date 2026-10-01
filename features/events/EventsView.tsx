@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { GatewayEventEdition } from "@/lib/gateway/types";
 import type { RecordedMaterial } from "./api";
 import PastRecordings from "./PastRecordings";
@@ -8,7 +7,10 @@ interface EventsViewProps {
   recordings: RecordedMaterial[];
 }
 
-function formatDate(value: string | null, fallback = "Date to be announced"): string {
+function formatDate(
+  value: string | null,
+  fallback = "Date to be announced",
+): string {
   if (!value) return fallback;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return fallback;
@@ -34,21 +36,30 @@ function EmptyEvents({ children }: Readonly<{ children: string }>) {
   );
 }
 
-export function UpcomingEventCard({ event }: Readonly<{ event: GatewayEventEdition }>) {
+export function UpcomingEventCard({
+  event,
+}: Readonly<{ event: GatewayEventEdition }>) {
   return (
     <article className="event-card">
       <div className="event-card__date">{formatDate(event.startAt)}</div>
       <span className="event-card__type">{event.format ?? "SDSC event"}</span>
       <h3>{event.title ?? "Untitled event"}</h3>
       <p>{truncate(event.description)}</p>
-      {event.location ? <div className="event-card__location">{event.location}</div> : null}
+      {event.location ? (
+        <div className="event-card__location">{event.location}</div>
+      ) : null}
     </article>
   );
 }
 
-function UpcomingEvents({ events }: Readonly<{ events: GatewayEventEdition[] }>) {
+function UpcomingEvents({
+  events,
+}: Readonly<{ events: GatewayEventEdition[] }>) {
   return (
-    <section className="section section--sand" aria-labelledby="upcoming-heading">
+    <section
+      className="section section--sand"
+      aria-labelledby="upcoming-heading"
+    >
       <div className="section-shell">
         <div className="section-heading">
           <span className="eyebrow">SDSC schedule</span>
@@ -56,7 +67,9 @@ function UpcomingEvents({ events }: Readonly<{ events: GatewayEventEdition[] }>)
         </div>
         {events.length > 0 ? (
           <div className="event-grid">
-            {events.map((event) => <UpcomingEventCard event={event} key={event.id} />)}
+            {events.map((event) => (
+              <UpcomingEventCard event={event} key={event.id} />
+            ))}
           </div>
         ) : (
           <EmptyEvents>No upcoming events are currently listed.</EmptyEvents>
@@ -75,7 +88,9 @@ export default function EventsView({
       <section className="page-hero" aria-labelledby="events-heading">
         <div className="page-hero__shell">
           <span className="eyebrow">Events</span>
-          <h1 id="events-heading">Attend what is next. Learn from what already happened.</h1>
+          <h1 id="events-heading">
+            Attend what is next. Learn from what already happened.
+          </h1>
           <p>
             View upcoming events from SDSC and past session recordings to guide
             your learning further.
