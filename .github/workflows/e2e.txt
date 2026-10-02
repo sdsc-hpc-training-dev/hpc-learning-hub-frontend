@@ -1,0 +1,35 @@
+-- Agent created this file github actions, can use for future reference --
+
+name: Cypress E2E
+
+on:
+  pull_request:
+    branches: [dev, master]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [dev, master]
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cypress:
+    name: Cypress E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.13.0"
+          cache: npm
+      - run: npm ci
+      - uses: cypress-io/github-action@v6
+        with:
+          build: npm run build
+          start: npm run start
+          wait-on: "http://localhost:3000"
+          browser: chrome
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"

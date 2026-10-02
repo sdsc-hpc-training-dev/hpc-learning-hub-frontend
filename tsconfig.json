@@ -32,11 +32,12 @@
     "**/*.mts",
     "**/*.cjs",
     "**/*.js",
-    "**/*.mjs",
+    "**/*.mjs"
   ],
   "exclude": [
     "node_modules",
     ".next",
+    "cypress",
     "types/validator.ts" // Add generated type artifacts here if located outside .next
   ]
 }
