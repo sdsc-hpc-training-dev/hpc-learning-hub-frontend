@@ -10,7 +10,7 @@
     "lint": "eslint",
     "test:coverage": "jest --coverage --passWithNoTests",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run"
+    "cypress:run": "cypress run --headed --browser electron"
   },
   "dependencies": {
     "next": "16.3.8",
