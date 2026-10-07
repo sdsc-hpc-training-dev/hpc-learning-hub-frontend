@@ -62,7 +62,8 @@ function matchesFilters(
   return [
     !filters.topic || hasCaseInsensitiveValue(material.topics, filters.topic),
     !filters.tool || hasCaseInsensitiveValue(material.tools, filters.tool),
-    !filters.system || hasCaseInsensitiveValue(material.systems, filters.system),
+    !filters.system ||
+      hasCaseInsensitiveValue(material.systems, filters.system),
     !filters.resource ||
       material.resources.some(
         (resource) =>

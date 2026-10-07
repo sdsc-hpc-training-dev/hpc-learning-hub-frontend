@@ -1,3 +1,7 @@
 export default function Loading() {
-	return <p>Loading...</p>;
+  return (
+    <p role="status" aria-busy="true">
+      Loading...
+    </p>
+  );
 }

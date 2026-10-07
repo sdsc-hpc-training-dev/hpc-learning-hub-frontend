@@ -20,7 +20,7 @@
   --green: #6e963b;
   --ink: #182b49;
   --text: #344861;
-  --muted: #627187;
+  --muted: #526176;
   --line: #d6dee7;
   --surface: #ffffff;
   --surface-soft: #f4f7fa;
@@ -548,15 +548,18 @@ h3 {
   text-transform: uppercase;
 }
 
+.material-card h2,
 .material-card h3 {
   margin-bottom: 12px;
 }
 
+.material-card h2 a,
 .material-card h3 a {
   color: var(--ink);
   text-decoration: none;
 }
 
+.material-card h2 a:hover,
 .material-card h3 a:hover {
   color: var(--blue);
 }
@@ -670,7 +673,7 @@ h3 {
   --green: #6e963b;
   --ink: #182b49;
   --text: #344861;
-  --muted: #627187;
+  --muted: #526176;
   --line: #d6dee7;
   --surface: #ffffff;
   --surface-soft: #f4f7fa;
@@ -1341,6 +1344,7 @@ main#main-content {
   display: block;
   margin-bottom: 9px;
   color: #d7e2e9;
+  background-color: var(--navy-deep);
   text-decoration: underline;
 }
 
