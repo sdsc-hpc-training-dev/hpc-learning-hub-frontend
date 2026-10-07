@@ -1,3 +1,7 @@
 export default function ConversationsPage() {
-	return <main><h1>Conversations</h1></main>;
+  return (
+    <div>
+      <h1>Conversations</h1>
+    </div>
+  );
 }

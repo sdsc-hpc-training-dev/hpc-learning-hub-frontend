@@ -64,7 +64,10 @@ function searchPage(isSecondPage: boolean) {
 }
 
 describe("Training Library API search", () => {
-  const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
+  const fetchMock = jest.fn<
+    ReturnType<typeof fetch>,
+    Parameters<typeof fetch>
+  >();
 
   beforeEach(() => {
     process.env.GATEWAY_URL = "https://gateway.example";

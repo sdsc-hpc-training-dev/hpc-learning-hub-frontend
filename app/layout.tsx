@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
+import UmamiTracking from "@/features/analytics/UmamiTracking";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import { ToastProvider } from "@/components/ui/ToastProvider";
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <main id="main-content">{children}</main>
           <SiteFooter />
         </ToastProvider>
+        <UmamiTracking />
       </body>
     </html>
   );
