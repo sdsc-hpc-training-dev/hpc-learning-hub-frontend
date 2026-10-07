@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { resourceOpenEvent } from "@/features/analytics/events";
 import InlineError from "@/components/ui/InlineError";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 import MaterialCard from "./MaterialCard";
@@ -149,6 +150,11 @@ export default function MaterialDetail({
                   target="_blank"
                   rel="noopener noreferrer"
                   key={resource.id}
+                  {...resourceOpenEvent(
+                    material.id,
+                    resource.id,
+                    resource.type,
+                  )}
                 >
                   <span>
                     <strong>{resource.title}</strong>
