@@ -1,6 +1,44 @@
-/* eslint-disable no-undef, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/restrict-template-expressions, max-lines-per-function */
+/* eslint-disable no-undef, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/restrict-template-expressions */
+
+async function scanSelectFilters(page, viewportName, scan) {
+  const filters = page.locator(".catalog-filters select");
+  for (let index = 0; index < (await filters.count()); index += 1) {
+    const filter = filters.nth(index);
+    const options = await filter
+      .locator("option")
+      .evaluateAll((elements) =>
+        elements
+          .filter((element) => element.value && !element.disabled)
+          .map((element) => element.value),
+      );
+    for (const value of options) {
+      await filter.selectOption(value);
+      const isProgram = (await filter.getAttribute("id")) === "catalog-program";
+      if (isProgram)
+        await page.waitForURL(
+          (url) => url.searchParams.get("program") === value,
+        );
+      await page.locator(".filter-chip").first().waitFor();
+      await scan(
+        `${viewportName}: ${await filter.getAttribute("id")}=${value}`,
+      );
+      await page.locator(".filter-chip").first().focus();
+      await page.locator(".filter-chip").first().press("Enter");
+      await page.waitForFunction(() => !document.querySelector(".filter-chip"));
+      if (isProgram)
+        await page.waitForURL((url) => !url.searchParams.has("program"));
+      await scan(`${viewportName}: filter removed`);
+    }
+  }
+}
 
 export async function scanInteractions(page, route, scan) {
+  const disclosureSelector = ["header", "main", "footer"]
+    .flatMap((region) => [
+      `${region} button[aria-expanded="false"]`,
+      `${region} details > summary`,
+    ])
+    .join(", ");
   for (const viewport of [
     { name: "desktop", width: 1280, height: 720 },
     { name: "mobile", width: 390, height: 844 },
@@ -8,17 +46,14 @@ export async function scanInteractions(page, route, scan) {
     await page.setViewportSize(viewport);
     await scan(`${viewport.name}: initial`);
 
-    const disclosures = page.locator(
-      'button[aria-expanded="false"], details > summary',
-    );
+    const disclosures = page.locator(disclosureSelector);
     const disclosureCount = await disclosures.count();
     for (let index = 0; index < disclosureCount; index += 1) {
       // Restore the same initial state before testing each disclosure.
       await page.goto(route, { waitUntil: "load" });
-      const control = page
-        .locator('button[aria-expanded="false"], details > summary')
-        .nth(index);
+      const control = page.locator(disclosureSelector).nth(index);
       if (!(await control.isVisible())) continue;
+      const element = await control.elementHandle();
       await control.focus();
       await control.press("Enter");
       await page.waitForFunction(
@@ -26,7 +61,7 @@ export async function scanInteractions(page, route, scan) {
           element.tagName === "SUMMARY"
             ? element.parentElement.open
             : element.getAttribute("aria-expanded") === "true",
-        await control.elementHandle(),
+        element,
       );
       await scan(`${viewport.name}: disclosure ${index + 1} open`);
     }
@@ -34,30 +69,7 @@ export async function scanInteractions(page, route, scan) {
     await page.goto(route, { waitUntil: "load" });
     if (new URL(route).pathname !== "/materials") continue;
 
-    const filters = page.locator(".catalog-filters select");
-    for (let index = 0; index < (await filters.count()); index += 1) {
-      const filter = filters.nth(index);
-      const options = await filter
-        .locator("option")
-        .evaluateAll((elements) =>
-          elements
-            .filter((element) => element.value && !element.disabled)
-            .map((element) => element.value),
-        );
-      for (const value of options) {
-        await filter.selectOption(value);
-        await page.locator(".filter-chip").first().waitFor();
-        await scan(
-          `${viewport.name}: ${await filter.getAttribute("id")}=${value}`,
-        );
-        await page.locator(".filter-chip").first().focus();
-        await page.locator(".filter-chip").first().press("Enter");
-        await page.waitForFunction(
-          () => !document.querySelector(".filter-chip"),
-        );
-        await scan(`${viewport.name}: filter removed`);
-      }
-    }
+    await scanSelectFilters(page, viewport.name, scan);
 
     await page.locator("#catalog-date").fill("1900-01-01");
     await page.locator(".empty-state").waitFor();
@@ -72,6 +84,9 @@ export async function scanInteractions(page, route, scan) {
 
     // A real keyword exposes the dynamically rendered removal button.
     await page.locator("#catalog-search").fill("computing");
+    await page.waitForURL(
+      (url) => url.searchParams.get("query") === "computing",
+    );
     await page.locator(".filter-chip").first().waitFor();
     await scan(`${viewport.name}: search active`);
     await page
@@ -79,6 +94,7 @@ export async function scanInteractions(page, route, scan) {
       .getByRole("button", { name: "Reset filters" })
       .click();
     await page.waitForFunction(() => !document.querySelector(".filter-chip"));
+    await page.waitForURL((url) => !url.searchParams.has("query"));
     await scan(`${viewport.name}: search reset`);
   }
 }

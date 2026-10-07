@@ -9,13 +9,13 @@ remote branches, cloud resources, pushes, PRs or merges were changed.
 
 ## Frozen Inputs
 
-| Source | Exact revision and acquisition |
-| --- | --- |
-| Frontend default `master` | `67cbb3f24cbe3ca1f671e647d86421356a93c7ff`; `git fetch origin` then `git ls-remote --symref origin HEAD`. Dedicated worktree created at that SHA. |
-| Frontend shared checkout | `9a59ec48d41d65f77117f9cfdb450fc3800bca28`; left on `master`, initially clean. |
-| Prototype remote default `main` | `deaf8e5371dd46fd525c0d668c49e3b50aa0aa46`; remote inspected and fetched into a separate source clone, not the prototype checkout. Latest `v1.0.0` examined. |
-| Prototype local working branch | `4e318f39d2208bfc5dc99239d67445db70174e77`, `codex/v0.0.6-auth-prototype`; initially clean. Earlier local `origin/main` was `f6bfa6a`, so it was not treated as latest. |
-| Gateway fixed contract baseline | `fda21d619dcc5119f1133501bafa8cc7e800c7cf`; read with `git show`, including all five named contract documents. Concurrent author's module diagram was not used. |
+| Source                          | Exact revision and acquisition                                                                                                                                          |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend default `master`       | `67cbb3f24cbe3ca1f671e647d86421356a93c7ff`; `git fetch origin` then `git ls-remote --symref origin HEAD`. Dedicated worktree created at that SHA.                       |
+| Frontend shared checkout        | `9a59ec48d41d65f77117f9cfdb450fc3800bca28`; left on `master`, initially clean.                                                                                          |
+| Prototype remote default `main` | `deaf8e5371dd46fd525c0d668c49e3b50aa0aa46`; remote inspected and fetched into a separate source clone, not the prototype checkout. Latest `v1.0.0` examined.            |
+| Prototype local working branch  | `4e318f39d2208bfc5dc99239d67445db70174e77`, `codex/v0.0.6-auth-prototype`; initially clean. Earlier local `origin/main` was `f6bfa6a`, so it was not treated as latest. |
+| Gateway fixed contract baseline | `fda21d619dcc5119f1133501bafa8cc7e800c7cf`; read with `git show`, including all five named contract documents. Concurrent author's module diagram was not used.         |
 
 Source paths/links and precedence are recorded in the
 [architecture document](../nextjs-modules.md). The exact scoped files read were

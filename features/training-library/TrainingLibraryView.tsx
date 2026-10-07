@@ -77,6 +77,7 @@ function ActiveFilterList({
   return (
     <div
       className="active-filters"
+      role="group"
       aria-label={activeFilters.length ? "Active filters" : "No active filters"}
     >
       {activeFilters.map(({ key, value }) => (

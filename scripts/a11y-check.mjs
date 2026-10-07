@@ -8,6 +8,7 @@ import net from "node:net";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { scanInteractions } from "./a11y-interactions.mjs";
+import { startFixtureGateway } from "./a11y-fixtures.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -71,6 +72,28 @@ async function getFreePort() {
   });
 }
 
+async function analyzePage(page) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.waitForLoadState("load", { timeout: 60000 });
+      await page.waitForFunction(
+        () =>
+          document.title.trim() &&
+          document.querySelector("main") &&
+          !document.querySelector("main [aria-busy='true']"),
+      );
+      await page.evaluate(() => document.fonts.ready);
+      return await new AxeBuilder({ page }).analyze();
+    } catch (error) {
+      const navigationError =
+        /Execution context was destroyed|Frame was detached/i.test(
+          error.message,
+        );
+      if (!navigationError || attempt === 2) throw error;
+    }
+  }
+}
+
 async function isServerReachable(url) {
   try {
     const response = await fetch(url, {
@@ -125,16 +148,11 @@ async function main() {
   const queued = new Set(routes);
   await fs.mkdir(reportDir, { recursive: true });
 
-  const existingBaseUrl = process.env.A11Y_BASE_URL ?? "http://127.0.0.1:3000";
-  if (
-    process.env.A11Y_BASE_URL &&
-    !(await isServerReachable(existingBaseUrl))
-  ) {
+  const existingBaseUrl = process.env.A11Y_BASE_URL;
+  if (existingBaseUrl && !(await isServerReachable(existingBaseUrl))) {
     throw new Error(`Accessibility server is unreachable: ${existingBaseUrl}`);
   }
-  const baseUrl = (await isServerReachable(existingBaseUrl))
-    ? existingBaseUrl
-    : `http://127.0.0.1:${await getFreePort()}`;
+  const baseUrl = existingBaseUrl ?? `http://127.0.0.1:${await getFreePort()}`;
 
   const summary = {
     generatedAt: new Date().toISOString(),
@@ -146,9 +164,14 @@ async function main() {
   };
 
   let serverProcess;
+  let fixtureGateway;
 
   try {
-    if (!(await isServerReachable(existingBaseUrl))) {
+    if (!existingBaseUrl) {
+      if (!process.env.GATEWAY_URL && !process.env.NEXT_PUBLIC_GATEWAY_URL) {
+        fixtureGateway = await startFixtureGateway();
+        console.log("Accessibility scan uses the local fixture gateway.");
+      }
       serverProcess = spawn(
         "npm",
         [
@@ -165,6 +188,7 @@ async function main() {
           env: {
             ...process.env,
             NEXT_TELEMETRY_DISABLED: "1",
+            ...(fixtureGateway ? { GATEWAY_URL: fixtureGateway.url } : {}),
           },
           stdio: ["ignore", "pipe", "pipe"],
           detached: process.platform !== "win32",
@@ -195,7 +219,7 @@ async function main() {
           `Cannot scan ${route}: HTTP ${response?.status() ?? "unknown"}`,
         );
       }
-      const results = await new AxeBuilder({ page }).analyze();
+      const results = await analyzePage(page);
       // Follow linked page paths, including concrete IDs for dynamic routes.
       // Ignore query/hash variants and endpoints that are not app pages.
       const links = await page
@@ -215,7 +239,7 @@ async function main() {
       }
       const states = [];
       await scanInteractions(page, fullUrl, async (state) => {
-        const stateResults = await new AxeBuilder({ page }).analyze();
+        const stateResults = await analyzePage(page);
         states.push({ state, ...stateResults });
       });
       const uniqueViolations = new Map();
@@ -312,6 +336,7 @@ async function main() {
 
     console.log("Accessibility check passed: no violations found.");
   } finally {
+    if (fixtureGateway) await fixtureGateway.close();
     if (serverProcess) {
       try {
         if (process.platform !== "win32") {

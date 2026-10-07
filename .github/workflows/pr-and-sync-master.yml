@@ -111,6 +111,7 @@ jobs:
   test:
     name: Tests & coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.event_name == 'pull_request'
     needs: [validate-branch]
     steps:
@@ -120,7 +121,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
       - run: npm ci
-      - run: npm run test:coverage
+      - run: npm run test:coverage -- --ci --runInBand --detectOpenHandles
 
   duplication:
     name: Duplicate code (jscpd)
