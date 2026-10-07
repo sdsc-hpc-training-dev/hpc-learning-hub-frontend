@@ -142,11 +142,11 @@ function PathStep({
         {stepNumber}
       </span>
       <div>
-        <h2>
+        <h3>
           <Link href={`/materials/${encodeURIComponent(item.material.id)}`}>
             {item.material.title ?? "Untitled training material"}
           </Link>
-        </h2>
+        </h3>
         {item.material.description ? (
           <p>{truncateTrainingDescription(item.material.description)}</p>
         ) : null}
