@@ -16,6 +16,11 @@
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
+  "overrides": {
+    "@istanbuljs/load-nyc-config": {
+      "js-yaml": "^4.3.2"
+    }
+  },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
     "@emnapi/core": "^1.11.3",

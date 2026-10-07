@@ -42,19 +42,25 @@ async function discoverPages(directory, segments = []) {
 
 function pagePattern(route) {
   const segments = route.split("/").filter(Boolean);
-  if (segments.length === 0) return /^\/$/;
-  // Route literals are escaped; only known dynamic-segment patterns are added.
-  // eslint-disable-next-line security/detect-non-literal-regexp
-  return new RegExp(
-    `^${segments
-      .map((segment) => {
-        if (segment.startsWith("[[...")) return "(?:/.*)?";
-        if (segment.startsWith("[...")) return "/.+";
-        if (segment.startsWith("[")) return "/[^/]+";
-        return `/${segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`;
-      })
-      .join("")}/?$`,
-  );
+  return {
+    test(pathname) {
+      if (!pathname.startsWith("/")) return false;
+      const parts = pathname.replace(/\/$/, "").slice(1).split("/");
+      if (pathname === "/") parts.length = 0;
+      for (const [index, segment] of segments.entries()) {
+        // Next.js catch-all segments consume the remainder of the path.
+        if (segment.startsWith("[[...")) return true;
+        if (segment.startsWith("[...")) {
+          return parts.length > index && parts.slice(index).every(Boolean);
+        }
+        const part = parts[index];
+        if (!part || (!segment.startsWith("[") && segment !== part)) {
+          return false;
+        }
+      }
+      return parts.length === segments.length;
+    },
+  };
 }
 
 async function getFreePort() {
