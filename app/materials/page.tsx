@@ -1,5 +1,6 @@
 import MaterialsPageClient from "@/features/training-library/MaterialsPageClient";
 import { getTrainingLibraryData } from "@/features/training-library/api";
+import { getProgramsData } from "@/features/programs/api";
 
 interface MaterialsPageProps {
   searchParams?: Promise<{
@@ -28,11 +29,21 @@ export default async function MaterialsPage({
     query: getValue(params.query),
     date: getValue(params.date),
   };
-  const { materials, error } = await getTrainingLibraryData(filters);
+  const programsPromise = getProgramsData()
+    .then(({ programs }) => programs)
+    .catch((error: unknown) => {
+      console.error("Failed to load program filters", error);
+      return [];
+    });
+  const [{ materials, error }, programs] = await Promise.all([
+    getTrainingLibraryData(filters),
+    programsPromise,
+  ]);
 
   return (
     <MaterialsPageClient
       materials={materials}
+      programs={programs}
       initialFilters={filters}
       initialError={
         error ? "The Training Library could not be loaded." : undefined
