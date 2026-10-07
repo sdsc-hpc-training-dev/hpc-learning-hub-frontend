@@ -106,14 +106,14 @@ function CatalogSearchControls({
   return (
     <>
       <label htmlFor="catalog-search" className="sr-only">
-        Search the library by keyword or metadata
+        Search material titles and descriptions
       </label>
       <div className="catalog-search-wrap">
         <input
           id="catalog-search"
           className="catalog-search"
           type="search"
-          placeholder="Try Expanse, Slurm, GPU, Jupyter, instructor, recording…"
+          placeholder="Search material titles and descriptions…"
           value={searchValue}
           onChange={(event) => {
             onSearch(event.target.value);

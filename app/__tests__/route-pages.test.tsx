@@ -29,6 +29,8 @@ import {
 } from "@/features/learning-paths/api";
 import { notFound } from "next/navigation";
 
+const mockSearchParams = new URLSearchParams();
+
 jest.mock("@/features/training-library/api", () => {
   const actual = jest.requireActual<
     typeof import("@/features/training-library/api")
@@ -81,6 +83,7 @@ jest.mock("@/features/learning-paths/api", () => ({
 jest.mock("next/navigation", () => ({
   usePathname: () => "/materials",
   useRouter: () => ({ replace: jest.fn(), refresh: jest.fn() }),
+  useSearchParams: () => mockSearchParams,
   notFound: jest.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -164,6 +167,40 @@ describe("training catalog routes", () => {
       }),
     ).rejects.toThrow("NEXT_NOT_FOUND");
     expect(notFoundMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("training program filter data", () => {
+  it("loads program options and passes selected filters to the API modules", async () => {
+    getTrainingLibraryDataMock.mockClear();
+    getProgramsDataMock.mockResolvedValueOnce({
+      programs: [{ id: "series-1", name: "Series One" }],
+      selectedProgram: null,
+    });
+    mockSearchParams.set("query", "batch computing");
+    mockSearchParams.set("program", "series-1");
+
+    const page = await MaterialsPage({
+      searchParams: Promise.resolve({
+        query: "batch computing",
+        program: "series-1",
+      }),
+    });
+    const { unmount } = render(page);
+
+    expect(getTrainingLibraryDataMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: "batch computing",
+        program: "series-1",
+      }),
+    );
+    expect(getProgramsDataMock).toHaveBeenCalled();
+    expect(screen.getByRole("option", { name: "Series One" })).toHaveValue(
+      "series-1",
+    );
+    unmount();
+    mockSearchParams.delete("query");
+    mockSearchParams.delete("program");
   });
 });
 
