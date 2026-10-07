@@ -16,9 +16,7 @@ function gatewayBaseUrl() {
 
 function gatewayPath(path: string) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return normalizedPath.startsWith("/api/v1/")
-    ? normalizedPath
-    : `/api/v1${normalizedPath}`;
+  return normalizedPath.startsWith("/api/v1/") ? normalizedPath : `/api/v1${normalizedPath}`;
 }
 
 export async function gatewayFetch<T>(
@@ -48,3 +46,4 @@ export async function gatewayFetch<T>(
 
   return (await response.json()) as T;
 }
+

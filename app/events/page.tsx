@@ -11,6 +11,17 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function EventsPage() {
-  const data = await getEventsData();
-  return <EventsView {...data} />;
+  try {
+    const data = await getEventsData();
+    return <EventsView {...data} />;
+  } catch (error) {
+    console.error("Failed to load events", error);
+    return (
+      <EventsView
+        upcomingEvents={[]}
+        recordings={[]}
+        error="We could not reach the event catalog. Please try again."
+      />
+    );
+  }
 }

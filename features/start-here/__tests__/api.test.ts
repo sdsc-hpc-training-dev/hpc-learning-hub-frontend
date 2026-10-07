@@ -140,6 +140,12 @@ describe("Start Here data", () => {
         learningPaths: [],
         upcomingEvents: [],
         programs: [],
+        errors: [
+          "Training materials could not be loaded.",
+          "Learning paths could not be loaded.",
+          "Upcoming events could not be loaded.",
+          "Programs could not be loaded.",
+        ],
       });
     } finally {
       global.fetch = originalFetch;
@@ -167,6 +173,7 @@ describe("Start Here data", () => {
         "series-2",
         "series-3",
       ]);
+      expect(data.errors).toEqual([]);
     } finally {
       restoreGateway();
     }

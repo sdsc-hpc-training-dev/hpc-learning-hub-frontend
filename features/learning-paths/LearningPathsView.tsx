@@ -1,12 +1,21 @@
 import Link from "next/link";
+import InlineError from "@/components/ui/InlineError";
 import type { LearningPath, LearningPathItem } from "@/lib/gateway/types";
 
 interface LearningPathsViewProps {
   paths: LearningPath[];
+  error?: string;
 }
 
 interface LearningPathDetailProps {
   path: LearningPath;
+}
+
+function truncateTrainingDescription(description: string): string {
+  const characters = Array.from(description.replace(/\s+/g, " ").trim());
+  return characters.length > 100
+    ? `${characters.slice(0, 99).join("").trimEnd()}…`
+    : characters.join("");
 }
 
 function PathCard({ path }: Readonly<{ path: LearningPath }>) {
@@ -64,7 +73,29 @@ function EmptyPathMaterialsStatus() {
   );
 }
 
-export function LearningPathsView({ paths }: Readonly<LearningPathsViewProps>) {
+function AvailablePaths({
+  paths,
+  error,
+}: Readonly<{ paths: LearningPath[]; error?: string }>) {
+  if (error) {
+    return (
+      <InlineError title="Learning paths are unavailable." message={error} />
+    );
+  }
+  if (paths.length === 0) return <EmptyPathsStatus />;
+  return (
+    <div className="learning-path-grid">
+      {paths.map((path) => (
+        <PathCard key={path.id} path={path} />
+      ))}
+    </div>
+  );
+}
+
+export function LearningPathsView({
+  paths,
+  error,
+}: Readonly<LearningPathsViewProps>) {
   return (
     <div className="learning-paths-page">
       <section
@@ -94,15 +125,7 @@ export function LearningPathsView({ paths }: Readonly<LearningPathsViewProps>) {
               progression.
             </p>
           </div>
-          {paths.length > 0 ? (
-            <div className="learning-path-grid">
-              {paths.map((path) => (
-                <PathCard key={path.id} path={path} />
-              ))}
-            </div>
-          ) : (
-            <EmptyPathsStatus />
-          )}
+          <AvailablePaths paths={paths} error={error} />
         </div>
       </section>
     </div>
@@ -119,12 +142,14 @@ function PathStep({
         {stepNumber}
       </span>
       <div>
-        <h2>
+        <h3>
           <Link href={`/materials/${encodeURIComponent(item.material.id)}`}>
             {item.material.title ?? "Untitled training material"}
           </Link>
-        </h2>
-        {item.material.description ? <p>{item.material.description}</p> : null}
+        </h3>
+        {item.material.description ? (
+          <p>{truncateTrainingDescription(item.material.description)}</p>
+        ) : null}
         <Link
           className="text-link"
           href={`/materials/${encodeURIComponent(item.material.id)}`}

@@ -1,4 +1,4 @@
-import { render, screen /*fireEvent*/ } from "@testing-library/react";
+import { render, screen, /*fireEvent*/ } from "@testing-library/react";
 import { usePathname } from "next/navigation";
 import Navbar from "../Navbar";
 
@@ -32,28 +32,18 @@ describe("Navbar - Rendering", () => {
   it("renders navbar with site branding", () => {
     render(<Navbar />);
     expect(screen.getByText("HPC Learning Hub")).toBeInTheDocument();
-    expect(
-      screen.getByAltText("San Diego Supercomputer Center"),
-    ).toBeInTheDocument();
+    expect(screen.getByAltText("San Diego Supercomputer Center")).toBeInTheDocument();
   });
 
   it("renders all navigation links", () => {
     render(<Navbar />);
-    expect(
-      screen.getByRole("link", { name: /start here/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /training library/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /learning paths/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /start here/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /training library/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /learning paths/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /events/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /programs & series/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /programs & series/i })).toBeInTheDocument();
   });
-  /*
+/*
   it("renders sign in and create account links", () => {
     render(<Navbar />);
     expect(screen.getByRole("link", { name: /sign in/i })).toBeInTheDocument();
@@ -131,9 +121,7 @@ describe("Navbar - Active Page Detection", () => {
   it("highlights programs page correctly", () => {
     (usePathname as jest.Mock).mockReturnValue("/programs");
     render(<Navbar />);
-    const programsLink = screen.getByRole("link", {
-      name: /programs & series/i,
-    });
+    const programsLink = screen.getByRole("link", { name: /programs & series/i });
     expect(programsLink).toHaveAttribute("aria-current", "page");
   });
 
@@ -152,25 +140,13 @@ describe("Navbar - Navigation Links", () => {
 
   it("has correct navigation links", () => {
     render(<Navbar />);
-    expect(screen.getByRole("link", { name: /start here/i })).toHaveAttribute(
-      "href",
-      "/",
-    );
-    expect(
-      screen.getByRole("link", { name: /training library/i }),
-    ).toHaveAttribute("href", "/materials");
-    expect(
-      screen.getByRole("link", { name: /learning paths/i }),
-    ).toHaveAttribute("href", "/learning-paths");
-    expect(screen.getByRole("link", { name: /^events$/i })).toHaveAttribute(
-      "href",
-      "/events",
-    );
-    expect(
-      screen.getByRole("link", { name: /programs & series/i }),
-    ).toHaveAttribute("href", "/programs");
+    expect(screen.getByRole("link", { name: /start here/i })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: /training library/i })).toHaveAttribute("href", "/materials");
+    expect(screen.getByRole("link", { name: /learning paths/i })).toHaveAttribute("href", "/learning-paths");
+    expect(screen.getByRole("link", { name: /^events$/i })).toHaveAttribute("href", "/events");
+    expect(screen.getByRole("link", { name: /programs & series/i })).toHaveAttribute("href", "/programs");
   });
-  /*
+/*
   it("has correct account action links", () => {
     render(<Navbar />);
     const signInLink = screen.getByRole("link", { name: /sign in/i });

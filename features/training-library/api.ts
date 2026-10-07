@@ -164,28 +164,36 @@ function normalizeMaterial(material: GatewayMaterial): CatalogMaterial {
 
 function queryForFilters(filters: MaterialListFilters, page: number) {
   const params = new URLSearchParams();
-  const queryMap: Record<string, string | undefined> = {
-    search: filters.query,
-    topic: filters.topic,
-    tool: filters.tool,
-    system: filters.system,
-    eventSeries: filters.program,
-    resourceType: filters.resource,
-  };
-
-  Object.entries(queryMap).forEach(([key, value]) => {
-    if (value?.trim()) params.set(key, value.trim());
-  });
-
+  if (filters.query?.trim()) {
+    params.set("search", filters.query.trim());
+  }
+  if (filters.program?.trim()) {
+    params.set("eventSeries", filters.program.trim());
+  }
   params.set("page", String(page));
   params.set("pageSize", String(MATERIALS_PAGE_SIZE));
 
   return params;
 }
 
+function matchesTitleOrDescription(material: CatalogMaterial, query: string) {
+  const normalizedQuery = query.trim().replace(/\s+/g, " ").toLowerCase();
+  const normalizeText = (value: string) =>
+    value.replace(/\s+/g, " ").toLowerCase();
+
+  return (
+    normalizeText(material.title).includes(normalizedQuery) ||
+    normalizeText(material.description ?? "").includes(normalizedQuery)
+  );
+}
+
 export async function getTrainingLibraryData(
   filters: MaterialListFilters = {},
-): Promise<{ materials: CatalogMaterial[]; total: number }> {
+): Promise<{
+  materials: CatalogMaterial[];
+  total: number;
+  error?: boolean;
+}> {
   try {
     const firstPage = await gatewayFetch<GatewayMaterialPage>(
       `${MATERIALS_ENDPOINT}?${queryForFilters(filters, 1)}`,
@@ -207,14 +215,21 @@ export async function getTrainingLibraryData(
       }
     }
 
+    const matchingMaterials = filters.query?.trim()
+      ? materials.filter((material) =>
+          matchesTitleOrDescription(material, filters.query ?? ""),
+        )
+      : materials;
+
     return {
-      materials,
-      total: firstPage.total,
+      materials: matchingMaterials,
+      total: filters.query?.trim() ? matchingMaterials.length : firstPage.total,
     };
   } catch {
     return {
-      materials: fallbackMaterials,
-      total: fallbackMaterials.length,
+      materials: [],
+      total: 0,
+      error: true,
     };
   }
 }
@@ -231,17 +246,8 @@ export async function getMaterialById(
     ).then(normalizeMaterial);
   } catch (error) {
     if (error instanceof GatewayRequestError && error.status === 404) {
-      return (
-        fallbackMaterials.find(
-          (material) => material.id === normalizedMaterialId,
-        ) ?? null
-      );
+      return null;
     }
-
-    const fallback = fallbackMaterials.find(
-      (material) => material.id === normalizedMaterialId,
-    );
-    if (fallback) return fallback;
     throw error;
   }
 }

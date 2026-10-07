@@ -10,6 +10,16 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function LearningPathsPage() {
-  const paths = await getLearningPaths();
-  return <LearningPathsView paths={paths} />;
+  try {
+    const paths = await getLearningPaths();
+    return <LearningPathsView paths={paths} />;
+  } catch (error) {
+    console.error("Failed to load learning paths", error);
+    return (
+      <LearningPathsView
+        paths={[]}
+        error="We could not reach the learning path catalog. Please try again."
+      />
+    );
+  }
 }

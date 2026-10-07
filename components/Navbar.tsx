@@ -20,8 +20,7 @@ const NAV_LINKS: NavLink[] = [
 ];
 
 function getCurrentPage(pathname: string): string {
-  if (pathname.includes("training") || pathname.includes("materials"))
-    return "catalog";
+  if (pathname.includes("training") || pathname.includes("materials")) return "catalog";
   if (pathname.includes("learning")) return "learning";
   if (pathname.includes("events")) return "events";
   if (pathname.includes("programs")) return "programs";
@@ -40,18 +39,8 @@ export default function Navbar() {
   return (
     <header className="site-header">
       <div className="header-shell">
-        <Link
-          className="site-brand"
-          href="/"
-          aria-label="HPC Learning Hub home"
-        >
-          <Image
-            src="/SDSC-logo.svg"
-            alt="San Diego Supercomputer Center"
-            width={170}
-            height={48}
-            priority
-          />
+        <Link className="site-brand" href="/" aria-label="HPC Learning Hub home">
+          <Image src="/SDSC-logo.svg" alt="San Diego Supercomputer Center" width={170} height={48} priority />
           <span>HPC Learning Hub</span>
         </Link>
         {/*
@@ -87,7 +76,7 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-          {/*
+{/*
           <button className="nav-button" type="button" title="Ask AIDA" onClick={closeMenus}>
             Ask AIDA
           </button>

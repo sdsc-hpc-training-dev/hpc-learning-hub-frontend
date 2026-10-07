@@ -16,7 +16,11 @@ import AccountsPage from "../account/page";
 import ConversationsPage from "../my-learning/conversations/page";
 import ProgramsPage from "../programs/page";
 import ProgramsLoading from "../programs/loading";
-import { fallbackMaterials } from "@/features/training-library/api";
+import {
+  fallbackMaterials,
+  getMaterialById,
+  getTrainingLibraryData,
+} from "@/features/training-library/api";
 import { getEventsData } from "@/features/events/api";
 import { getProgramsData } from "@/features/programs/api";
 import {
@@ -24,6 +28,30 @@ import {
   getLearningPaths,
 } from "@/features/learning-paths/api";
 import { notFound } from "next/navigation";
+
+const mockSearchParams = new URLSearchParams();
+
+jest.mock("@/features/training-library/api", () => {
+  const actual = jest.requireActual<
+    typeof import("@/features/training-library/api")
+  >("@/features/training-library/api");
+  return {
+    ...actual,
+    getTrainingLibraryData: jest.fn().mockResolvedValue({
+      materials: actual.fallbackMaterials,
+      total: actual.fallbackMaterials.length,
+    }),
+    getMaterialById: jest
+      .fn()
+      .mockImplementation((id: string) =>
+        Promise.resolve(
+          actual.fallbackMaterials.find(
+            (material: { id: string }) => material.id === id,
+          ) ?? null,
+        ),
+      ),
+  };
+});
 
 jest.mock("@/features/events/api", () => ({
   getEventsData: jest.fn().mockResolvedValue({
@@ -54,7 +82,8 @@ jest.mock("@/features/learning-paths/api", () => ({
 
 jest.mock("next/navigation", () => ({
   usePathname: () => "/materials",
-  useRouter: () => ({ replace: jest.fn() }),
+  useRouter: () => ({ replace: jest.fn(), refresh: jest.fn() }),
+  useSearchParams: () => mockSearchParams,
   notFound: jest.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -74,6 +103,8 @@ const getLearningPathsMock = jest.mocked(getLearningPaths);
 const getLearningPathMock = jest.mocked(getLearningPath);
 const getEventsDataMock = jest.mocked(getEventsData);
 const getProgramsDataMock = jest.mocked(getProgramsData);
+const getMaterialByIdMock = jest.mocked(getMaterialById);
+const getTrainingLibraryDataMock = jest.mocked(getTrainingLibraryData);
 const notFoundMock = jest.mocked(notFound);
 
 describe("static route components", () => {
@@ -98,7 +129,9 @@ describe("static route components", () => {
       unmount();
     }
   });
+});
 
+describe("training catalog routes", () => {
   it("renders the catalog page with the public library hero text", async () => {
     render(await MaterialsPage({}));
     expect(
@@ -109,6 +142,69 @@ describe("static route components", () => {
     expect(screen.getByLabelText(/training filters/i)).toBeInTheDocument();
   });
 
+  it("shows an inline error when the training catalog is unavailable", async () => {
+    getTrainingLibraryDataMock.mockResolvedValueOnce({
+      materials: [],
+      total: 0,
+      error: true,
+    });
+
+    render(await MaterialsPage({}));
+    expect(
+      screen.getByRole("heading", {
+        name: "Training materials are unavailable.",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("uses the 404 boundary for an unknown material", async () => {
+    notFoundMock.mockClear();
+    getMaterialByIdMock.mockResolvedValueOnce(null);
+
+    await expect(
+      MaterialPage({
+        params: Promise.resolve({ materialId: "missing-material" }),
+      }),
+    ).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(notFoundMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("training program filter data", () => {
+  it("loads program options and passes selected filters to the API modules", async () => {
+    getTrainingLibraryDataMock.mockClear();
+    getProgramsDataMock.mockResolvedValueOnce({
+      programs: [{ id: "series-1", name: "Series One" }],
+      selectedProgram: null,
+    });
+    mockSearchParams.set("query", "batch computing");
+    mockSearchParams.set("program", "series-1");
+
+    const page = await MaterialsPage({
+      searchParams: Promise.resolve({
+        query: "batch computing",
+        program: "series-1",
+      }),
+    });
+    const { unmount } = render(page);
+
+    expect(getTrainingLibraryDataMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: "batch computing",
+        program: "series-1",
+      }),
+    );
+    expect(getProgramsDataMock).toHaveBeenCalled();
+    expect(screen.getByRole("option", { name: "Series One" })).toHaveValue(
+      "series-1",
+    );
+    unmount();
+    mockSearchParams.delete("query");
+    mockSearchParams.delete("program");
+  });
+});
+
+describe("static loading and not-found states", () => {
   it("renders the loading and not-found states", () => {
     const { unmount: unmountLoading } = render(<Loading />);
     expect(screen.getByText("Loading...")).toBeInTheDocument();
@@ -133,11 +229,14 @@ describe("events route components", () => {
     getEventsDataMock.mockResolvedValue({ upcomingEvents: [], recordings: [] });
   });
 
-  it("propagates gateway failures", async () => {
+  it("renders an inline error when the events API fails", async () => {
     const error = new Error("events request failed");
     getEventsDataMock.mockRejectedValueOnce(error);
 
-    await expect(EventsPage()).rejects.toThrow(error);
+    render(await EventsPage());
+    expect(
+      screen.getByRole("heading", { name: "Events are unavailable." }),
+    ).toBeInTheDocument();
   });
 
   it("renders the programs loading state", () => {
@@ -164,11 +263,14 @@ describe("programs route components", () => {
     expect(getProgramsDataMock).toHaveBeenCalledWith("series-1");
   });
 
-  it("propagates gateway failures", async () => {
+  it("renders an inline error when the programs API fails", async () => {
     const error = new Error("program request failed");
     getProgramsDataMock.mockRejectedValueOnce(error);
 
-    await expect(ProgramsPage()).rejects.toThrow(error);
+    render(await ProgramsPage());
+    expect(
+      screen.getByRole("heading", { name: "Programs are unavailable." }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -201,10 +303,15 @@ describe("learning path route components", () => {
     ).toBeInTheDocument();
   });
 
-  it("propagates learning path gateway failures", async () => {
+  it("renders an inline error for a learning path list failure", async () => {
     const listError = new Error("list request failed");
     getLearningPathsMock.mockRejectedValueOnce(listError);
-    await expect(LearningPathsPage()).rejects.toThrow(listError);
+    render(await LearningPathsPage());
+    expect(
+      screen.getByRole("heading", {
+        name: "Learning paths are unavailable.",
+      }),
+    ).toBeInTheDocument();
 
     const detailError = new Error("detail request failed");
     getLearningPathMock.mockRejectedValueOnce(detailError);
@@ -234,27 +341,27 @@ describe("learning path route components", () => {
 
 describe("error boundaries", () => {
   it("renders the global error state and retries", () => {
-    const reset = jest.fn();
+    const retry = jest.fn();
     const consoleError = jest
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
 
-    render(<ErrorPage error={new Error("test error")} reset={reset} />);
+    render(<ErrorPage error={new Error("test error")} retry={retry} />);
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
 
-    expect(reset).toHaveBeenCalledTimes(1);
+    expect(retry).toHaveBeenCalledTimes(1);
     expect(consoleError).toHaveBeenCalledTimes(1);
     consoleError.mockRestore();
   });
 
   it("renders the learning path error state and retries", () => {
-    const reset = jest.fn();
+    const retry = jest.fn();
     const error = new Error("gateway unavailable");
     const consoleError = jest
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
 
-    render(<LearningPathsError error={error} reset={reset} />);
+    render(<LearningPathsError error={error} retry={retry} />);
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
 
     expect(
@@ -262,7 +369,7 @@ describe("error boundaries", () => {
         name: "Learning paths are temporarily unavailable.",
       }),
     ).toBeInTheDocument();
-    expect(reset).toHaveBeenCalledTimes(1);
+    expect(retry).toHaveBeenCalledTimes(1);
     expect(consoleError).toHaveBeenCalledWith(error);
     consoleError.mockRestore();
   });

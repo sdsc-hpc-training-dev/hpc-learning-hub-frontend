@@ -56,11 +56,12 @@ describe("ProgramsView", () => {
       ),
     ).toBeInTheDocument();
     const materialLink = screen.getByRole("link", { name: "Linux training" });
-    expect(materialLink).toHaveAttribute("href", "/materials/material-1");
-    expect(materialLink.closest("article")).not.toHaveAttribute("tabindex");
-    expect(materialLink.closest("article")).not.toHaveAttribute(
-      "data-card-href",
+    expect(materialLink).toHaveAttribute(
+      "href",
+      "/materials/material-1",
     );
+    expect(materialLink.closest("article")).not.toHaveAttribute("tabindex");
+    expect(materialLink.closest("article")).not.toHaveAttribute("data-card-href");
     expect(screen.getByRole("link", { name: "COMPLECS" })).toHaveAttribute(
       "aria-current",
       "page",

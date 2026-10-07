@@ -33,11 +33,7 @@ function material(id: string, title: string, startAt: string) {
 }
 
 function responseWith(body: unknown): Response {
-  return {
-    ok: true,
-    status: 200,
-    json: () => Promise.resolve(body),
-  } as Response;
+  return { ok: true, status: 200, json: () => Promise.resolve(body) } as Response;
 }
 
 function requestUrl(input: RequestInfo | URL): string {
@@ -45,45 +41,8 @@ function requestUrl(input: RequestInfo | URL): string {
   return input instanceof URL ? input.toString() : input.url;
 }
 
-function mockEventsApiResponse(input: RequestInfo | URL): Promise<Response> {
-  const url = requestUrl(input);
-  if (url.endsWith("/api/v1/event-editions")) {
-    return Promise.resolve(
-      responseWith([
-        futureLate,
-        {
-          ...futureSoon,
-          id: "past",
-          startAt: "2025-01-01T00:00:00.000Z",
-          endAt: "2099-01-01T00:00:00.000Z",
-        },
-        futureSoon,
-      ]),
-    );
-  }
-
-  const isSecondPage = url.includes("page=2");
-  return Promise.resolve(
-    responseWith({
-      items: isSecondPage
-        ? [material("newer", "Newer recording", "2026-06-01T18:00:00.000Z")]
-        : [
-            material("older", "Older recording", "2025-06-01T18:00:00.000Z"),
-            material("future", "Future livestream", "2028-06-01T18:00:00.000Z"),
-          ],
-      page: isSecondPage ? 2 : 1,
-      pageSize: 100,
-      total: 3,
-      totalPages: 2,
-    }),
-  );
-}
-
 describe("events API", () => {
-  const fetchMock = jest.fn<
-    ReturnType<typeof fetch>,
-    Parameters<typeof fetch>
-  >();
+  const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
 
   beforeEach(() => {
     process.env.GATEWAY_URL = "https://gateway.example";
@@ -96,7 +55,38 @@ describe("events API", () => {
   });
 
   it("selects future events and recent recording materials", async () => {
-    fetchMock.mockImplementation((input) => mockEventsApiResponse(input));
+    fetchMock.mockImplementation((input) => {
+      const url = requestUrl(input);
+      if (url.endsWith("/api/v1/event-editions")) {
+        return Promise.resolve(
+          responseWith([
+            futureLate,
+            {
+              ...futureSoon,
+              id: "past",
+              startAt: "2025-01-01T00:00:00.000Z",
+              endAt: "2099-01-01T00:00:00.000Z",
+            },
+            futureSoon,
+          ]),
+        );
+      }
+      const isSecondPage = url.includes("page=2");
+      return Promise.resolve(
+        responseWith({
+          items: isSecondPage
+            ? [material("newer", "Newer recording", "2026-06-01T18:00:00.000Z")]
+            : [
+                material("older", "Older recording", "2025-06-01T18:00:00.000Z"),
+                material("future", "Future livestream", "2028-06-01T18:00:00.000Z"),
+              ],
+          page: isSecondPage ? 2 : 1,
+          pageSize: 100,
+          total: 3,
+          totalPages: 2,
+        }),
+      );
+    });
 
     const data = await getEventsData(new Date("2027-01-01T00:00:00.000Z"));
 

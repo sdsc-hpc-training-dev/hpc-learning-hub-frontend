@@ -21,6 +21,17 @@ export default async function ProgramsPage({
   const programId = Array.isArray(params.program)
     ? params.program[0]
     : params.program;
-  const data = await getProgramsData(programId);
-  return <ProgramsView {...data} />;
+  try {
+    const data = await getProgramsData(programId);
+    return <ProgramsView {...data} />;
+  } catch (error) {
+    console.error("Failed to load programs", error);
+    return (
+      <ProgramsView
+        programs={[]}
+        selectedProgram={null}
+        error="We could not reach the training collections. Please try again."
+      />
+    );
+  }
 }

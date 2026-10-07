@@ -8,8 +8,6 @@ import type {
 const EVENT_EDITIONS_ENDPOINT = "/api/v1/event-editions";
 const MATERIALS_ENDPOINT = "/api/v1/materials";
 const PAGE_SIZE = 100;
-const SECTION_LIMIT = 6;
-const HOME_SECTION_LIMIT = 3;
 
 export interface RecordedMaterial {
   id: string;
@@ -78,7 +76,7 @@ async function getRecordingMaterials(): Promise<GatewayMaterial[]> {
 
 export async function getEventsData(now = new Date()): Promise<EventsData> {
   const [upcomingEvents, recordingMaterials] = await Promise.all([
-    getUpcomingEvents(now, SECTION_LIMIT),
+    getUpcomingEvents(now),
     getRecordingMaterials(),
   ]);
   const nowTimestamp = now.getTime();
@@ -93,15 +91,14 @@ export async function getEventsData(now = new Date()): Promise<EventsData> {
       (left, right) =>
         (Date.parse(right.recordedAt ?? "") || Number.NEGATIVE_INFINITY) -
         (Date.parse(left.recordedAt ?? "") || Number.NEGATIVE_INFINITY),
-    )
-    .slice(0, SECTION_LIMIT);
+    );
 
   return { upcomingEvents, recordings };
 }
 
 export async function getUpcomingEvents(
   now = new Date(),
-  limit = HOME_SECTION_LIMIT,
+  limit?: number,
 ): Promise<GatewayEventEdition[]> {
   const eventEditions = await gatewayFetch<GatewayEventEdition[]>(
     EVENT_EDITIONS_ENDPOINT,
@@ -109,12 +106,13 @@ export async function getUpcomingEvents(
   );
   const nowTimestamp = now.getTime();
 
-  return eventEditions
+  const upcomingEvents = eventEditions
     .filter((event) => (eventTimestamp(event) ?? 0) >= nowTimestamp)
     .sort(
       (left, right) =>
         (Date.parse(left.startAt ?? "") || Number.MAX_SAFE_INTEGER) -
         (Date.parse(right.startAt ?? "") || Number.MAX_SAFE_INTEGER),
-    )
-    .slice(0, limit);
+    );
+
+  return limit === undefined ? upcomingEvents : upcomingEvents.slice(0, limit);
 }

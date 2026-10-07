@@ -27,6 +27,7 @@ export interface StartHereData {
   learningPaths: GatewayLearningPath[];
   upcomingEvents: GatewayEventEdition[];
   programs: GatewayEventSeries[];
+  errors: string[];
 }
 
 function materialsUrl(page: number): string {
@@ -58,37 +59,21 @@ function toCatalogMaterial(material: GatewayMaterial): CatalogMaterial | null {
 }
 
 async function getAllMaterials(): Promise<GatewayMaterial[]> {
-  try {
-    const firstPage = await gatewayFetch<GatewayMaterialPage>(materialsUrl(1), {
-      cache: "no-store",
-    });
-    const materials = [...firstPage.items];
-    const totalPages = Math.max(firstPage.totalPages, 1);
+  const firstPage = await gatewayFetch<GatewayMaterialPage>(materialsUrl(1), {
+    cache: "no-store",
+  });
+  const materials = [...firstPage.items];
+  const totalPages = Math.max(firstPage.totalPages, 1);
 
-    for (let page = 2; page <= totalPages; page += 1) {
-      const response = await gatewayFetch<GatewayMaterialPage>(
-        materialsUrl(page),
-        { cache: "no-store" },
-      );
-      materials.push(...response.items);
-    }
-
-    return materials;
-  } catch {
-    return [];
-  }
-}
-
-function shuffleValues<T>(items: T[]): T[] {
-  const shuffled = [...items];
-
-  while (shuffled.length > 1) {
-    const randomIndex = randomInt(shuffled.length);
-    const [selected] = shuffled.splice(randomIndex, 1);
-    shuffled.unshift(selected);
+  for (let page = 2; page <= totalPages; page += 1) {
+    const response = await gatewayFetch<GatewayMaterialPage>(
+      materialsUrl(page),
+      { cache: "no-store" },
+    );
+    materials.push(...response.items);
   }
 
-  return shuffled;
+  return materials;
 }
 
 function sampleFilters(
@@ -102,7 +87,17 @@ function sampleFilters(
     addFilterValues(options, material.systems, "system");
   }
 
-  const shuffled = shuffleValues([...options.values()]);
+  const shuffled = [...options.values()];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = randomInt(index + 1);
+    // Both indexes are bounded by the array length and crypto.randomInt.
+    /* eslint-disable security/detect-object-injection */
+    [shuffled[index], shuffled[randomIndex]] = [
+      shuffled[randomIndex],
+      shuffled[index],
+    ];
+    /* eslint-enable security/detect-object-injection */
+  }
   return shuffled.slice(0, count);
 }
 
@@ -125,26 +120,43 @@ function addFilterValues(
 }
 
 async function getAllLearningPaths(): Promise<GatewayLearningPath[]> {
-  try {
-    const payload = await gatewayFetch<
-      GatewayListResponse<GatewayLearningPath>
-    >("/api/v1/learning-paths", { cache: "no-store" });
-    return listFrom(payload);
-  } catch {
-    return [];
-  }
+  const payload = await gatewayFetch<GatewayListResponse<GatewayLearningPath>>(
+    "/api/v1/learning-paths",
+    { cache: "no-store" },
+  );
+  return listFrom(payload);
 }
 
 export async function getStartHereData(): Promise<StartHereData> {
-  const [materials, learningPaths, upcomingEvents, programs] =
-    await Promise.all([
+  const [materialsResult, pathsResult, eventsResult, programsResult] =
+    await Promise.allSettled([
       getAllMaterials(),
       getAllLearningPaths(),
-      getUpcomingEvents().catch(() => []),
-      getProgramsData()
-        .then((data) => data.programs)
-        .catch(() => []),
+      getUpcomingEvents(new Date(), 3),
+      getProgramsData().then((data) => data.programs),
     ]);
+  const errors = [
+    materialsResult.status === "rejected"
+      ? "Training materials could not be loaded."
+      : null,
+    pathsResult.status === "rejected"
+      ? "Learning paths could not be loaded."
+      : null,
+    eventsResult.status === "rejected"
+      ? "Upcoming events could not be loaded."
+      : null,
+    programsResult.status === "rejected"
+      ? "Programs could not be loaded."
+      : null,
+  ].filter((message): message is string => message !== null);
+  const materials =
+    materialsResult.status === "fulfilled" ? materialsResult.value : [];
+  const learningPaths =
+    pathsResult.status === "fulfilled" ? pathsResult.value : [];
+  const upcomingEvents =
+    eventsResult.status === "fulfilled" ? eventsResult.value : [];
+  const programs =
+    programsResult.status === "fulfilled" ? programsResult.value : [];
   const catalogMaterials = materials
     .map(toCatalogMaterial)
     .filter((material): material is CatalogMaterial => material !== null);
@@ -155,5 +167,6 @@ export async function getStartHereData(): Promise<StartHereData> {
     learningPaths: learningPaths.slice(0, 3),
     upcomingEvents,
     programs: programs.slice(0, 3),
+    errors,
   };
 }

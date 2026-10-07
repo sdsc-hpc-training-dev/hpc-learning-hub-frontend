@@ -1,11 +1,13 @@
 import Link from "next/link";
 import MaterialCard from "@/features/training-library/MaterialCard";
+import InlineError from "@/components/ui/InlineError";
 import type { GatewayEventSeries } from "@/lib/gateway/types";
 import type { SelectedProgram } from "./api";
 
 interface ProgramsViewProps {
   programs: GatewayEventSeries[];
   selectedProgram: SelectedProgram | null;
+  error?: string;
 }
 
 function programHref(programId: string): string {
@@ -130,6 +132,7 @@ function ProgramDetail({
 export default function ProgramsView({
   programs,
   selectedProgram,
+  error,
 }: Readonly<ProgramsViewProps>) {
   return (
     <div className="programs-page">
@@ -145,11 +148,17 @@ export default function ProgramsView({
           </p>
         </div>
       </section>
-      <ProgramOverview
-        programs={programs}
-        selectedProgramId={selectedProgram?.id}
-      />
-      <ProgramDetail program={selectedProgram} />
+      {error ? (
+        <InlineError title="Programs are unavailable." message={error} />
+      ) : (
+        <>
+          <ProgramOverview
+            programs={programs}
+            selectedProgramId={selectedProgram?.id}
+          />
+          <ProgramDetail program={selectedProgram} />
+        </>
+      )}
     </div>
   );
 }
