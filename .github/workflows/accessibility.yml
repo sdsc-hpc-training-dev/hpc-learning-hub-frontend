@@ -71,7 +71,15 @@ jobs:
                 .map((route) => `- \`${route.route}\`: ${route.violationCount} ${route.violationCount === 1 ? 'issue' : 'issues'}`)
                 .join('\n');
 
-              body = `### Accessibility check failed\n\nThe automated accessibility scan found issues that should be fixed before merge.\n\n### Route summary\n\n${routeLines}\n\n**Total:** ${summary.totals?.violations ?? 0} accessibility violations across ${summary.totals?.pagesScanned ?? 0} pages\n\n| Severity | Count |\n| --- | ---: |\n| Critical | ${counts.critical} |\n| Serious | ${counts.serious} |\n| Moderate | ${counts.moderate} |\n| Minor | ${counts.minor} |\n\n⚠️ This check fails on any accessibility issue, so this PR is currently blocked.\n\nArtifacts are available in the workflow run output and the uploaded \`a11y-report\` artifact.`;
+              const hasViolations = (summary.totals?.violations ?? 0) > 0;
+              const result = hasViolations
+                ? 'The automated accessibility scan found issues that must be fixed before merge.'
+                : 'The automated accessibility scan found no accessibility violations.';
+              const status = hasViolations
+                ? 'This check fails on any accessibility issue.'
+                : 'The accessibility check passed.';
+
+              body = `### Accessibility summary\n\n${result}\n\n### Route summary\n\n${routeLines}\n\n**Total:** ${summary.totals?.violations ?? 0} accessibility violations across ${summary.totals?.pagesScanned ?? 0} pages\n\n| Severity | Count |\n| --- | ---: |\n| Critical | ${counts.critical} |\n| Serious | ${counts.serious} |\n| Moderate | ${counts.moderate} |\n| Minor | ${counts.minor} |\n\n${status}\n\nArtifacts are available in the workflow run output and the uploaded \`a11y-report\` artifact.`;
             }
 
             const pr = context.payload.pull_request;

@@ -2,23 +2,59 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import net from "node:net";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
+import { scanInteractions } from "./a11y-interactions.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const reportDir = path.join(repoRoot, "a11y-artifacts");
-const routes = [
-  "/",
-  "/events",
-  "/materials",
-  "/learning-paths",
-  "/my-learning",
-  "/maintainer",
-];
+async function discoverPages(directory, segments = []) {
+  const entries = await fs.readdir(directory, { withFileTypes: true });
+  const pages = [];
+  if (
+    entries.some(
+      (entry) => entry.isFile() && /^page\.(tsx|ts|jsx|js)$/.test(entry.name),
+    )
+  ) {
+    pages.push(`/${segments.join("/")}`);
+  }
+  for (const entry of entries) {
+    if (
+      !entry.isDirectory() ||
+      entry.name.startsWith("_") ||
+      entry.name.startsWith("@")
+    )
+      continue;
+    const nextSegments = entry.name.startsWith("(")
+      ? segments
+      : [...segments, entry.name];
+    pages.push(
+      ...(await discoverPages(path.join(directory, entry.name), nextSegments)),
+    );
+  }
+  return pages;
+}
+
+function pagePattern(route) {
+  const segments = route.split("/").filter(Boolean);
+  if (segments.length === 0) return /^\/$/;
+  // Route literals are escaped; only known dynamic-segment patterns are added.
+  // eslint-disable-next-line security/detect-non-literal-regexp
+  return new RegExp(
+    `^${segments
+      .map((segment) => {
+        if (segment.startsWith("[[...")) return "(?:/.*)?";
+        if (segment.startsWith("[...")) return "/.+";
+        if (segment.startsWith("[")) return "/[^/]+";
+        return `/${segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`;
+      })
+      .join("")}/?$`,
+  );
+}
 
 async function getFreePort() {
   return new Promise((resolve, reject) => {
@@ -80,24 +116,22 @@ async function waitForServer(processRef, timeoutMs = 120000) {
   });
 }
 
-function cleanupStaleNextProcesses() {
-  if (process.platform === "win32") {
-    return;
-  }
-
-  try {
-    spawnSync("pkill", ["-f", "next dev"], { stdio: "ignore" });
-  } catch {
-    // Ignore cleanup failures; the script should continue if there are no stale Next processes.
-  }
-}
-
 async function main() {
+  const pages = await discoverPages(path.join(repoRoot, "app"));
+  const patterns = pages.map(pagePattern);
+  const routes = [
+    ...new Set(pages.filter((route) => !route.includes("["))),
+  ].sort((a, b) => a.localeCompare(b));
+  const queued = new Set(routes);
   await fs.mkdir(reportDir, { recursive: true });
-  cleanupStaleNextProcesses();
 
-  const preferredPort = 3000;
-  const existingBaseUrl = `http://127.0.0.1:${preferredPort}`;
+  const existingBaseUrl = process.env.A11Y_BASE_URL ?? "http://127.0.0.1:3000";
+  if (
+    process.env.A11Y_BASE_URL &&
+    !(await isServerReachable(existingBaseUrl))
+  ) {
+    throw new Error(`Accessibility server is unreachable: ${existingBaseUrl}`);
+  }
   const baseUrl = (await isServerReachable(existingBaseUrl))
     ? existingBaseUrl
     : `http://127.0.0.1:${await getFreePort()}`;
@@ -143,6 +177,7 @@ async function main() {
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext();
     const page = await context.newPage();
+    page.setDefaultTimeout(15000);
 
     for (const route of routes) {
       const fullUrl = `${baseUrl}${route}`;
@@ -150,13 +185,63 @@ async function main() {
         route === "/" ? "index" : route.replace(/^\//, "").replace(/\//g, "-");
       const resultPath = path.join(reportDir, `${routeName}.json`);
 
-      await page.goto(fullUrl, {
+      const response = await page.goto(fullUrl, {
         waitUntil: "domcontentloaded",
         timeout: 60000,
       });
       await page.waitForLoadState("load", { timeout: 60000 });
+      if (!response?.ok()) {
+        throw new Error(
+          `Cannot scan ${route}: HTTP ${response?.status() ?? "unknown"}`,
+        );
+      }
       const results = await new AxeBuilder({ page }).analyze();
-      const violations = results.violations.map((violation) => ({
+      // Follow linked page paths, including concrete IDs for dynamic routes.
+      // Ignore query/hash variants and endpoints that are not app pages.
+      const links = await page
+        .locator("a[href], area[href]")
+        .evaluateAll((elements) => elements.map((element) => element.href));
+      for (const href of links) {
+        const linked = new URL(href, fullUrl);
+        const linkedRoute = linked.pathname.replace(/\/$/, "") || "/";
+        if (
+          linked.origin === new URL(baseUrl).origin &&
+          patterns.some((pattern) => pattern.test(linkedRoute)) &&
+          !queued.has(linkedRoute)
+        ) {
+          queued.add(linkedRoute);
+          routes.push(linkedRoute);
+        }
+      }
+      const states = [];
+      await scanInteractions(page, fullUrl, async (state) => {
+        const stateResults = await new AxeBuilder({ page }).analyze();
+        states.push({ state, ...stateResults });
+      });
+      const uniqueViolations = new Map();
+      for (const result of [results, ...states]) {
+        for (const violation of result.violations) {
+          const existing = uniqueViolations.get(violation.id);
+          if (!existing) {
+            uniqueViolations.set(violation.id, {
+              ...violation,
+              nodes: [...violation.nodes],
+            });
+          } else {
+            for (const node of violation.nodes) {
+              if (
+                !existing.nodes.some(
+                  (item) =>
+                    JSON.stringify(item.target) === JSON.stringify(node.target),
+                )
+              ) {
+                existing.nodes.push(node);
+              }
+            }
+          }
+        }
+      }
+      const violations = [...uniqueViolations.values()].map((violation) => ({
         id: violation.id,
         impact: violation.impact ?? "moderate",
         help: violation.help,
@@ -168,13 +253,17 @@ async function main() {
         url: fullUrl,
         violationCount: violations.length,
         violations,
+        statesScanned: states.map(({ state }) => state),
       };
 
       summary.routes.push(routeSummary);
       summary.totals.pagesScanned += 1;
       summary.totals.violations += violations.length;
 
-      await fs.writeFile(resultPath, JSON.stringify(results, null, 2));
+      await fs.writeFile(
+        resultPath,
+        JSON.stringify({ ...results, states }, null, 2),
+      );
       console.log(`${route}: ${violations.length} accessibility issue(s)`);
     }
 
@@ -217,7 +306,8 @@ async function main() {
       console.error(
         `\nAccessibility check failed: ${summary.totals.violations} violation(s) found across ${summary.totals.pagesScanned} page(s).`,
       );
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
 
     console.log("Accessibility check passed: no violations found.");
