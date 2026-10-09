@@ -4,6 +4,7 @@ import InlineError from "@/components/ui/InlineError";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 
 export interface TrainingLibraryViewProps {
+  pending?: boolean;
   materials: CatalogMaterial[];
   total: number;
   error?: string;
@@ -50,6 +51,7 @@ function CatalogHero() {
 }
 
 interface CatalogResultsProps {
+  pending?: boolean;
   materials: CatalogMaterial[];
   total: number;
   error?: string;
@@ -127,7 +129,7 @@ function CatalogSearchControls({
       </div>
       <div className="catalog-toolbar">
         <p className="catalog-count" aria-live="polite">
-          {total} {total === 1 ? "material" : "materials"} shown
+          {total} {total === 1 ? "material" : "materials"} found
         </p>
         <button
           type="button"
@@ -191,6 +193,7 @@ function CatalogContent({
 }
 
 function CatalogResults({
+  pending,
   materials,
   total,
   activeFilters,
@@ -204,7 +207,7 @@ function CatalogResults({
   error,
 }: Readonly<CatalogResultsProps>) {
   return (
-    <div>
+    <div aria-busy={pending}>
       <CatalogSearchControls
         total={total}
         activeFilters={activeFilters}
@@ -222,7 +225,7 @@ function CatalogResults({
           <button
             type="button"
             className="button button--secondary"
-            disabled={page === 1}
+            disabled={Boolean(pending) || page <= 1}
             onClick={() => {
               onPageChange(page - 1);
             }}
@@ -235,7 +238,7 @@ function CatalogResults({
           <button
             type="button"
             className="button button--secondary"
-            disabled={page === totalPages}
+            disabled={Boolean(pending) || page >= totalPages}
             onClick={() => {
               onPageChange(page + 1);
             }}
@@ -249,6 +252,7 @@ function CatalogResults({
 }
 
 export default function TrainingLibraryView({
+  pending,
   materials,
   total,
   error,
@@ -280,6 +284,7 @@ export default function TrainingLibraryView({
           </div>
 
           <CatalogResults
+            pending={pending}
             materials={materials}
             total={total}
             error={error}

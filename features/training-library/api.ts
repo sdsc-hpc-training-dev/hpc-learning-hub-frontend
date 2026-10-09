@@ -4,11 +4,12 @@ import type {
   GatewayEventEdition,
   GatewayMaterial,
   GatewayMaterialPage,
+  NamedCatalogItem,
 } from "@/lib/gateway/types";
 import { catalogPlainText } from "./presentation";
+import { catalogPage, MATERIALS_PAGE_SIZE } from "./navigation";
 
 const MATERIALS_ENDPOINT = "/api/v1/materials";
-const MATERIALS_PAGE_SIZE = 100;
 
 export const fallbackMaterials: CatalogMaterial[] = [
   {
@@ -144,6 +145,8 @@ export interface MaterialListFilters {
   resource?: string;
   query?: string;
   date?: string;
+  page?: string;
+  sort?: string;
 }
 
 function namedValues(items: { name: string }[] | undefined) {
@@ -190,8 +193,11 @@ function materialDescription(
 }
 
 export function normalizeMaterial(material: GatewayMaterial): CatalogMaterial {
-  const eventEdition: GatewayEventEdition | undefined =
-    material.eventEditions.at(0);
+  const eventEdition: GatewayEventEdition | undefined = [
+    ...material.eventEditions,
+  ]
+    .sort((a, b) => (b.startAt ?? "").localeCompare(a.startAt ?? ""))
+    .at(0);
   const resources = Array.isArray(material.resources) ? material.resources : [];
   const title = materialDisplayTitle(material, resources, eventEdition);
   const description = materialDescription(material, eventEdition);
@@ -213,27 +219,41 @@ export function normalizeMaterial(material: GatewayMaterial): CatalogMaterial {
 
 function queryForFilters(filters: MaterialListFilters, page: number) {
   const params = new URLSearchParams();
-  if (filters.query?.trim()) {
-    params.set("search", filters.query.trim());
-  }
-  if (filters.program?.trim()) {
-    params.set("eventSeries", filters.program.trim());
+  const mappedFilters: [string, string | undefined][] = [
+    ["search", filters.query],
+    ["eventSeries", filters.program],
+    ["topic", filters.topic],
+    ["tool", filters.tool],
+    ["system", filters.system],
+    ["date", filters.date],
+    ["resourceType", filters.resource],
+  ];
+  for (const [key, value] of mappedFilters) {
+    if (value?.trim()) params.set(key, value.trim());
   }
   params.set("page", String(page));
+  if (filters.query?.trim()) params.set("searchMode", "phrase");
+  params.set("sort", filters.sort === "title" ? "title" : "recommended");
   params.set("pageSize", String(MATERIALS_PAGE_SIZE));
 
   return params;
 }
 
-function matchesTitleOrDescription(material: CatalogMaterial, query: string) {
-  const normalizedQuery = query.trim().replace(/\s+/g, " ").toLowerCase();
-  const normalizeText = (value: string) =>
-    value.replace(/\s+/g, " ").toLowerCase();
+export interface CatalogFacets {
+  topics: NamedCatalogItem[];
+  tools: NamedCatalogItem[];
+  systems: NamedCatalogItem[];
+}
 
-  return (
-    normalizeText(material.title).includes(normalizedQuery) ||
-    normalizeText(material.description ?? "").includes(normalizedQuery)
+export async function getTrainingLibraryFacets(): Promise<CatalogFacets> {
+  const [topics, tools, systems] = await Promise.all(
+    ["topics", "tools", "systems"].map((endpoint) =>
+      gatewayFetch<NamedCatalogItem[]>(`/api/v1/${endpoint}`, {
+        cache: "no-store",
+      }),
+    ),
   );
+  return { topics, tools, systems };
 }
 
 export async function getTrainingLibraryData(
@@ -241,43 +261,30 @@ export async function getTrainingLibraryData(
 ): Promise<{
   materials: CatalogMaterial[];
   total: number;
+  page: number;
+  totalPages: number;
   error?: boolean;
 }> {
   try {
     const firstPage = await gatewayFetch<GatewayMaterialPage>(
-      `${MATERIALS_ENDPOINT}?${queryForFilters(filters, 1)}`,
+      `${MATERIALS_ENDPOINT}?${queryForFilters(filters, catalogPage(filters.page))}`,
       { cache: "no-store" },
     );
     const materials = Array.isArray(firstPage.items)
       ? firstPage.items.map(normalizeMaterial)
       : [];
-    const totalPages = Math.max(firstPage.totalPages, 1);
-
-    for (let page = 2; page <= totalPages; page += 1) {
-      const response = await gatewayFetch<GatewayMaterialPage>(
-        `${MATERIALS_ENDPOINT}?${queryForFilters(filters, page)}`,
-        { cache: "no-store" },
-      );
-
-      if (Array.isArray(response.items)) {
-        materials.push(...response.items.map(normalizeMaterial));
-      }
-    }
-
-    const matchingMaterials = filters.query?.trim()
-      ? materials.filter((material) =>
-          matchesTitleOrDescription(material, filters.query ?? ""),
-        )
-      : materials;
-
     return {
-      materials: matchingMaterials,
-      total: filters.query?.trim() ? matchingMaterials.length : firstPage.total,
+      materials,
+      total: firstPage.total,
+      page: firstPage.page,
+      totalPages: firstPage.totalPages,
     };
   } catch {
     return {
       materials: [],
       total: 0,
+      page: catalogPage(filters.page),
+      totalPages: 0,
       error: true,
     };
   }

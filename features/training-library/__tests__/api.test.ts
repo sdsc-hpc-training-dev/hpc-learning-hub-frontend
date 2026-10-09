@@ -1,4 +1,8 @@
-import { getTrainingLibraryData, normalizeMaterial } from "../api";
+import {
+  getTrainingLibraryData,
+  getTrainingLibraryFacets,
+  normalizeMaterial,
+} from "../api";
 import type { GatewayMaterial } from "@/lib/gateway/types";
 
 function material(
@@ -18,7 +22,6 @@ function material(
     resources: [],
   };
 }
-
 function responseWith(body: unknown): Response {
   return {
     ok: true,
@@ -26,85 +29,116 @@ function responseWith(body: unknown): Response {
     json: () => Promise.resolve(body),
   } as Response;
 }
-
 function requestUrl(input: RequestInfo | URL): string {
   if (typeof input === "string") return input;
   if (input instanceof URL) return input.toString();
   return input.url;
 }
-
-function searchPage(isSecondPage: boolean) {
-  return responseWith({
-    items: isSecondPage
-      ? [
-          material(
-            "description-match",
-            "Scheduling compute jobs",
-            "An introduction to batch computing.",
-          ),
-          material("cross-field-only", "Batch", "Computing jobs"),
-        ]
-      : [
-          material(
-            "title-match",
-            "Batch Computing with Slurm",
-            "Scheduling jobs on shared systems.",
-          ),
-          material(
-            "metadata-only",
-            "Scheduling compute jobs",
-            "Learn to schedule compute jobs.",
-          ),
-        ],
-    page: isSecondPage ? 2 : 1,
-    pageSize: 100,
-    total: 4,
-    totalPages: 2,
-  });
-}
-
 const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
 
-describe("Training Library API search", () => {
-  beforeEach(() => {
-    process.env.GATEWAY_URL = "https://gateway.example";
-    global.fetch = fetchMock;
-    fetchMock.mockReset();
-    fetchMock.mockImplementation((input) => {
-      return Promise.resolve(searchPage(requestUrl(input).includes("page=2")));
-    });
+beforeEach(() => {
+  process.env.GATEWAY_URL = "https://gateway.example";
+  global.fetch = fetchMock;
+  fetchMock.mockReset();
+  fetchMock.mockResolvedValue(
+    responseWith({
+      items: Array.from({ length: 10 }, (_, i) =>
+        material(String(i), "Material " + String(i), "Description"),
+      ),
+      page: 2,
+      pageSize: 10,
+      total: 530,
+      totalPages: 53,
+    }),
+  );
+});
+afterEach(() => {
+  delete process.env.GATEWAY_URL;
+});
+
+it("requests exactly one ten-item Gateway page with every filter and preserves server order and totals", async () => {
+  const result = await getTrainingLibraryData({
+    page: "2",
+    query: "batch computing",
+    program: "series-1",
+    topic: "Batch Computing",
+    tool: "Slurm",
+    system: "Expanse",
+    resource: "video",
+    date: "2025-01-01",
   });
-
-  afterEach(() => {
-    delete process.env.GATEWAY_URL;
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+  const url = new URL(requestUrl(fetchMock.mock.calls[0][0]));
+  expect(Object.fromEntries(url.searchParams)).toEqual({
+    search: "batch computing",
+    searchMode: "phrase",
+    eventSeries: "series-1",
+    page: "2",
+    pageSize: "10",
+    topic: "Batch Computing",
+    tool: "Slurm",
+    system: "Expanse",
+    resourceType: "video",
+    date: "2025-01-01",
+    sort: "recommended",
   });
+  expect(result.materials.map((item) => item.id)).toEqual(
+    Array.from({ length: 10 }, (_, i) => String(i)),
+  );
+  expect(result).toMatchObject({ page: 2, total: 530, totalPages: 53 });
+});
 
-  it("queries every Gateway page and keeps title or description matches", async () => {
-    const result = await getTrainingLibraryData({ query: "batch computing" });
+it.each([undefined, "0", "-1", "1.5", "invalid"])(
+  "normalizes invalid page %s without downloading extra pages",
+  async (page) => {
+    await getTrainingLibraryData({ page, sort: "title" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(requestUrl(fetchMock.mock.calls[0][0])).toContain("page=1");
+    expect(requestUrl(fetchMock.mock.calls[0][0])).toContain("sort=title");
+  },
+);
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://gateway.example/api/v1/materials?search=batch+computing&page=1&pageSize=100",
-      expect.objectContaining({ cache: "no-store" }),
-    );
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://gateway.example/api/v1/materials?search=batch+computing&page=2&pageSize=100",
-      expect.objectContaining({ cache: "no-store" }),
-    );
-    expect(result.materials.map(({ id }) => id)).toEqual([
-      "title-match",
-      "description-match",
-    ]);
-    expect(result.total).toBe(2);
+it("keeps an empty page and server totals, including incomplete records", async () => {
+  fetchMock.mockResolvedValueOnce(
+    responseWith({
+      items: [],
+      page: 54,
+      pageSize: 10,
+      total: 530,
+      totalPages: 53,
+    }),
+  );
+  expect(await getTrainingLibraryData({ page: "54" })).toMatchObject({
+    materials: [],
+    total: 530,
+    page: 54,
+    totalPages: 53,
   });
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});
 
-  it("filters materials by the selected event-series ID", async () => {
-    await getTrainingLibraryData({ program: "series-1" });
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("eventSeries=series-1"),
-      expect.objectContaining({ cache: "no-store" }),
-    );
+it("reports failures without falling back to a full-catalog download", async () => {
+  fetchMock.mockRejectedValueOnce(new Error("offline"));
+  expect(await getTrainingLibraryData()).toMatchObject({
+    materials: [],
+    total: 0,
+    error: true,
   });
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
+it("loads catalog-wide facet options from small lookup endpoints", async () => {
+  fetchMock.mockResolvedValue(responseWith([{ id: "id", name: "Name" }]));
+  expect(await getTrainingLibraryFacets()).toEqual({
+    topics: [{ id: "id", name: "Name" }],
+    tools: [{ id: "id", name: "Name" }],
+    systems: [{ id: "id", name: "Name" }],
+  });
+  expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
+    "https://gateway.example/api/v1/topics",
+    "https://gateway.example/api/v1/tools",
+    "https://gateway.example/api/v1/systems",
+  ]);
 });
 
 describe("Training Library repository normalization", () => {

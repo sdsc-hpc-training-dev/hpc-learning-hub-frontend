@@ -1,84 +1,70 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import TrainingLibraryView from "./TrainingLibraryView";
 import type { CatalogMaterial, GatewayEventSeries } from "@/lib/gateway/types";
-import type { MaterialListFilters } from "./api";
+import type { CatalogFacets, MaterialListFilters } from "./api";
 import { publicResourceTypeLabel } from "./presentation";
+import { catalogUrl, emptyFilterValues, type FilterValues } from "./navigation";
 
-const MATERIALS_PER_PAGE = 24;
+interface MaterialsPageClientProps {
+  materials: CatalogMaterial[];
+  total?: number;
+  page?: number;
+  totalPages?: number;
+  programs?: GatewayEventSeries[];
+  facets?: CatalogFacets;
+  initialFilters?: MaterialListFilters;
+  initialError?: string;
+}
 
-const emptyFilterValues = {
-  query: "",
-  topic: "",
-  tool: "",
-  system: "",
-  program: "",
-  resource: "",
-  date: "",
-};
+function filterValues(initialFilters: MaterialListFilters): FilterValues {
+  return Object.fromEntries(
+    Object.keys(emptyFilterValues).map((key) => [
+      key,
+      initialFilters[key as keyof FilterValues] ?? "",
+    ]),
+  ) as FilterValues;
+}
 
-function initialFilterState(filters: MaterialListFilters = {}) {
+function namedOptions(items: CatalogFacets["topics"], selected: string) {
+  const options = items.map(({ name }) => ({ label: name, value: name }));
+  if (selected && !options.some((option) => option.value === selected)) {
+    options.push({
+      label: items.find((item) => item.id === selected)?.name ?? selected,
+      value: selected,
+    });
+  }
+  return options;
+}
+
+function filterOptions(
+  facets: CatalogFacets,
+  programs: GatewayEventSeries[],
+  filters: FilterValues,
+) {
   return {
-    ...emptyFilterValues,
-    ...filters,
-    query: filters.query ?? "",
-    topic: filters.topic ?? "",
-    tool: filters.tool ?? "",
-    system: filters.system ?? "",
-    program: filters.program ?? "",
-    resource: filters.resource ?? "",
-    date: filters.date ?? "",
+    topics: namedOptions(facets.topics, filters.topic),
+    tools: namedOptions(facets.tools, filters.tool),
+    systems: namedOptions(facets.systems, filters.system),
+    programs: programs.map(({ id, name }) => ({ label: name, value: id })),
+    resourceTypes: [
+      "repository",
+      "repository_session",
+      "slides",
+      "transcript",
+      "video",
+      "webpage",
+    ].map((value) => ({
+      label: publicResourceTypeLabel(value) ?? value,
+      value,
+    })),
   };
 }
 
-function normalizeMaterials(materials: CatalogMaterial[]) {
-  return materials.map((material) => ({
-    ...material,
-    topics: Array.isArray(material.topics) ? material.topics : [],
-    tools: Array.isArray(material.tools) ? material.tools : [],
-    systems: Array.isArray(material.systems) ? material.systems : [],
-    instructors: Array.isArray(material.instructors)
-      ? material.instructors
-      : [],
-    resources: Array.isArray(material.resources) ? material.resources : [],
-  }));
-}
-
-function hasCaseInsensitiveValue(values: string[], value: string) {
-  const normalizedValue = value.toLocaleLowerCase();
-  return values.some((item) => item.toLocaleLowerCase() === normalizedValue);
-}
-
-function matchesDate(material: CatalogMaterial, date: string) {
-  const materialDate = material.date
-    ? new Date(material.date).toISOString().slice(0, 10)
-    : "";
-  return !date || materialDate === date;
-}
-
-function matchesFilters(
-  material: CatalogMaterial,
-  filters: typeof emptyFilterValues,
-) {
-  return [
-    !filters.topic || hasCaseInsensitiveValue(material.topics, filters.topic),
-    !filters.tool || hasCaseInsensitiveValue(material.tools, filters.tool),
-    !filters.system ||
-      hasCaseInsensitiveValue(material.systems, filters.system),
-    !filters.resource ||
-      material.resources.some(
-        (resource) =>
-          resource.type.toLocaleLowerCase() ===
-          filters.resource.toLocaleLowerCase(),
-      ),
-    matchesDate(material, filters.date),
-  ].every(Boolean);
-}
-
 function activeFilterEntries(
-  filters: typeof emptyFilterValues,
+  filters: FilterValues,
   programs: GatewayEventSeries[],
 ) {
   return Object.entries(filters)
@@ -92,187 +78,94 @@ function activeFilterEntries(
     }));
 }
 
-function filterOptions(
-  materials: CatalogMaterial[],
-  programs: GatewayEventSeries[],
-) {
-  const unique = <T extends string>(items: T[]) =>
-    Array.from(new Set(items.filter(Boolean))).sort((left, right) =>
-      left.localeCompare(right),
-    );
-
-  return {
-    topics: unique(materials.flatMap((material) => material.topics)).map(
-      (value) => ({ label: value, value }),
-    ),
-    tools: unique(materials.flatMap((material) => material.tools)).map(
-      (value) => ({ label: value, value }),
-    ),
-    systems: unique(materials.flatMap((material) => material.systems)).map(
-      (value) => ({ label: value, value }),
-    ),
-    programs: programs
-      .map(({ id, name }) => ({ label: name, value: id }))
-      .sort((left, right) => left.label.localeCompare(right.label)),
-    resourceTypes: unique(
-      materials.flatMap((material) =>
-        material.resources.map((resource) => resource.type),
-      ),
-    )
-      .map((value) => ({ label: publicResourceTypeLabel(value), value }))
-      .filter(
-        (option): option is { label: string; value: string } =>
-          Boolean(option.label),
-      ),
-  };
-}
-
-function useMaterialPagination(
-  materials: CatalogMaterial[],
-  filters: typeof emptyFilterValues,
-) {
-  const [page, setPage] = useState(1);
-  const filteredMaterials = useMemo(
-    () => materials.filter((material) => matchesFilters(material, filters)),
-    [filters, materials],
-  );
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredMaterials.length / MATERIALS_PER_PAGE),
-  );
-  const pagedMaterials = filteredMaterials.slice(
-    (page - 1) * MATERIALS_PER_PAGE,
-    page * MATERIALS_PER_PAGE,
-  );
-  const changePage = (nextPage: number) => {
-    setPage(Math.min(Math.max(nextPage, 1), totalPages));
-  };
-
-  return {
-    page,
-    setPage,
-    filteredMaterials,
-    totalPages,
-    pagedMaterials,
-    changePage,
-  };
-}
-
-function useServerFilterNavigation(
-  pathname: string,
-  query: string,
-  program: string,
-) {
+function useCatalogFilters(initialFilters: MaterialListFilters) {
+  const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
-
+  const currentQuery = useSearchParams().toString();
+  const [pending, startTransition] = useTransition();
+  const [filters, setFilters] = useState<FilterValues>(() =>
+    filterValues(initialFilters),
+  );
+  const filterQuery = JSON.stringify(filters);
+  const initialQuery = JSON.stringify(filterValues(initialFilters));
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (query.trim()) {
-        params.set("query", query.trim());
-      } else {
-        params.delete("query");
-      }
-      if (program.trim()) {
-        params.set("program", program.trim());
-      } else {
-        params.delete("program");
-      }
-
-      const nextQuery = params.toString();
-      const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
-      const currentQuery = searchParams.toString();
-      const currentUrl = currentQuery
-        ? `${pathname}?${currentQuery}`
-        : pathname;
-
-      if (nextUrl !== currentUrl) {
-        startTransition(() => {
-          router.replace(nextUrl, { scroll: false });
-        });
-      }
+    if (filterQuery === initialQuery) return;
+    const timeout = window.setTimeout(() => {
+      startTransition(() => {
+        router.replace(
+          catalogUrl(
+            pathname,
+            currentQuery,
+            JSON.parse(filterQuery) as FilterValues,
+          ),
+          { scroll: false },
+        );
+      });
     }, 300);
-
     return () => {
-      window.clearTimeout(timeoutId);
+      window.clearTimeout(timeout);
     };
-  }, [pathname, program, query, router, searchParams]);
-
-  return () => {
+  }, [filterQuery, initialQuery, pathname, currentQuery, router]);
+  const changeFilter = (key: string, value: string) => {
+    setFilters((current) => ({ ...current, [key]: value }));
+  };
+  const changePage = (nextPage: number) => {
     startTransition(() => {
-      router.replace(pathname, { scroll: false });
+      router.replace(catalogUrl(pathname, currentQuery, filters, nextPage), {
+        scroll: false,
+      });
     });
   };
-}
-
-interface MaterialsPageClientProps {
-  materials: CatalogMaterial[];
-  programs?: GatewayEventSeries[];
-  initialFilters?: MaterialListFilters;
-  initialError?: string;
+  const reset = () => {
+    setFilters({ ...emptyFilterValues });
+    startTransition(() => {
+      router.replace(catalogUrl(pathname, currentQuery, emptyFilterValues), {
+        scroll: false,
+      });
+    });
+  };
+  return {
+    filters,
+    changeFilter,
+    changePage,
+    reset,
+    pending: pending || filterQuery !== initialQuery,
+  };
 }
 
 export default function MaterialsPageClient({
-  materials: initialMaterials,
+  materials,
+  total = materials.length,
+  page = 1,
+  totalPages = 1,
   programs = [],
+  facets = { topics: [], tools: [], systems: [] },
   initialFilters = {},
   initialError,
 }: Readonly<MaterialsPageClientProps>) {
-  const pathname = usePathname();
-  const materials = useMemo(
-    () => normalizeMaterials(initialMaterials),
-    [initialMaterials],
-  );
-  const [filters, setFilters] = useState(initialFilterState(initialFilters));
-
-  const options = useMemo(
-    () => filterOptions(materials, programs),
-    [materials, programs],
-  );
-  const navigateToCatalog = useServerFilterNavigation(
-    pathname,
-    filters.query,
-    filters.program,
-  );
-
-  const pagination = useMaterialPagination(materials, filters);
-
-  const handleChange = (key: string, value: string) => {
-    pagination.setPage(1);
-    setFilters((current) => ({ ...current, [key]: value }));
-  };
-
-  const handleReset = () => {
-    setFilters({ ...emptyFilterValues });
-    pagination.setPage(1);
-    navigateToCatalog();
-  };
-  const activeFilters = activeFilterEntries(filters, programs);
-
+  const navigation = useCatalogFilters(initialFilters);
+  const { filters, changeFilter } = navigation;
   return (
     <TrainingLibraryView
-      materials={pagination.pagedMaterials}
-      total={pagination.filteredMaterials.length}
+      materials={materials}
+      total={total}
       error={initialError}
-      activeFilters={activeFilters}
+      activeFilters={activeFilterEntries(filters, programs)}
       onRemoveFilter={(key) => {
-        handleChange(key, "");
+        changeFilter(key, "");
       }}
-      onReset={handleReset}
+      onReset={navigation.reset}
       searchValue={filters.query}
       onSearch={(value) => {
-        handleChange("query", value);
+        changeFilter("query", value);
       }}
-      filters={options}
+      filters={filterOptions(facets, programs, filters)}
       values={filters}
-      onChange={(key, value) => {
-        handleChange(key, value);
-      }}
-      page={pagination.page}
-      totalPages={pagination.totalPages}
-      onPageChange={pagination.changePage}
+      onChange={changeFilter}
+      page={page}
+      totalPages={totalPages}
+      pending={navigation.pending}
+      onPageChange={navigation.changePage}
     />
   );
 }

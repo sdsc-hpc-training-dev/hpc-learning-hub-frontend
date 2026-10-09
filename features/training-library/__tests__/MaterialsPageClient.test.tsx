@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import MaterialsPageClient from "../MaterialsPageClient";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 
-const mockReplace = jest.fn();
+const mockReplace = jest.fn<undefined, [string, { scroll: boolean }]>();
 const mockSearchParams = new URLSearchParams();
 
 jest.mock("next/navigation", () => ({
@@ -24,8 +24,8 @@ const batchMaterial: CatalogMaterial = {
 
 beforeEach(() => {
   mockReplace.mockReset();
-  mockSearchParams.delete("query");
-  mockSearchParams.delete("program");
+  for (const key of Array.from(mockSearchParams.keys()))
+    mockSearchParams.delete(key);
   window.history.replaceState(null, "", "/materials");
 });
 
@@ -43,7 +43,7 @@ describe("Training Library search", () => {
         { scroll: false },
       );
     });
-    expect(screen.getByText("1 material shown")).toBeInTheDocument();
+    expect(screen.getByText("1 material found")).toBeInTheDocument();
   });
 
   it("clears the URL search when filters are reset", () => {
@@ -100,23 +100,94 @@ describe("Training Library topic filters", () => {
   });
 });
 
-describe("Training Library pagination", () => {
-  it("limits the initial catalog DOM and advances to the next page", () => {
-    const materials = Array.from({ length: 25 }, (_, index) => ({
-      ...batchMaterial,
-      id: `material-${String(index + 1)}`,
-      title: `Material ${String(index + 1)}`,
-    }));
-
-    render(<MaterialsPageClient materials={materials} />);
-
-    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "Material 25" }),
-    ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(
-      screen.getByRole("heading", { name: "Material 25" }),
-    ).toBeInTheDocument();
+it("renders the ten supplied records in server order and navigates with all filters and ranking intact", () => {
+  const filters = {
+    query: "batch",
+    topic: "Batch Computing",
+    tool: "Slurm",
+    system: "Expanse",
+    program: "series-1",
+    resource: "video",
+    date: "2025-01-01",
+  };
+  for (const [key, value] of Object.entries(filters))
+    mockSearchParams.set(key, value);
+  mockSearchParams.set("sort", "recommended");
+  const materials = Array.from({ length: 10 }, (_, index) => ({
+    ...batchMaterial,
+    id: `m-${String(index)}`,
+    title: `Material ${String(10 - index)}`,
+  }));
+  render(
+    <MaterialsPageClient
+      materials={materials}
+      total={530}
+      page={1}
+      totalPages={53}
+      initialFilters={filters}
+    />,
+  );
+  expect(screen.getByText("Page 1 of 53")).toBeInTheDocument();
+  expect(screen.getByText("530 materials found")).toBeInTheDocument();
+  expect(
+    screen
+      .getAllByRole("heading", { level: 3 })
+      .map((heading) => heading.textContent),
+  ).toEqual(materials.map((material) => material.title));
+  expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Next" }));
+  const url = new URL(mockReplace.mock.calls[0][0], "https://example.org");
+  expect(Object.fromEntries(url.searchParams)).toEqual({
+    ...filters,
+    sort: "recommended",
+    page: "2",
   });
+  expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(10);
+});
+
+it("resets the server page when changing or removing a filter", async () => {
+  mockSearchParams.set("page", "3");
+  mockSearchParams.set("topic", "Batch Computing");
+  mockSearchParams.set("tool", "Slurm");
+  render(
+    <MaterialsPageClient
+      materials={[batchMaterial]}
+      page={3}
+      totalPages={4}
+      initialFilters={{ topic: "Batch Computing", tool: "Slurm" }}
+      facets={{
+        topics: [
+          { id: "t", name: "Batch Computing" },
+          { id: "x", name: "Linux" },
+        ],
+        tools: [{ id: "s", name: "Slurm" }],
+        systems: [],
+      }}
+    />,
+  );
+  fireEvent.change(screen.getByLabelText("Topic"), {
+    target: { value: "Linux" },
+  });
+  await waitFor(() => {
+    expect(mockReplace).toHaveBeenCalledWith(
+      "/materials?topic=Linux&tool=Slurm",
+      { scroll: false },
+    );
+  });
+  expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+});
+
+it("keeps catalog-wide options available when they are absent from the current page", () => {
+  render(
+    <MaterialsPageClient
+      materials={[]}
+      facets={{
+        topics: [{ id: "linux", name: "Linux" }],
+        tools: [],
+        systems: [],
+      }}
+    />,
+  );
+  expect(screen.getByRole("option", { name: "Linux" })).toHaveValue("Linux");
+  expect(screen.getByRole("option", { name: "Video" })).toHaveValue("video");
 });

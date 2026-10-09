@@ -36,7 +36,12 @@ jest.mock("@/features/training-library/api", () => {
     getTrainingLibraryData: jest.fn().mockResolvedValue({
       materials: actual.fallbackMaterials,
       total: actual.fallbackMaterials.length,
+      page: 1,
+      totalPages: 1,
     }),
+    getTrainingLibraryFacets: jest
+      .fn()
+      .mockResolvedValue({ topics: [], tools: [], systems: [] }),
     getMaterialById: jest
       .fn()
       .mockImplementation((id: string) =>
@@ -121,7 +126,6 @@ describe("static route components", () => {
       unmount();
     }
   });
-
 });
 
 describe("training catalog routes", () => {
@@ -139,6 +143,8 @@ describe("training catalog routes", () => {
     getTrainingLibraryDataMock.mockResolvedValueOnce({
       materials: [],
       total: 0,
+      page: 1,
+      totalPages: 0,
       error: true,
     });
 
