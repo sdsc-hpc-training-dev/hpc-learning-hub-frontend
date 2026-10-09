@@ -1823,6 +1823,26 @@ main#main-content > .events-status {
   padding-top: 18px;
 }
 
+.program-description__text {
+  block-size: 10rem;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-inline-end: 8px;
+}
+
+.program-description__text p {
+  margin: 0;
+}
+
+.program-description__control {
+  min-block-size: 2.75rem;
+}
+
+.program-description__text:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
 .programs-status {
   padding: 30px;
   border: 1px dashed #9eafbf;

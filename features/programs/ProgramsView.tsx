@@ -3,6 +3,9 @@ import MaterialCard from "@/features/training-library/MaterialCard";
 import InlineError from "@/components/ui/InlineError";
 import type { GatewayEventSeries } from "@/lib/gateway/types";
 import type { SelectedProgram } from "./api";
+import { seriesMaterialsHref } from "./api";
+import { seriesDescription } from "./descriptions";
+import ProgramDescription from "./ProgramDescription";
 
 interface ProgramsViewProps {
   programs: GatewayEventSeries[];
@@ -29,9 +32,10 @@ export function ProgramCard({
           {program.name}
         </Link>
       </h3>
-      <p>
-        Explore representative training materials associated with this series.
-      </p>
+      <ProgramDescription
+        name={program.name}
+        text={seriesDescription(program.name)}
+      />
       <Link className="text-link program-card__link" href={href}>
         View collection <span aria-hidden="true">→</span>
       </Link>
@@ -88,14 +92,13 @@ function ProgramDetail({
               <div>
                 <span className="eyebrow">Selected series</span>
                 <h2 id="program-detail-heading">{program.name}</h2>
-                <p>
-                  Showing {program.materials.length} representative{" "}
-                  {program.materials.length === 1 ? "material" : "materials"}{" "}
-                  from {program.total} associated with this series.
-                </p>
+                <p>{seriesDescription(program.name)}</p>
               </div>
-              <Link className="text-link" href="/materials">
-                Browse the Training Library <span aria-hidden="true">→</span>
+              <Link
+                className="text-link"
+                href={seriesMaterialsHref(program.id)}
+              >
+                Explore these materials <span aria-hidden="true">→</span>
               </Link>
             </div>
             {program.materials.length > 0 ? (

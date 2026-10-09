@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import ProgramsView from "../ProgramsView";
+import { seriesDescription } from "../descriptions";
 
 const programs = [
   { id: "series-1", name: "COMPLECS" },
@@ -50,18 +51,16 @@ describe("ProgramsView", () => {
       <ProgramsView programs={programs} selectedProgram={selectedProgram} />,
     );
 
+    expect(screen.getByText(seriesDescription("COMPLECS"))).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Showing 1 representative material from 1 associated with this series.",
-      ),
-    ).toBeInTheDocument();
+      screen.getByRole("link", { name: /Explore these materials/ }),
+    ).toHaveAttribute("href", "/programs/materials?program=series-1&page=1");
     const materialLink = screen.getByRole("link", { name: "Linux training" });
-    expect(materialLink).toHaveAttribute(
-      "href",
-      "/materials/material-1",
-    );
+    expect(materialLink).toHaveAttribute("href", "/materials/material-1");
     expect(materialLink.closest("article")).not.toHaveAttribute("tabindex");
-    expect(materialLink.closest("article")).not.toHaveAttribute("data-card-href");
+    expect(materialLink.closest("article")).not.toHaveAttribute(
+      "data-card-href",
+    );
     expect(screen.getByRole("link", { name: "COMPLECS" })).toHaveAttribute(
       "aria-current",
       "page",

@@ -47,7 +47,7 @@ export default function MaterialCard({ material, compact = false }: Readonly<Mat
           <Link href={href}>{title}</Link>
         </h3>
         <p>{summary}</p>
-        <div className="tag-row" aria-label="Topics and tools">
+        <div className="tag-row" role="group" aria-label="Topics and tools">
           {[...material.topics, ...material.tools].slice(0, compact ? 2 : 3).map((item) => (
             <span className="tag" key={`${material.id}-${item}`}>{item}</span>
           ))}

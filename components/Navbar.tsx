@@ -20,6 +20,8 @@ const NAV_LINKS: NavLink[] = [
 ];
 
 function getCurrentPage(pathname: string): string {
+  if (pathname === "/programs" || pathname.startsWith("/programs/"))
+    return "programs";
   if (pathname.includes("training") || pathname.includes("materials"))
     return "catalog";
   if (pathname.includes("learning")) return "learning";

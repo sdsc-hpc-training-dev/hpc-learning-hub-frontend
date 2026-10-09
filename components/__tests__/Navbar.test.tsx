@@ -93,6 +93,16 @@ describe("Navbar - Interactions", () => {
 });
 
 describe("Navbar - Active Page Detection", () => {
+  it("keeps a series materials drill-down under Programs & Series", () => {
+    (usePathname as jest.Mock).mockReturnValue("/programs/materials");
+    render(<Navbar />);
+    expect(
+      screen.getByRole("link", { name: /programs & series/i }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getByRole("link", { name: /training library/i }),
+    ).not.toHaveAttribute("aria-current");
+  });
   it("sets active page indicator for current route", () => {
     (usePathname as jest.Mock).mockReturnValue("/learning-paths");
     render(<Navbar />);

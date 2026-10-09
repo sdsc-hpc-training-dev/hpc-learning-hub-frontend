@@ -2,14 +2,11 @@ import { gatewayFetch } from "@/lib/gateway/client";
 import type {
   CatalogMaterial,
   GatewayEventSeries,
-  GatewayMaterial,
   GatewayMaterialPage,
 } from "@/lib/gateway/types";
+import { normalizeMaterial } from "@/features/training-library/api";
 
-const EVENT_SERIES_ENDPOINT = "/api/v1/event-series";
-const MATERIALS_ENDPOINT = "/api/v1/materials";
-const CANDIDATE_POOL_SIZE = 20;
-const REPRESENTATIVE_LIMIT = 6;
+export const SERIES_PAGE_SIZE = 6;
 
 export interface SelectedProgram extends GatewayEventSeries {
   materials: CatalogMaterial[];
@@ -21,90 +18,47 @@ export interface ProgramsData {
   selectedProgram: SelectedProgram | null;
 }
 
-function namedValues(items: { name: string }[]): string[] {
-  return items.map((item) => item.name);
+export interface SeriesMaterialsData {
+  program: SelectedProgram | null;
+  page: number;
+  totalPages: number;
 }
 
-function materialTitle(material: GatewayMaterial): string {
-  const title = material.title?.trim();
-  if (!title) return "Untitled training material";
-  return title;
+export function parseSeriesPage(value?: string | string[]): number {
+  const page = Number(Array.isArray(value) ? value[0] : value);
+  return Number.isSafeInteger(page) && page > 0 ? page : 1;
 }
 
-function toCatalogMaterial(
-  material: GatewayMaterial,
-  seriesName: string,
-): CatalogMaterial {
-  const trimmedDescription = material.description?.trim();
-  let description: string | null = null;
-  if (trimmedDescription) description = trimmedDescription;
-  return {
-    id: material.id,
-    title: materialTitle(material),
-    description,
-    summary: description,
-    topics: namedValues(material.topics),
-    tools: namedValues(material.tools),
-    systems: namedValues(material.systems),
-    instructors: namedValues(material.instructors),
-    program: seriesName,
-    series: seriesName,
-    resources: material.resources,
-  };
-}
-
-function materialsUrl(seriesId: string, page: number): string {
+export function seriesMaterialsHref(programId: string, page = 1): string {
   const params = new URLSearchParams({
-    eventSeries: seriesId,
+    program: programId,
     page: String(page),
-    pageSize: String(CANDIDATE_POOL_SIZE),
   });
-  return `${MATERIALS_ENDPOINT}?${params}`;
+  return `/programs/materials?${params}`;
 }
 
-function representativeMaterials(
-  materials: GatewayMaterial[],
-  seriesName: string,
-): CatalogMaterial[] {
-  const seenTitles = new Set<string>();
-  return materials
-    .filter((material) => {
-      const title = materialTitle(material).toLowerCase();
-      if (seenTitles.has(title)) return false;
-      seenTitles.add(title);
-      return true;
-    })
-    .slice(0, REPRESENTATIVE_LIMIT)
-    .map((material) => toCatalogMaterial(material, seriesName));
-}
-
-function distinctTitleCount(materials: GatewayMaterial[]): number {
-  return new Set(materials.map((material) => materialTitle(material).toLowerCase()))
-    .size;
-}
-
-async function getRepresentativeMaterials(
-  selected: GatewayEventSeries,
-): Promise<{ materials: CatalogMaterial[]; total: number }> {
-  const candidates: GatewayMaterial[] = [];
-  let page = 1;
-  let response: GatewayMaterialPage;
-
-  do {
-    response = await gatewayFetch<GatewayMaterialPage>(
-      materialsUrl(selected.id, page),
-      { cache: "no-store" },
-    );
-    candidates.push(...response.items);
-    page += 1;
-  } while (
-    distinctTitleCount(candidates) < REPRESENTATIVE_LIMIT &&
-    page <= response.totalPages
+async function loadSeriesPage(selected: GatewayEventSeries, page: number) {
+  const params = new URLSearchParams({
+    eventSeries: selected.id,
+    page: String(page),
+    pageSize: String(SERIES_PAGE_SIZE),
+  });
+  const response = await gatewayFetch<GatewayMaterialPage>(
+    `/api/v1/materials?${params}`,
+    { cache: "no-store" },
   );
-
   return {
-    materials: representativeMaterials(candidates, selected.name),
-    total: response.total,
+    program: {
+      ...selected,
+      materials: response.items.map((material) => ({
+        ...normalizeMaterial(material),
+        program: selected.name,
+        series: selected.name,
+      })),
+      total: response.total,
+    },
+    page: response.page,
+    totalPages: response.totalPages,
   };
 }
 
@@ -112,22 +66,31 @@ export async function getProgramsData(
   selectedProgramId?: string,
 ): Promise<ProgramsData> {
   const programs = await gatewayFetch<GatewayEventSeries[]>(
-    EVENT_SERIES_ENDPOINT,
+    "/api/v1/event-series",
     { cache: "no-store" },
   );
   const selected = programs.find((program) => program.id === selectedProgramId);
+  if (!selected) return { programs, selectedProgram: null };
+  const { program } = await loadSeriesPage(selected, 1);
+  return { programs, selectedProgram: program };
+}
 
-  if (!selected) {
-    return { programs, selectedProgram: null };
-  }
-
-  const collection = await getRepresentativeMaterials(selected);
-
-  return {
-    programs,
-    selectedProgram: {
-      ...selected,
-      ...collection,
-    },
-  };
+export async function getSeriesMaterialsData(
+  programId?: string,
+  requestedPage = 1,
+): Promise<SeriesMaterialsData> {
+  const programs = await gatewayFetch<GatewayEventSeries[]>(
+    "/api/v1/event-series",
+    { cache: "no-store" },
+  );
+  const selected = programs.find((program) => program.id === programId);
+  if (!selected) return { program: null, page: 1, totalPages: 0 };
+  const result = await loadSeriesPage(
+    selected,
+    parseSeriesPage(String(requestedPage)),
+  );
+  // Clamp stale direct links with at most one additional bounded Gateway request.
+  const lastPage = Math.max(1, result.totalPages);
+  if (result.page > lastPage) return loadSeriesPage(selected, lastPage);
+  return result;
 }
