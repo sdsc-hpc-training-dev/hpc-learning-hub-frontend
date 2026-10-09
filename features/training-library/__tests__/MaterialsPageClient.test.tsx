@@ -99,3 +99,24 @@ describe("Training Library topic filters", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("Training Library pagination", () => {
+  it("limits the initial catalog DOM and advances to the next page", () => {
+    const materials = Array.from({ length: 25 }, (_, index) => ({
+      ...batchMaterial,
+      id: `material-${String(index + 1)}`,
+      title: `Material ${String(index + 1)}`,
+    }));
+
+    render(<MaterialsPageClient materials={materials} />);
+
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Material 25" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(
+      screen.getByRole("heading", { name: "Material 25" }),
+    ).toBeInTheDocument();
+  });
+});

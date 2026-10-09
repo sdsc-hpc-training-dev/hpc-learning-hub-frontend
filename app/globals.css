@@ -1355,6 +1355,63 @@ main#main-content {
   filter: brightness(0) invert(1);
 }
 
+.material-summary p {
+  margin: 0;
+}
+
+.material-summary__toggle {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--blue-dark);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  margin-top: 0.75rem;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.material-summary__toggle:hover {
+  color: var(--blue);
+}
+
+.material-summary__toggle:focus-visible {
+  outline: 3px solid var(--gold-bright);
+  outline-offset: 4px;
+}
+
+.catalog-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 32px;
+}
+
+.catalog-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (max-width: 760px) {
+  .footer-shell {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px;
+  }
+}
+
+@media (max-width: 520px) {
+  .footer-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .catalog-pagination {
+    gap: 10px;
+  }
+}
+
 /* ========== LEARNING PATHS ========== */
 
 .page-hero {

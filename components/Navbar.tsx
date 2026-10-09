@@ -20,7 +20,8 @@ const NAV_LINKS: NavLink[] = [
 ];
 
 function getCurrentPage(pathname: string): string {
-  if (pathname.includes("training") || pathname.includes("materials")) return "catalog";
+  if (pathname.includes("training") || pathname.includes("materials"))
+    return "catalog";
   if (pathname.includes("learning")) return "learning";
   if (pathname.includes("events")) return "events";
   if (pathname.includes("programs")) return "programs";
@@ -39,16 +40,20 @@ export default function Navbar() {
   return (
     <header className="site-header">
       <div className="header-shell">
-        <Link className="site-brand" href="/" aria-label="HPC Learning Hub home">
-          <Image src="/SDSC-logo.svg" alt="San Diego Supercomputer Center" width={170} height={48} priority />
+        <Link
+          className="site-brand"
+          href="/"
+          aria-label="HPC Learning Hub home"
+        >
+          <Image
+            src="/SDSC-logo.svg"
+            alt="San Diego Supercomputer Center"
+            width={170}
+            height={48}
+            priority
+          />
           <span>HPC Learning Hub</span>
         </Link>
-        {/*
-        <button className="mobile-aida" type="button" aria-label="Open Ask AIDA" title="Ask AIDA">
-          <span aria-hidden="true">A</span>
-        </button>
-        
-
         <button
           className="menu-toggle"
           type="button"
@@ -60,7 +65,6 @@ export default function Navbar() {
         >
           Menu
         </button>
-        */}
         <nav
           className={`primary-nav ${menuOpen ? "is-open" : ""}`}
           id="primary-navigation"
@@ -76,7 +80,7 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-{/*
+          {/*
           <button className="nav-button" type="button" title="Ask AIDA" onClick={closeMenus}>
             Ask AIDA
           </button>

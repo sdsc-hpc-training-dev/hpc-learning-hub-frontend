@@ -1,9 +1,11 @@
 import { gatewayFetch, GatewayRequestError } from "@/lib/gateway/client";
 import type {
   CatalogMaterial,
+  GatewayEventEdition,
   GatewayMaterial,
   GatewayMaterialPage,
 } from "@/lib/gateway/types";
+import { catalogPlainText } from "./presentation";
 
 const MATERIALS_ENDPOINT = "/api/v1/materials";
 const MATERIALS_PAGE_SIZE = 100;
@@ -148,17 +150,64 @@ function namedValues(items: { name: string }[] | undefined) {
   return Array.isArray(items) ? items.map((item) => item.name) : [];
 }
 
-function normalizeMaterial(material: GatewayMaterial): CatalogMaterial {
+function prioritizeTitleMatches(values: string[], title: string) {
+  const normalizedTitle = title.toLocaleLowerCase();
+  return [...values].sort((left, right) => {
+    const leftMatches = normalizedTitle.includes(left.toLocaleLowerCase());
+    const rightMatches = normalizedTitle.includes(right.toLocaleLowerCase());
+    return Number(rightMatches) - Number(leftMatches);
+  });
+}
+
+function repositoryMaterialTitle(resources: CatalogMaterial["resources"]) {
+  return resources.find((resource) => {
+    if (resource.type !== "repository" || !resource.title) return false;
+    return !/^repository$/i.test(resource.title.trim());
+  })?.title;
+}
+
+function materialDisplayTitle(
+  material: GatewayMaterial,
+  resources: CatalogMaterial["resources"],
+  eventEdition: GatewayEventEdition | undefined,
+) {
+  return (
+    catalogPlainText(material.title) ||
+    catalogPlainText(repositoryMaterialTitle(resources)) ||
+    catalogPlainText(eventEdition?.title) ||
+    "Untitled material"
+  );
+}
+
+function materialDescription(
+  material: GatewayMaterial,
+  eventEdition: GatewayEventEdition | undefined,
+) {
+  return (
+    catalogPlainText(material.description) ||
+    catalogPlainText(eventEdition?.description)
+  );
+}
+
+export function normalizeMaterial(material: GatewayMaterial): CatalogMaterial {
+  const eventEdition: GatewayEventEdition | undefined =
+    material.eventEditions.at(0);
+  const resources = Array.isArray(material.resources) ? material.resources : [];
+  const title = materialDisplayTitle(material, resources, eventEdition);
+  const description = materialDescription(material, eventEdition);
+
   return {
     id: material.id,
-    title: material.title ?? "Untitled material",
-    description: material.description,
-    summary: material.description,
+    title,
+    description,
+    summary: description,
+    date: eventEdition?.startAt,
     topics: namedValues(material.topics),
     tools: namedValues(material.tools),
-    systems: namedValues(material.systems),
+    systems: prioritizeTitleMatches(namedValues(material.systems), title),
     instructors: namedValues(material.instructors),
-    resources: Array.isArray(material.resources) ? material.resources : [],
+    resources,
+    primaryUrl: resources.find((resource) => resource.url)?.url,
   };
 }
 

@@ -29,6 +29,9 @@ export interface TrainingLibraryViewProps {
     date: string;
   };
   onChange: (key: string, value: string) => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 function CatalogHero() {
@@ -38,9 +41,8 @@ function CatalogHero() {
         <span className="eyebrow">Training Library</span>
         <h1 id="catalog-heading">Search by what you want to learn or use.</h1>
         <p>
-          This curated prototype demonstrates 28 real Snapshot v2 materials.
-          Filters combine topics, tools, systems, programs, and available
-          resource types.
+          Browse the current SDSC training catalog. Filters combine topics,
+          tools, systems, programs, and available resource types.
         </p>
       </div>
     </section>
@@ -56,6 +58,9 @@ interface CatalogResultsProps {
   onReset: () => void;
   searchValue: string;
   onSearch: (value: string) => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 interface CatalogSearchControlsProps {
@@ -193,6 +198,9 @@ function CatalogResults({
   onReset,
   searchValue,
   onSearch,
+  page,
+  totalPages,
+  onPageChange,
   error,
 }: Readonly<CatalogResultsProps>) {
   return (
@@ -206,6 +214,36 @@ function CatalogResults({
         onSearch={onSearch}
       />
       <CatalogContent materials={materials} error={error} onReset={onReset} />
+      {!error && totalPages > 1 ? (
+        <nav
+          className="catalog-pagination"
+          aria-label="Training material pages"
+        >
+          <button
+            type="button"
+            className="button button--secondary"
+            disabled={page === 1}
+            onClick={() => {
+              onPageChange(page - 1);
+            }}
+          >
+            Previous
+          </button>
+          <span aria-live="polite">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            type="button"
+            className="button button--secondary"
+            disabled={page === totalPages}
+            onClick={() => {
+              onPageChange(page + 1);
+            }}
+          >
+            Next
+          </button>
+        </nav>
+      ) : null}
     </div>
   );
 }
@@ -222,6 +260,9 @@ export default function TrainingLibraryView({
   filters,
   values,
   onChange,
+  page,
+  totalPages,
+  onPageChange,
 }: Readonly<TrainingLibraryViewProps>) {
   return (
     <>
@@ -247,6 +288,9 @@ export default function TrainingLibraryView({
             onReset={onReset}
             searchValue={searchValue}
             onSearch={onSearch}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
           />
         </div>
       </section>

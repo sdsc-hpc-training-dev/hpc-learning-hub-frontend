@@ -5,6 +5,9 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import TrainingLibraryView from "./TrainingLibraryView";
 import type { CatalogMaterial, GatewayEventSeries } from "@/lib/gateway/types";
 import type { MaterialListFilters } from "./api";
+import { publicResourceTypeLabel } from "./presentation";
+
+const MATERIALS_PER_PAGE = 24;
 
 const emptyFilterValues = {
   query: "",
@@ -62,7 +65,8 @@ function matchesFilters(
   return [
     !filters.topic || hasCaseInsensitiveValue(material.topics, filters.topic),
     !filters.tool || hasCaseInsensitiveValue(material.tools, filters.tool),
-    !filters.system || hasCaseInsensitiveValue(material.systems, filters.system),
+    !filters.system ||
+      hasCaseInsensitiveValue(material.systems, filters.system),
     !filters.resource ||
       material.resources.some(
         (resource) =>
@@ -114,7 +118,43 @@ function filterOptions(
       materials.flatMap((material) =>
         material.resources.map((resource) => resource.type),
       ),
-    ).map((value) => ({ label: value, value })),
+    )
+      .map((value) => ({ label: publicResourceTypeLabel(value), value }))
+      .filter(
+        (option): option is { label: string; value: string } =>
+          Boolean(option.label),
+      ),
+  };
+}
+
+function useMaterialPagination(
+  materials: CatalogMaterial[],
+  filters: typeof emptyFilterValues,
+) {
+  const [page, setPage] = useState(1);
+  const filteredMaterials = useMemo(
+    () => materials.filter((material) => matchesFilters(material, filters)),
+    [filters, materials],
+  );
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredMaterials.length / MATERIALS_PER_PAGE),
+  );
+  const pagedMaterials = filteredMaterials.slice(
+    (page - 1) * MATERIALS_PER_PAGE,
+    page * MATERIALS_PER_PAGE,
+  );
+  const changePage = (nextPage: number) => {
+    setPage(Math.min(Math.max(nextPage, 1), totalPages));
+  };
+
+  return {
+    page,
+    setPage,
+    filteredMaterials,
+    totalPages,
+    pagedMaterials,
+    changePage,
   };
 }
 
@@ -167,17 +207,19 @@ function useServerFilterNavigation(
   };
 }
 
+interface MaterialsPageClientProps {
+  materials: CatalogMaterial[];
+  programs?: GatewayEventSeries[];
+  initialFilters?: MaterialListFilters;
+  initialError?: string;
+}
+
 export default function MaterialsPageClient({
   materials: initialMaterials,
   programs = [],
   initialFilters = {},
   initialError,
-}: Readonly<{
-  materials: CatalogMaterial[];
-  programs?: GatewayEventSeries[];
-  initialFilters?: MaterialListFilters;
-  initialError?: string;
-}>) {
+}: Readonly<MaterialsPageClientProps>) {
   const pathname = usePathname();
   const materials = useMemo(
     () => normalizeMaterials(initialMaterials),
@@ -195,24 +237,24 @@ export default function MaterialsPageClient({
     filters.program,
   );
 
-  const filteredMaterials = useMemo(() => {
-    return materials.filter((material) => matchesFilters(material, filters));
-  }, [filters, materials]);
+  const pagination = useMaterialPagination(materials, filters);
 
   const handleChange = (key: string, value: string) => {
+    pagination.setPage(1);
     setFilters((current) => ({ ...current, [key]: value }));
   };
 
   const handleReset = () => {
     setFilters({ ...emptyFilterValues });
+    pagination.setPage(1);
     navigateToCatalog();
   };
   const activeFilters = activeFilterEntries(filters, programs);
 
   return (
     <TrainingLibraryView
-      materials={filteredMaterials}
-      total={filteredMaterials.length}
+      materials={pagination.pagedMaterials}
+      total={pagination.filteredMaterials.length}
       error={initialError}
       activeFilters={activeFilters}
       onRemoveFilter={(key) => {
@@ -228,6 +270,9 @@ export default function MaterialsPageClient({
       onChange={(key, value) => {
         handleChange(key, value);
       }}
+      page={pagination.page}
+      totalPages={pagination.totalPages}
+      onPageChange={pagination.changePage}
     />
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CatalogMaterial } from "@/lib/gateway/types";
+import { catalogPlainText, resourceTypeSummary } from "./presentation";
 
 interface MaterialCardProps {
   material: CatalogMaterial;
@@ -21,7 +22,6 @@ function truncate(value: string | null | undefined, length: number) {
 }
 
 export default function MaterialCard({ material, compact = false }: Readonly<MaterialCardProps>) {
-  const resourceTypes = [...new Set(material.resources.map((resource) => resource.type))];
   const meta = [
     formatDate(material.date),
     material.series,
@@ -32,14 +32,19 @@ export default function MaterialCard({ material, compact = false }: Readonly<Mat
   const cardClassName = compact
     ? "material-card material-card--compact"
     : "material-card";
-  const summary = truncate(material.summary ?? material.description ?? "No summary available.", compact ? 112 : 180);
+  const title = catalogPlainText(material.title) || "Untitled material";
+  const summary = truncate(
+    catalogPlainText(material.summary ?? material.description) ||
+      "No summary available.",
+    compact ? 112 : 180,
+  );
 
   return (
     <article className={cardClassName}>
       <div className="material-card__body">
         <div className="material-card__meta">{meta.join(" | ") || "SDSC training material"}</div>
         <h3>
-          <Link href={href}>{material.title}</Link>
+          <Link href={href}>{title}</Link>
         </h3>
         <p>{summary}</p>
         <div className="tag-row" aria-label="Topics and tools">
@@ -49,7 +54,7 @@ export default function MaterialCard({ material, compact = false }: Readonly<Mat
         </div>
       </div>
       <div className="material-card__footer">
-        <span>{resourceTypes.length ? resourceTypes.join(" + ") : "Catalog entry"}</span>
+        <span>{resourceTypeSummary(material.resources)}</span>
         <Link className="text-link" href={href}>
           View material <span aria-hidden="true">→</span>
         </Link>

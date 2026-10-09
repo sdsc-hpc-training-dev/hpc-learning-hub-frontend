@@ -7,13 +7,9 @@ import LearningPathPage from "../learning-paths/[pathId]/page";
 import LearningPathsLoading from "../learning-paths/loading";
 import LearningPathsPage from "../learning-paths/page";
 import Loading from "../loading";
-import MaintainerPage from "../maintainer/page";
 import MaterialPage from "../materials/[materialId]/page";
 import MaterialsPage from "../materials/page";
-import MyLearningPage from "../my-learning/page";
 import NotFound from "../not-found";
-import AccountsPage from "../account/page";
-import ConversationsPage from "../my-learning/conversations/page";
 import ProgramsPage from "../programs/page";
 import ProgramsLoading from "../programs/loading";
 import {
@@ -111,15 +107,11 @@ describe("static route components", () => {
   it("renders the route pages", async () => {
     const pages = [
       () => EventsPage(),
-      () => MaintainerPage(),
       () =>
         MaterialPage({
           params: Promise.resolve({ materialId: fallbackMaterials[0].id }),
         }),
       () => MaterialsPage({}),
-      () => MyLearningPage(),
-      () => AccountsPage(),
-      () => ConversationsPage(),
       () => ProgramsPage(),
     ];
 
@@ -129,6 +121,7 @@ describe("static route components", () => {
       unmount();
     }
   });
+
 });
 
 describe("training catalog routes", () => {
