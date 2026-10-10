@@ -1,4 +1,5 @@
 import { gatewayFetch } from "@/lib/gateway/client";
+import { catalogFetchOptions } from "@/lib/gateway/cache";
 import type {
   CatalogMaterial,
   GatewayEventSeries,
@@ -45,7 +46,7 @@ async function loadSeriesPage(selected: GatewayEventSeries, page: number) {
   });
   const response = await gatewayFetch<GatewayMaterialPage>(
     `/api/v1/materials?${params}`,
-    { cache: "no-store" },
+    catalogFetchOptions({ tags: ["catalog:programs"] }),
   );
   return {
     program: {
@@ -67,7 +68,7 @@ export async function getProgramsData(
 ): Promise<ProgramsData> {
   const programs = await gatewayFetch<GatewayEventSeries[]>(
     "/api/v1/event-series",
-    { cache: "no-store" },
+    catalogFetchOptions({ tags: ["catalog:programs"] }),
   );
   const selected = programs.find((program) => program.id === selectedProgramId);
   if (!selected) return { programs, selectedProgram: null };
@@ -81,7 +82,7 @@ export async function getSeriesMaterialsData(
 ): Promise<SeriesMaterialsData> {
   const programs = await gatewayFetch<GatewayEventSeries[]>(
     "/api/v1/event-series",
-    { cache: "no-store" },
+    catalogFetchOptions({ tags: ["catalog:programs"] }),
   );
   const selected = programs.find((program) => program.id === programId);
   if (!selected) return { program: null, page: 1, totalPages: 0 };

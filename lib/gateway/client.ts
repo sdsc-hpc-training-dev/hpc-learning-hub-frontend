@@ -10,6 +10,13 @@ export class GatewayRequestError extends Error {
   }
 }
 
+export interface GatewayFetchInit extends RequestInit {
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
+}
+
 function gatewayBaseUrl() {
   return process.env.GATEWAY_URL ?? process.env.NEXT_PUBLIC_GATEWAY_URL ?? "";
 }
@@ -21,7 +28,7 @@ function gatewayPath(path: string) {
 
 export async function gatewayFetch<T>(
   path: string,
-  init: RequestInit = {},
+  init: GatewayFetchInit = {},
 ): Promise<T> {
   const baseUrl = gatewayBaseUrl();
   if (!baseUrl) {

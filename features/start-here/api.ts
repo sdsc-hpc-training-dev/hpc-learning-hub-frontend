@@ -1,4 +1,5 @@
 import { gatewayFetch } from "@/lib/gateway/client";
+import { catalogFetchOptions } from "@/lib/gateway/cache";
 import { getUpcomingEvents } from "@/features/events/api";
 import { getProgramsData } from "@/features/programs/api";
 import { normalizeMaterial } from "@/features/training-library/api";
@@ -65,7 +66,7 @@ function listFrom<T>(payload: GatewayListResponse<T>): T[] {
 
 async function getAllMaterials(): Promise<GatewayMaterial[]> {
   const firstPage = await gatewayFetch<GatewayMaterialPage>(materialsUrl(1), {
-    cache: "no-store",
+    ...catalogFetchOptions({ tags: ["catalog:start-here"] }),
   });
   const materials = [...firstPage.items];
   const totalPages = Math.max(firstPage.totalPages, 1);
@@ -73,7 +74,7 @@ async function getAllMaterials(): Promise<GatewayMaterial[]> {
   for (let page = 2; page <= totalPages; page += 1) {
     const response = await gatewayFetch<GatewayMaterialPage>(
       materialsUrl(page),
-      { cache: "no-store" },
+      catalogFetchOptions({ tags: ["catalog:start-here"] }),
     );
     materials.push(...response.items);
   }
@@ -130,7 +131,7 @@ function featuredMaterials(materials: CatalogMaterial[]): CatalogMaterial[] {
 async function getAllLearningPaths(): Promise<GatewayLearningPath[]> {
   const payload = await gatewayFetch<GatewayListResponse<GatewayLearningPath>>(
     "/api/v1/learning-paths",
-    { cache: "no-store" },
+    catalogFetchOptions({ tags: ["catalog:learning-paths"] }),
   );
   return listFrom(payload);
 }

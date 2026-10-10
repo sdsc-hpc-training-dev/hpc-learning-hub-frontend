@@ -1,4 +1,5 @@
 import { gatewayFetch, GatewayRequestError } from "@/lib/gateway/client";
+import { catalogFetchOptions } from "@/lib/gateway/cache";
 import type {
   CatalogMaterial,
   GatewayEventEdition,
@@ -249,7 +250,7 @@ export async function getTrainingLibraryFacets(): Promise<CatalogFacets> {
   const [topics, tools, systems] = await Promise.all(
     ["topics", "tools", "systems"].map((endpoint) =>
       gatewayFetch<NamedCatalogItem[]>(`/api/v1/${endpoint}`, {
-        cache: "no-store",
+        ...catalogFetchOptions({ tags: [`catalog:${endpoint}`] }),
       }),
     ),
   );
@@ -268,7 +269,7 @@ export async function getTrainingLibraryData(
   try {
     const firstPage = await gatewayFetch<GatewayMaterialPage>(
       `${MATERIALS_ENDPOINT}?${queryForFilters(filters, catalogPage(filters.page))}`,
-      { cache: "no-store" },
+      catalogFetchOptions({ tags: ["catalog:materials"] }),
     );
     const materials = Array.isArray(firstPage.items)
       ? firstPage.items.map(normalizeMaterial)
@@ -298,7 +299,7 @@ export async function getMaterialById(
   try {
     return await gatewayFetch<GatewayMaterial>(
       `${MATERIALS_ENDPOINT}/${encodeURIComponent(normalizedMaterialId)}`,
-      { cache: "no-store" },
+      catalogFetchOptions({ detail: true, tags: ["catalog:materials"] }),
     ).then(normalizeMaterial);
   } catch (error) {
     if (error instanceof GatewayRequestError && error.status === 404) {

@@ -23,16 +23,21 @@ const material = {
 const responseWith = (body: unknown) =>
   ({ ok: true, status: 200, json: () => Promise.resolve(body) }) as Response;
 
+function requestUrl(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input;
+  return input instanceof URL ? input.toString() : input.url;
+}
+
 // Keep request-budget assertions with their shared Gateway mock.
 // eslint-disable-next-line max-lines-per-function
 describe("series Gateway pagination", () => {
-  const fetchMock = jest.fn();
+  const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
   beforeEach(() => {
     process.env.GATEWAY_URL = "https://gateway.example";
     global.fetch = fetchMock;
     fetchMock.mockReset();
-    fetchMock.mockImplementation((input: string) => {
-      const url = new URL(input);
+    fetchMock.mockImplementation((input) => {
+      const url = new URL(requestUrl(input));
       if (url.pathname.endsWith("event-series"))
         return Promise.resolve(responseWith(series));
       const page = Number(url.searchParams.get("page"));
@@ -74,7 +79,12 @@ describe("series Gateway pagination", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock).toHaveBeenLastCalledWith(
       "https://gateway.example/api/v1/materials?eventSeries=series-1&page=1&pageSize=6",
-      expect.objectContaining({ cache: "no-store" }),
+      {
+        next: {
+          revalidate: 300,
+          tags: ["catalog", "catalog:programs"],
+        },
+      },
     );
   });
 

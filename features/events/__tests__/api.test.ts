@@ -44,6 +44,8 @@ function requestUrl(input: RequestInfo | URL): string {
   return input instanceof URL ? input.toString() : input.url;
 }
 
+// Keep the mocked multi-page response and cache assertion in one suite.
+// eslint-disable-next-line max-lines-per-function
 describe("events API", () => {
   const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
 
@@ -101,9 +103,14 @@ describe("events API", () => {
       "newer",
       "older",
     ]);
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("resourceType=video"),
-      expect.objectContaining({ cache: "no-store" }),
+    const recordingRequest = fetchMock.mock.calls.find(([input]) =>
+      requestUrl(input).includes("resourceType=video"),
     );
+    expect(recordingRequest?.[1]).toEqual({
+      next: {
+        revalidate: 300,
+        tags: ["catalog", "catalog:recordings"],
+      },
+    });
   });
 });
