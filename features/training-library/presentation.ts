@@ -31,7 +31,7 @@ function decodedCodePoint(value: string, radix: number) {
     : null;
 }
 
-function decodeHtmlEntities(value: string) {
+function decodeHtmlEntitiesOnce(value: string) {
   return value.replace(
     /&(#x[\da-f]+|#\d+|[a-z]+);/gi,
     (entity, token: string) => {
@@ -45,6 +45,16 @@ function decodeHtmlEntities(value: string) {
       return HTML_ENTITIES.get(normalized) ?? entity;
     },
   );
+}
+
+function decodeHtmlEntities(value: string) {
+  let decoded = value;
+  for (let pass = 0; pass < 3; pass += 1) {
+    const next = decodeHtmlEntitiesOnce(decoded);
+    if (next === decoded) return decoded;
+    decoded = next;
+  }
+  return decoded;
 }
 
 function replaceMarkdownTokens(

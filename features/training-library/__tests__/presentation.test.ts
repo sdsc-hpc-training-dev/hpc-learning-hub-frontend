@@ -14,6 +14,12 @@ describe("catalog presentation cleanup", () => {
     );
   });
 
+  it("decodes nested HTML entities from retained source text", () => {
+    expect(catalogPlainText("Join SDSC &amp;#160; at SC26")).toBe(
+      "Join SDSC at SC26",
+    );
+  });
+
   it("hides internal metadata and summarizes repository resources", () => {
     expect(
       resourceTypeSummary([

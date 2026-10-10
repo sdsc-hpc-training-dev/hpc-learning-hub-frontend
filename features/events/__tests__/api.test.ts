@@ -8,6 +8,9 @@ const futureSoon = {
   endAt: "2027-01-10T19:00:00.000Z",
   format: "online",
   location: "Remote event",
+  eventUrl: "https://www.sdsc.edu/events/upcoming-workshop.html",
+  registrationUrl: "https://registration.example/upcoming-workshop",
+  isTimeDisplayed: true,
 };
 
 const futureLate = {

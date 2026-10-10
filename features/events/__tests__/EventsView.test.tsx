@@ -9,6 +9,9 @@ const upcomingEvent = {
   endAt: "2027-06-23T19:30:00.000Z",
   format: "online",
   location: "Remote event",
+  eventUrl: "https://www.sdsc.edu/events/upcoming-workshop.html",
+  registrationUrl: "https://registration.example/upcoming-workshop",
+  isTimeDisplayed: true,
 };
 
 const recording = {
@@ -29,6 +32,16 @@ describe("EventsView", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Upcoming HPC workshop")).toBeInTheDocument();
     expect(screen.getByText("Remote event")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Register" })).toHaveAttribute(
+      "href",
+      "https://registration.example/upcoming-workshop",
+    );
+    expect(
+      screen.getByRole("link", { name: "Event details" }),
+    ).toHaveAttribute(
+      "href",
+      "https://www.sdsc.edu/events/upcoming-workshop.html",
+    );
     expect(screen.getByRole("link", { name: "Recorded HPC session" })).toHaveAttribute(
       "href",
       "/materials/material-1",

@@ -1703,10 +1703,17 @@ main#main-content {
 }
 
 .event-card__location {
-  margin-top: auto;
   padding-top: 18px;
   color: var(--ink);
   font-weight: 700;
+}
+
+.event-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: auto;
+  padding-top: 18px;
 }
 
 .event-card__link {
