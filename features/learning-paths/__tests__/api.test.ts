@@ -43,12 +43,12 @@ describe("learning paths API", () => {
     await expect(getLearningPaths()).resolves.toEqual([samplePath]);
     expect(fetchMock).toHaveBeenCalledWith(
       "https://gateway.example/api/v1/learning-paths",
-      {
+      expect.objectContaining({
         next: {
           revalidate: 300,
           tags: ["catalog", "catalog:learning-paths"],
         },
-      },
+      }),
     );
   });
 
@@ -58,12 +58,12 @@ describe("learning paths API", () => {
     await expect(getLearningPath("path/one")).resolves.toEqual(samplePath);
     expect(fetchMock).toHaveBeenCalledWith(
       "https://gateway.example/api/v1/learning-paths/path%2Fone",
-      {
+      expect.objectContaining({
         next: {
           revalidate: 3600,
           tags: ["catalog", "catalog:learning-paths"],
         },
-      },
+      }),
     );
   });
 

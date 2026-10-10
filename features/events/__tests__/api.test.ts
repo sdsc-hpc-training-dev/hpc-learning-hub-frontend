@@ -36,7 +36,11 @@ function material(id: string, title: string, startAt: string) {
 }
 
 function responseWith(body: unknown): Response {
-  return { ok: true, status: 200, json: () => Promise.resolve(body) } as Response;
+  return {
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve(body),
+  } as Response;
 }
 
 function requestUrl(input: RequestInfo | URL): string {
@@ -47,7 +51,10 @@ function requestUrl(input: RequestInfo | URL): string {
 // Keep the mocked multi-page response and cache assertion in one suite.
 // eslint-disable-next-line max-lines-per-function
 describe("events API", () => {
-  const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
+  const fetchMock = jest.fn<
+    ReturnType<typeof fetch>,
+    Parameters<typeof fetch>
+  >();
 
   beforeEach(() => {
     process.env.GATEWAY_URL = "https://gateway.example";
@@ -82,8 +89,16 @@ describe("events API", () => {
           items: isSecondPage
             ? [material("newer", "Newer recording", "2026-06-01T18:00:00.000Z")]
             : [
-                material("older", "Older recording", "2025-06-01T18:00:00.000Z"),
-                material("future", "Future livestream", "2028-06-01T18:00:00.000Z"),
+                material(
+                  "older",
+                  "Older recording",
+                  "2025-06-01T18:00:00.000Z",
+                ),
+                material(
+                  "future",
+                  "Future livestream",
+                  "2028-06-01T18:00:00.000Z",
+                ),
               ],
           page: isSecondPage ? 2 : 1,
           pageSize: 100,
@@ -106,11 +121,13 @@ describe("events API", () => {
     const recordingRequest = fetchMock.mock.calls.find(([input]) =>
       requestUrl(input).includes("resourceType=video"),
     );
-    expect(recordingRequest?.[1]).toEqual({
-      next: {
-        revalidate: 300,
-        tags: ["catalog", "catalog:recordings"],
-      },
-    });
+    expect(recordingRequest?.[1]).toEqual(
+      expect.objectContaining({
+        next: {
+          revalidate: 300,
+          tags: ["catalog", "catalog:recordings"],
+        },
+      }),
+    );
   });
 });

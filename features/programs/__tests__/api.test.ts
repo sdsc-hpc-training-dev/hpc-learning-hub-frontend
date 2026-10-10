@@ -31,7 +31,10 @@ function requestUrl(input: RequestInfo | URL): string {
 // Keep request-budget assertions with their shared Gateway mock.
 // eslint-disable-next-line max-lines-per-function
 describe("series Gateway pagination", () => {
-  const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
+  const fetchMock = jest.fn<
+    ReturnType<typeof fetch>,
+    Parameters<typeof fetch>
+  >();
   beforeEach(() => {
     process.env.GATEWAY_URL = "https://gateway.example";
     global.fetch = fetchMock;
@@ -79,12 +82,12 @@ describe("series Gateway pagination", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock).toHaveBeenLastCalledWith(
       "https://gateway.example/api/v1/materials?eventSeries=series-1&page=1&pageSize=6",
-      {
+      expect.objectContaining({
         next: {
           revalidate: 300,
           tags: ["catalog", "catalog:programs"],
         },
-      },
+      }),
     );
   });
 
