@@ -105,6 +105,13 @@ function removeHtmlBlock(value: string, tag: "script" | "style") {
   return output;
 }
 
+function removeCreativeCommonsLicenseBadges(value: string) {
+  return value.replace(
+    /<a\b[^<]{0,1000}creativecommons\.org\/licenses\/[\s\S]{0,1000}?<\/a\s*>?/gi,
+    " ",
+  );
+}
+
 function stripHtml(value: string) {
   const withoutBlocks = removeHtmlBlock(
     removeHtmlBlock(value, "style"),
@@ -137,8 +144,11 @@ export function catalogPlainText(value: string | null | undefined) {
 
   const withoutImages = replaceMarkdownTokens(value, "![", false);
   const withoutLinks = replaceMarkdownTokens(withoutImages, "[", true);
+  const withoutLicenseBadges = removeCreativeCommonsLicenseBadges(
+    decodeHtmlEntities(withoutLinks),
+  );
 
-  return stripHtml(decodeHtmlEntities(withoutLinks))
+  return stripHtml(withoutLicenseBadges)
     .replace(/(^|\s)#{1,6}\s+/g, "$1")
     .replace(/(^|\s)(?:[-+*]|\d+[.)])\s+/g, "$1")
     .replace(/[`*_~|>]+/g, " ")

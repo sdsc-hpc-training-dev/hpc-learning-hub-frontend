@@ -61,3 +61,15 @@ describe("catalog presentation cleanup", () => {
     ).toBe("Source repository + Recording");
   });
 });
+
+describe("catalog badge cleanup", () => {
+  it("removes malformed Creative Commons badges without losing real prose", () => {
+    const badge =
+      '<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" <img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" / </a';
+
+    expect(catalogPlainText(badge)).toBe("");
+    expect(catalogPlainText(`${badge} SDSC Summer Institute 2021`)).toBe(
+      "SDSC Summer Institute 2021",
+    );
+  });
+});

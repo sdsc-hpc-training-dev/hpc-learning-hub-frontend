@@ -204,6 +204,47 @@ describe("Training Library repository normalization", () => {
 });
 
 describe("Training Library material presentation", () => {
+  it("falls back to event metadata when a repository title is a license badge", () => {
+    const badge =
+      '<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" <img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" / </a';
+    const normalized = normalizeMaterial({
+      ...material(
+        "summer-institute-material",
+        badge,
+        `${badge} SDSC Summer Institute 2021 materials and slides.`,
+      ),
+      eventEditions: [
+        {
+          id: "summer-institute-2021",
+          title: "High Performance Computing and Data Science Summer Institute",
+          description: "Annual SDSC training event.",
+          startAt: "2021-08-02T15:00:00Z",
+          endAt: "2021-08-06T21:00:00Z",
+          format: "online",
+          location: "Remote event",
+          eventUrl: null,
+          registrationUrl: null,
+          isTimeDisplayed: false,
+        },
+      ],
+      resources: [
+        {
+          id: "summer-institute-repository",
+          title: badge,
+          type: "repository",
+          url: "https://github.com/sdsc/sdsc-summer-institute-2021",
+        },
+      ],
+    });
+
+    expect(normalized).toEqual(
+      expect.objectContaining({
+        title: "High Performance Computing and Data Science Summer Institute",
+        description: "SDSC Summer Institute 2021 materials and slides.",
+      }),
+    );
+  });
+
   it("prioritizes a system named in the material title", () => {
     const normalized = normalizeMaterial({
       ...material(
