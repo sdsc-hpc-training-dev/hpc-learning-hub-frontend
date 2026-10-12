@@ -75,6 +75,9 @@ describe("catalog badge cleanup", () => {
     expect(catalogPlainText("Use values < 5 in this example.")).toBe(
       "Use values < 5 in this example.",
     );
+    expect(
+      catalogPlainText("Mai Nguyen <br / Paul Rodriguez </br Jon Stephens"),
+    ).toBe("Mai Nguyen Paul Rodriguez Jon Stephens");
   });
 
   it("removes malformed Creative Commons badges without losing real prose", () => {

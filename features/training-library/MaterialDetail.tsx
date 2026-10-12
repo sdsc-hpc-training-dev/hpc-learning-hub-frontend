@@ -134,10 +134,6 @@ export default function MaterialDetail({
             <div>
               <span className="eyebrow">Use the material</span>
               <h2 id="resources-heading">Available resources</h2>
-              <p>
-                Every destination below comes from the selected Snapshot v2
-                catalog record.
-              </p>
             </div>
           </div>
           {resources.length ? (
@@ -151,7 +147,10 @@ export default function MaterialDetail({
                   key={resource.id}
                 >
                   <span>
-                    <strong>{resource.title}</strong>
+                    <strong>
+                      {catalogPlainText(resource.title) ||
+                        resourceLabel(resource.type)}
+                    </strong>
                     <br />
                     <small>{resourceLabel(resource.type)}</small>
                   </span>
@@ -176,10 +175,6 @@ export default function MaterialDetail({
           <div className="section-heading">
             <span className="eyebrow">Continue exploring</span>
             <h2 id="related-heading">Related materials</h2>
-            <p>
-              Related items are chosen from overlapping topics, tools, systems,
-              and programs in the prototype subset.
-            </p>
           </div>
           {relatedMaterialsError ? (
             <InlineError
@@ -204,7 +199,7 @@ export default function MaterialDetail({
           {!relatedMaterialsError &&
           !relatedMaterialsLoading &&
           related.length === 0 ? (
-            <p>No related materials were identified in the curated subset.</p>
+            <p>No related materials are available.</p>
           ) : null}
         </div>
       </section>

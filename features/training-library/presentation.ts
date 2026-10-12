@@ -147,12 +147,11 @@ export function catalogPlainText(value: string | null | undefined) {
   const withoutLicenseBadges = removeCreativeCommonsLicenseBadges(
     decodeHtmlEntities(withoutLinks),
   );
-  const withoutEmptyAnchors = withoutLicenseBadges.replace(
-    /<a\b[^<>]{0,1000}<\/a\s*>?/gi,
-    " ",
-  );
+  const withoutEmptyMarkup = withoutLicenseBadges
+    .replace(/<a\b[^<>]{0,1000}<\/a\s*>?/gi, " ")
+    .replace(/<\/?br\b\s*\/?\s*>?/gi, " ");
 
-  return stripHtml(withoutEmptyAnchors)
+  return stripHtml(withoutEmptyMarkup)
     .replace(/(^|\s)#{1,6}\s+/g, "$1")
     .replace(/(^|\s)(?:[-+*]|\d+[.)])\s+/g, "$1")
     .replace(/[`*_~|>]+/g, " ")
