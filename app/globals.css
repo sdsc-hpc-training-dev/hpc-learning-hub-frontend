@@ -396,14 +396,20 @@ h3 {
   align-items: start;
 }
 
+.material-hero__layout > * {
+  min-width: 0;
+}
+
 .material-hero h1 {
   margin-bottom: 20px;
   font-size: clamp(2.5rem, 4.2vw, 4.2rem);
+  overflow-wrap: anywhere;
 }
 
 .material-summary {
   max-width: 780px;
   font-size: 1.16rem;
+  overflow-wrap: anywhere;
 }
 
 .material-facts {
@@ -471,6 +477,11 @@ h3 {
 .resource-link:hover {
   border-color: var(--blue);
   color: var(--blue);
+}
+
+.resource-link > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .material-canonical {
@@ -633,7 +644,7 @@ h3 {
   }
 
   .material-hero__layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
