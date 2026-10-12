@@ -63,6 +63,20 @@ describe("catalog presentation cleanup", () => {
 });
 
 describe("catalog badge cleanup", () => {
+  it("removes damaged empty README anchors while preserving surrounding prose", () => {
+    expect(
+      catalogPlainText(
+        'SDSC Summer Institute 2026 <a name="top" </a This repository hosts slides.',
+      ),
+    ).toBe("SDSC Summer Institute 2026 This repository hosts slides.");
+    expect(catalogPlainText('See <a href="/agenda">the agenda</a>.')).toBe(
+      "See the agenda .",
+    );
+    expect(catalogPlainText("Use values < 5 in this example.")).toBe(
+      "Use values < 5 in this example.",
+    );
+  });
+
   it("removes malformed Creative Commons badges without losing real prose", () => {
     const badge =
       '<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" <img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" / </a';
