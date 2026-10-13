@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CatalogMaterial } from "@/lib/gateway/types";
+import SaveMaterialButton from "@/features/my-learning/SaveMaterialButton";
 
 interface MaterialCardProps {
   material: CatalogMaterial;
@@ -50,6 +51,7 @@ export default function MaterialCard({ material, compact = false }: Readonly<Mat
       </div>
       <div className="material-card__footer">
         <span>{resourceTypes.length ? resourceTypes.join(" + ") : "Catalog entry"}</span>
+        <SaveMaterialButton materialId={material.id} compact />
         <Link className="text-link" href={href}>
           View material <span aria-hidden="true">→</span>
         </Link>

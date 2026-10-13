@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { SessionProvider } from "@/features/auth/SessionProvider";
 import "./globals.css";
 
 const sourceSans = localFont({
@@ -36,9 +37,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <ToastProvider>
-          <Navbar />
-          <main id="main-content">{children}</main>
-          <SiteFooter />
+          <SessionProvider>
+            <Navbar />
+            <main id="main-content">{children}</main>
+            <SiteFooter />
+          </SessionProvider>
         </ToastProvider>
       </body>
     </html>

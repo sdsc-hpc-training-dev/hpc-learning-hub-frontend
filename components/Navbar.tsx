@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "@/features/auth/SessionProvider";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface NavLink {
   key: string;
@@ -20,6 +22,7 @@ const NAV_LINKS: NavLink[] = [
 ];
 
 function getCurrentPage(pathname: string): string {
+  if (pathname.includes("my-learning") || pathname.includes("account")) return "";
   if (pathname.includes("training") || pathname.includes("materials")) return "catalog";
   if (pathname.includes("learning")) return "learning";
   if (pathname.includes("events")) return "events";
@@ -27,14 +30,57 @@ function getCurrentPage(pathname: string): string {
   return "home";
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { account, loading, signOut } = useSession();
+  const notify = useToast();
   const currentPage = getCurrentPage(pathname);
+  const closeMenus = () => { setMenuOpen(false); };
+  let accountActions;
+  if (loading) {
+    accountActions = <span className="nav-session-loading" aria-label="Checking account" />;
+  } else if (account) {
+    accountActions = (
+      <details className="account-menu">
+        <summary aria-label={`Account menu for ${account.username}`}>
+          <span className="account-avatar" aria-hidden="true">{account.username.slice(0, 1).toUpperCase()}</span>
+          <span>{account.username}</span>
+          <span className="account-menu__chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div className="account-menu__panel">
+          <p className="account-menu__identity">Signed in as <strong>{account.email}</strong></p>
+          <Link href="/my-learning" onClick={closeMenus}>My Learning</Link>
+          <Link href="/account" onClick={closeMenus}>Account settings</Link>
+          <button type="button" onClick={() => { void handleSignOut(); }}>Sign out</button>
+        </div>
+      </details>
+    );
+  } else {
+    accountActions = (
+      <>
+        <Link className="nav-signin" href={`/account?next=${encodeURIComponent(pathname)}`} onClick={closeMenus}>
+          Sign in
+        </Link>
+        <Link className="nav-button" href={`/account?mode=create&next=${encodeURIComponent(pathname)}`} onClick={closeMenus}>
+          Create account
+        </Link>
+      </>
+    );
+  }
 
-  const closeMenus = () => {
-    setMenuOpen(false);
-  };
+  async function handleSignOut() {
+    try {
+      await signOut();
+      closeMenus();
+      router.push("/");
+      router.refresh();
+    } catch {
+      notify("We could not sign you out. Please try again.", "error");
+    }
+  }
 
   return (
     <header className="site-header">
@@ -43,24 +89,15 @@ export default function Navbar() {
           <Image src="/SDSC-logo.svg" alt="San Diego Supercomputer Center" width={170} height={48} priority />
           <span>HPC Learning Hub</span>
         </Link>
-        {/*
-        <button className="mobile-aida" type="button" aria-label="Open Ask AIDA" title="Ask AIDA">
-          <span aria-hidden="true">A</span>
-        </button>
-        
-
         <button
           className="menu-toggle"
           type="button"
           aria-expanded={menuOpen}
           aria-controls="primary-navigation"
-          onClick={() => {
-            setMenuOpen(!menuOpen);
-          }}
+          onClick={() => { setMenuOpen((open) => !open); }}
         >
           Menu
         </button>
-        */}
         <nav
           className={`primary-nav ${menuOpen ? "is-open" : ""}`}
           id="primary-navigation"
@@ -76,20 +113,9 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-{/*
-          <button className="nav-button" type="button" title="Ask AIDA" onClick={closeMenus}>
-            Ask AIDA
-          </button>
-
           <div className="nav-account-actions">
-            <Link className="nav-signin" href="/account">
-              Sign in
-            </Link>
-            <Link className="nav-button" href="/account?mode=create">
-              Create account
-            </Link>
+            {accountActions}
           </div>
-*/}
         </nav>
       </div>
     </header>

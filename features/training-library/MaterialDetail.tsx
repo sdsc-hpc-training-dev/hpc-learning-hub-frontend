@@ -2,6 +2,7 @@ import Link from "next/link";
 import InlineError from "@/components/ui/InlineError";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 import MaterialCard from "./MaterialCard";
+import SaveMaterialButton from "@/features/my-learning/SaveMaterialButton";
 
 interface MaterialDetailProps {
   material: CatalogMaterial;
@@ -62,6 +63,7 @@ export default function MaterialDetail({ material, relatedMaterials, relatedMate
             <span className="eyebrow">{material.series ?? "SDSC training material"}</span>
             <div className="material-title-row">
               <h1>{material.title}</h1>
+              <SaveMaterialButton materialId={material.id} />
             </div>
             <p className="material-summary">{material.summary ?? material.description ?? "No summary available."}</p>
             <div className="tag-row" aria-label="Material topics and tools">
