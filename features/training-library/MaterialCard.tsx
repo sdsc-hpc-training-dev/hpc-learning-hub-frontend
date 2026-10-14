@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { materialOpenEvent } from "@/features/analytics/events";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 
 interface MaterialCardProps {
@@ -45,6 +46,7 @@ export default function MaterialCard({
       : null,
   ].filter(Boolean);
   const href = `/materials/${encodeURIComponent(material.id)}`;
+  const tracking = materialOpenEvent(material.id);
   const cardClassName = compact
     ? "material-card material-card--compact"
     : "material-card";
@@ -60,7 +62,9 @@ export default function MaterialCard({
           {meta.join(" | ") || "SDSC training material"}
         </div>
         <Heading>
-          <Link href={href}>{material.title}</Link>
+          <Link href={href} {...tracking}>
+            {material.title}
+          </Link>
         </Heading>
         <p>{summary}</p>
         <div className="tag-row" aria-label="Topics and tools">
@@ -77,7 +81,7 @@ export default function MaterialCard({
         <span>
           {resourceTypes.length ? resourceTypes.join(" + ") : "Catalog entry"}
         </span>
-        <Link className="text-link" href={href}>
+        <Link className="text-link" href={href} {...tracking}>
           View material <span aria-hidden="true">→</span>
         </Link>
       </div>
