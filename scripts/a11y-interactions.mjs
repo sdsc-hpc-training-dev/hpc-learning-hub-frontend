@@ -13,11 +13,11 @@ async function scanSelectFilters(page, viewportName, scan) {
       );
     for (const value of options) {
       await filter.selectOption(value);
-      const isProgram = (await filter.getAttribute("id")) === "catalog-program";
-      if (isProgram)
-        await page.waitForURL(
-          (url) => url.searchParams.get("program") === value,
-        );
+      const parameter = (await filter.getAttribute("id")).replace(
+        "catalog-",
+        "",
+      );
+      await page.waitForURL((url) => url.searchParams.get(parameter) === value);
       await page.locator(".filter-chip").first().waitFor();
       await scan(
         `${viewportName}: ${await filter.getAttribute("id")}=${value}`,
@@ -25,11 +25,24 @@ async function scanSelectFilters(page, viewportName, scan) {
       await page.locator(".filter-chip").first().focus();
       await page.locator(".filter-chip").first().press("Enter");
       await page.waitForFunction(() => !document.querySelector(".filter-chip"));
-      if (isProgram)
-        await page.waitForURL((url) => !url.searchParams.has("program"));
+      await page.waitForURL((url) => !url.searchParams.has(parameter));
       await scan(`${viewportName}: filter removed`);
     }
   }
+}
+
+async function scanDateFilter(page, viewportName, scan) {
+  await page.locator("#catalog-date").fill("1900-01-01");
+  await page.waitForURL((url) => url.searchParams.get("date") === "1900-01-01");
+  await page.locator(".empty-state").waitFor();
+  await scan(`${viewportName}: date filter and empty results`);
+  const reset = page
+    .locator(".empty-state")
+    .getByRole("button", { name: "Reset filters" });
+  await reset.focus();
+  await reset.press("Enter");
+  await page.waitForFunction(() => !document.querySelector(".filter-chip"));
+  await scan(`${viewportName}: reset filters`);
 }
 
 export async function scanInteractions(page, route, scan) {
@@ -71,16 +84,7 @@ export async function scanInteractions(page, route, scan) {
 
     await scanSelectFilters(page, viewport.name, scan);
 
-    await page.locator("#catalog-date").fill("1900-01-01");
-    await page.locator(".empty-state").waitFor();
-    await scan(`${viewport.name}: date filter and empty results`);
-    const reset = page
-      .locator(".empty-state")
-      .getByRole("button", { name: "Reset filters" });
-    await reset.focus();
-    await reset.press("Enter");
-    await page.waitForFunction(() => !document.querySelector(".filter-chip"));
-    await scan(`${viewport.name}: reset filters`);
+    await scanDateFilter(page, viewport.name, scan);
 
     // A real keyword exposes the dynamically rendered removal button.
     await page.locator("#catalog-search").fill("computing");

@@ -42,7 +42,7 @@ describe("LearningPathsView", () => {
     );
     expect(
       screen.getByText(
-        "Start with a curated learning path to build your skills in High Performance Computing (HPC). These two paths arrange HPC trainings into a clear first journey. They are proposed guidance, not a completed curriculum.",
+        "Start with a curated learning path to build your skills in High Performance Computing (HPC). These paths arrange HPC trainings into a clear first journey. They are proposed guidance, not a completed curriculum.",
       ),
     ).toBeInTheDocument();
   });

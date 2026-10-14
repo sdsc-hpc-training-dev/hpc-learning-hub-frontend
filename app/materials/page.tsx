@@ -1,5 +1,8 @@
 import MaterialsPageClient from "@/features/training-library/MaterialsPageClient";
-import { getTrainingLibraryData } from "@/features/training-library/api";
+import {
+  getTrainingLibraryData,
+  getTrainingLibraryFacets,
+} from "@/features/training-library/api";
 import { getProgramsData } from "@/features/programs/api";
 
 interface MaterialsPageProps {
@@ -11,6 +14,8 @@ interface MaterialsPageProps {
     resource?: string | string[];
     query?: string | string[];
     date?: string | string[];
+    page?: string | string[];
+    sort?: string | string[];
   }>;
 }
 
@@ -28,6 +33,8 @@ export default async function MaterialsPage({
     resource: getValue(params.resource),
     query: getValue(params.query),
     date: getValue(params.date),
+    page: getValue(params.page),
+    sort: getValue(params.sort),
   };
   const programsPromise = getProgramsData()
     .then(({ programs }) => programs)
@@ -35,14 +42,25 @@ export default async function MaterialsPage({
       console.error("Failed to load program filters", error);
       return [];
     });
-  const [{ materials, error }, programs] = await Promise.all([
-    getTrainingLibraryData(filters),
-    programsPromise,
-  ]);
+  const [{ materials, error, total, page, totalPages }, programs, facets] =
+    await Promise.all([
+      getTrainingLibraryData(filters),
+      programsPromise,
+      getTrainingLibraryFacets().catch(() => ({
+        topics: [],
+        tools: [],
+        systems: [],
+      })),
+    ]);
 
   return (
     <MaterialsPageClient
+      key={JSON.stringify(filters)}
       materials={materials}
+      total={total}
+      page={page}
+      totalPages={totalPages}
+      facets={facets}
       programs={programs}
       initialFilters={filters}
       initialError={

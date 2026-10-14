@@ -2,47 +2,78 @@ import { getStartHereData } from "../api";
 
 const gatewayMaterials = [
   {
-    id: "material-1",
-    title: "Material 1",
+    id: "20000013",
+    title: "Expanse 101: Accessing and Running Jobs on Expanse",
     description: "Description 1",
     topics: [{ id: "topic-1", name: "MPI" }],
     systems: [{ id: "system-1", name: "Expanse" }],
     tools: [{ id: "tool-1", name: "Slurm" }],
     instructors: [],
-    resources: [],
+    resources: [
+      {
+        id: "resource-1",
+        title: "Recording",
+        type: "video",
+        url: "https://example.test/1",
+      },
+    ],
     eventEditions: [],
   },
   {
-    id: "material-2",
-    title: "Material 2",
+    id: "20000058",
+    title: "Getting Started with Batch Job Scheduling: Slurm Edition",
     description: "Description 2",
     topics: [{ id: "topic-2", name: "Python" }],
-    systems: [{ id: "system-2", name: "Comet" }],
-    tools: [{ id: "tool-2", name: "Jupyter" }],
+    systems: [
+      { id: "system-1", name: "Expanse" },
+      { id: "system-2", name: "TSCC" },
+    ],
+    tools: [{ id: "tool-1", name: "Slurm" }],
     instructors: [],
-    resources: [],
+    resources: [
+      {
+        id: "resource-2",
+        title: "Repository",
+        type: "repository",
+        url: "https://example.test/2",
+      },
+    ],
     eventEditions: [],
   },
   {
-    id: "material-3",
-    title: "Material 3",
+    id: "20000070",
+    title: "GPU Computing and Programming on Expanse",
     description: "Description 3",
-    topics: [{ id: "topic-3", name: "GPU" }],
+    topics: [{ id: "topic-3", name: "GPU Programming" }],
     systems: [{ id: "system-1", name: "Expanse" }],
     tools: [{ id: "tool-3", name: "CUDA" }],
     instructors: [],
-    resources: [],
+    resources: [
+      {
+        id: "resource-3",
+        title: "Recording",
+        type: "video",
+        url: "https://example.test/3",
+      },
+    ],
     eventEditions: [],
   },
   {
     id: "material-4",
     title: "Material 4",
     description: "Description 4",
-    topics: [{ id: "topic-4", name: "Data" }],
-    systems: [],
-    tools: [],
+    topics: [{ id: "topic-4", name: "GPU Programming" }],
+    systems: [{ id: "system-2", name: "TSCC" }],
+    tools: [{ id: "tool-1", name: "Slurm" }],
     instructors: [],
-    resources: [],
+    resources: [
+      {
+        id: "resource-4",
+        title: "Slides",
+        type: "slides",
+        url: "https://example.test/4",
+      },
+    ],
     eventEditions: [],
   },
   {
@@ -156,11 +187,16 @@ describe("Start Here data", () => {
     const restoreGateway = installGatewayMock();
     try {
       const data = await getStartHereData();
-      expect(data.browseOptions).toHaveLength(4);
+      expect(data.browseOptions).toEqual([
+        { type: "system", name: "Expanse", count: 3 },
+        { type: "topic", name: "GPU Programming", count: 2 },
+        { type: "tool", name: "Slurm", count: 3 },
+        { type: "system", name: "TSCC", count: 2 },
+      ]);
       expect(data.featuredMaterials.map((material) => material.id)).toEqual([
-        "material-1",
-        "material-2",
-        "material-3",
+        "20000013",
+        "20000058",
+        "20000070",
       ]);
       expect(data.learningPaths.map((path) => path.id)).toEqual([
         "path-1",

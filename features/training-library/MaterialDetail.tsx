@@ -2,6 +2,8 @@ import Link from "next/link";
 import InlineError from "@/components/ui/InlineError";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 import MaterialCard from "./MaterialCard";
+import ExpandableDescription from "./ExpandableDescription";
+import { catalogPlainText, publicResourceTypeLabel } from "./presentation";
 
 interface MaterialDetailProps {
   material: CatalogMaterial;
@@ -28,9 +30,7 @@ function listOrFallback(items: string[]) {
 }
 
 function resourceLabel(type: string) {
-  return type
-    .replace(/[-_]/g, " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+  return publicResourceTypeLabel(type) ?? "Catalog material";
 }
 
 function relatedScore(material: CatalogMaterial, candidate: CatalogMaterial) {
@@ -76,6 +76,10 @@ export default function MaterialDetail({
     ...material.systems,
   ].slice(0, 8);
   const related = rankRelatedMaterials(material, relatedMaterials);
+  const title = catalogPlainText(material.title) || "Untitled material";
+  const summary =
+    catalogPlainText(material.summary ?? material.description) ||
+    "No summary available.";
 
   return (
     <>
@@ -86,14 +90,14 @@ export default function MaterialDetail({
               {material.series ?? "SDSC training material"}
             </span>
             <div className="material-title-row">
-              <h1>{material.title}</h1>
+              <h1>{title}</h1>
             </div>
-            <p className="material-summary">
-              {material.summary ??
-                material.description ??
-                "No summary available."}
-            </p>
-            <div className="tag-row" aria-label="Material topics and tools">
+            <ExpandableDescription text={summary} />
+            <div
+              className="tag-row"
+              role="group"
+              aria-label="Material topics and tools"
+            >
               {tags.map((tag) => (
                 <span className="tag" key={tag}>
                   {tag}
@@ -134,10 +138,6 @@ export default function MaterialDetail({
             <div>
               <span className="eyebrow">Use the material</span>
               <h2 id="resources-heading">Available resources</h2>
-              <p>
-                Every destination below comes from the selected Snapshot v2
-                catalog record.
-              </p>
             </div>
           </div>
           {resources.length ? (
@@ -151,7 +151,10 @@ export default function MaterialDetail({
                   key={resource.id}
                 >
                   <span>
-                    <strong>{resource.title}</strong>
+                    <strong>
+                      {catalogPlainText(resource.title) ||
+                        resourceLabel(resource.type)}
+                    </strong>
                     <br />
                     <small>{resourceLabel(resource.type)}</small>
                   </span>
@@ -176,10 +179,6 @@ export default function MaterialDetail({
           <div className="section-heading">
             <span className="eyebrow">Continue exploring</span>
             <h2 id="related-heading">Related materials</h2>
-            <p>
-              Related items are chosen from overlapping topics, tools, systems,
-              and programs in the prototype subset.
-            </p>
           </div>
           {relatedMaterialsError ? (
             <InlineError
@@ -204,7 +203,7 @@ export default function MaterialDetail({
           {!relatedMaterialsError &&
           !relatedMaterialsLoading &&
           related.length === 0 ? (
-            <p>No related materials were identified in the curated subset.</p>
+            <p>No related materials are available.</p>
           ) : null}
         </div>
       </section>
