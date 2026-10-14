@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CatalogMaterial } from "@/lib/gateway/types";
+import { catalogPlainText, resourceTypeSummary } from "./presentation";
 
 interface MaterialCardProps {
   material: CatalogMaterial;
@@ -32,9 +33,6 @@ export default function MaterialCard({
   material,
   compact = false,
 }: Readonly<MaterialCardProps>) {
-  const resourceTypes = [
-    ...new Set(material.resources.map((resource) => resource.type)),
-  ];
   const Heading = headingTag(compact);
   const meta = [
     formatDate(material.date),
@@ -48,8 +46,10 @@ export default function MaterialCard({
   const cardClassName = compact
     ? "material-card material-card--compact"
     : "material-card";
+  const title = catalogPlainText(material.title) || "Untitled material";
   const summary = truncate(
-    material.summary ?? material.description ?? "No summary available.",
+    catalogPlainText(material.summary ?? material.description) ||
+      "No summary available.",
     compact ? 112 : 180,
   );
 
@@ -60,10 +60,10 @@ export default function MaterialCard({
           {meta.join(" | ") || "SDSC training material"}
         </div>
         <Heading>
-          <Link href={href}>{material.title}</Link>
+          <Link href={href}>{title}</Link>
         </Heading>
         <p>{summary}</p>
-        <div className="tag-row" aria-label="Topics and tools">
+        <div className="tag-row" role="group" aria-label="Topics and tools">
           {[...material.topics, ...material.tools]
             .slice(0, compact ? 2 : 3)
             .map((item) => (
@@ -74,9 +74,7 @@ export default function MaterialCard({
         </div>
       </div>
       <div className="material-card__footer">
-        <span>
-          {resourceTypes.length ? resourceTypes.join(" + ") : "Catalog entry"}
-        </span>
+        <span>{resourceTypeSummary(material.resources)}</span>
         <Link className="text-link" href={href}>
           View material <span aria-hidden="true">→</span>
         </Link>

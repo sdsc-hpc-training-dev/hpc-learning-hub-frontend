@@ -1,4 +1,4 @@
-import { render, screen /*fireEvent*/ } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { usePathname } from "next/navigation";
 import Navbar from "../Navbar";
 
@@ -53,25 +53,12 @@ describe("Navbar - Rendering", () => {
       screen.getByRole("link", { name: /programs & series/i }),
     ).toBeInTheDocument();
   });
-  /*
-  it("renders sign in and create account links", () => {
-    render(<Navbar />);
-    expect(screen.getByRole("link", { name: /sign in/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /create account/i })).toBeInTheDocument();
-  });
-
-  it("renders Ask AIDA button", () => {
-    render(<Navbar />);
-    const aidaButtons = screen.getAllByTitle("Ask AIDA");
-    expect(aidaButtons.length).toBeGreaterThan(0);
-  });
-
   it("renders menu toggle button", () => {
     render(<Navbar />);
     expect(screen.getByRole("button", { name: /menu/i })).toBeInTheDocument();
-  });*/
+  });
 });
-/*
+
 describe("Navbar - Interactions", () => {
   beforeEach(() => {
     (usePathname as jest.Mock).mockReturnValue("/");
@@ -104,9 +91,18 @@ describe("Navbar - Interactions", () => {
     expect(nav).not.toHaveClass("is-open");
   });
 });
-*/
 
 describe("Navbar - Active Page Detection", () => {
+  it("keeps a series materials drill-down under Programs & Series", () => {
+    (usePathname as jest.Mock).mockReturnValue("/programs/materials");
+    render(<Navbar />);
+    expect(
+      screen.getByRole("link", { name: /programs & series/i }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getByRole("link", { name: /training library/i }),
+    ).not.toHaveAttribute("aria-current");
+  });
   it("sets active page indicator for current route", () => {
     (usePathname as jest.Mock).mockReturnValue("/learning-paths");
     render(<Navbar />);

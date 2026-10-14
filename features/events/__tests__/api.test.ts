@@ -1,5 +1,10 @@
 import { getEventsData } from "../api";
 
+const recordingCache = {
+  revalidate: 300,
+  tags: ["catalog", "catalog:recordings"],
+};
+
 const futureSoon = {
   id: "event-soon",
   title: "Upcoming workshop",
@@ -8,6 +13,9 @@ const futureSoon = {
   endAt: "2027-01-10T19:00:00.000Z",
   format: "online",
   location: "Remote event",
+  eventUrl: "https://www.sdsc.edu/events/upcoming-workshop.html",
+  registrationUrl: "https://registration.example/upcoming-workshop",
+  isTimeDisplayed: true,
 };
 
 const futureLate = {
@@ -45,39 +53,8 @@ function requestUrl(input: RequestInfo | URL): string {
   return input instanceof URL ? input.toString() : input.url;
 }
 
-function fetchEventsFixture(input: RequestInfo | URL): Promise<Response> {
-  const url = requestUrl(input);
-  if (url.endsWith("/api/v1/event-editions")) {
-    return Promise.resolve(
-      responseWith([
-        futureLate,
-        {
-          ...futureSoon,
-          id: "past",
-          startAt: "2025-01-01T00:00:00.000Z",
-          endAt: "2099-01-01T00:00:00.000Z",
-        },
-        futureSoon,
-      ]),
-    );
-  }
-  const isSecondPage = url.includes("page=2");
-  return Promise.resolve(
-    responseWith({
-      items: isSecondPage
-        ? [material("newer", "Newer recording", "2026-06-01T18:00:00.000Z")]
-        : [
-            material("older", "Older recording", "2025-06-01T18:00:00.000Z"),
-            material("future", "Future livestream", "2028-06-01T18:00:00.000Z"),
-          ],
-      page: isSecondPage ? 2 : 1,
-      pageSize: 100,
-      total: 3,
-      totalPages: 2,
-    }),
-  );
-}
-
+// Keep the mocked multi-page response and cache assertion in one suite.
+// eslint-disable-next-line max-lines-per-function
 describe("events API", () => {
   const fetchMock = jest.fn<
     ReturnType<typeof fetch>,
@@ -95,7 +72,46 @@ describe("events API", () => {
   });
 
   it("selects future events and recent recording materials", async () => {
-    fetchMock.mockImplementation(fetchEventsFixture);
+    fetchMock.mockImplementation((input) => {
+      const url = requestUrl(input);
+      if (url.endsWith("/api/v1/event-editions")) {
+        return Promise.resolve(
+          responseWith([
+            futureLate,
+            {
+              ...futureSoon,
+              id: "past",
+              startAt: "2025-01-01T00:00:00.000Z",
+              endAt: "2099-01-01T00:00:00.000Z",
+            },
+            futureSoon,
+          ]),
+        );
+      }
+      const isSecondPage = url.includes("page=2");
+      return Promise.resolve(
+        responseWith({
+          items: isSecondPage
+            ? [material("newer", "Newer recording", "2026-06-01T18:00:00.000Z")]
+            : [
+                material(
+                  "older",
+                  "Older recording",
+                  "2025-06-01T18:00:00.000Z",
+                ),
+                material(
+                  "future",
+                  "Future livestream",
+                  "2028-06-01T18:00:00.000Z",
+                ),
+              ],
+          page: isSecondPage ? 2 : 1,
+          pageSize: 100,
+          total: 3,
+          totalPages: 2,
+        }),
+      );
+    });
 
     const data = await getEventsData(new Date("2027-01-01T00:00:00.000Z"));
 
@@ -107,9 +123,13 @@ describe("events API", () => {
       "newer",
       "older",
     ]);
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("resourceType=video"),
-      expect.objectContaining({ cache: "no-store" }),
+    const recordingRequest = fetchMock.mock.calls.find(([input]) =>
+      requestUrl(input).includes("resourceType=video"),
+    );
+    expect(recordingRequest?.[1]).toEqual(
+      expect.objectContaining({
+        next: recordingCache,
+      }),
     );
   });
 });

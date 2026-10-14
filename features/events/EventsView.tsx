@@ -1,4 +1,5 @@
 import type { GatewayEventEdition } from "@/lib/gateway/types";
+import { catalogPlainText } from "@/features/training-library/presentation";
 import type { RecordedMaterial } from "./api";
 import PastRecordings from "./PastRecordings";
 import InlineError from "@/components/ui/InlineError";
@@ -9,23 +10,29 @@ interface EventsViewProps {
   error?: string;
 }
 
-function formatDate(
-  value: string | null,
+function formatSchedule(
+  event: GatewayEventEdition,
   fallback = "Date to be announced",
 ): string {
-  if (!value) return fallback;
-  const date = new Date(value);
+  if (!event.startAt) return fallback;
+  const date = new Date(event.startAt);
   if (Number.isNaN(date.getTime())) return fallback;
-  return new Intl.DateTimeFormat("en-US", {
+  const options: Intl.DateTimeFormatOptions = {
     month: "short",
     day: "numeric",
     year: "numeric",
     timeZone: "America/Los_Angeles",
-  }).format(date);
+  };
+  if (event.isTimeDisplayed !== false) {
+    options.hour = "numeric";
+    options.minute = "2-digit";
+    options.timeZoneName = "short";
+  }
+  return new Intl.DateTimeFormat("en-US", options).format(date);
 }
 
 function truncate(value: string | null, length = 180): string {
-  const clean = (value ?? "").replace(/\s+/g, " ").trim();
+  const clean = catalogPlainText(value);
   if (!clean) return "Additional event details are not available yet.";
   return clean.length > length ? `${clean.slice(0, length).trim()}…` : clean;
 }
@@ -41,14 +48,49 @@ function EmptyEvents({ children }: Readonly<{ children: string }>) {
 export function UpcomingEventCard({
   event,
 }: Readonly<{ event: GatewayEventEdition }>) {
+  const title = event.title ?? "Untitled event";
+  const titleContent = event.eventUrl ? (
+    <a href={event.eventUrl} target="_blank" rel="noreferrer">
+      {title}
+    </a>
+  ) : (
+    title
+  );
+
   return (
     <article className="event-card">
-      <div className="event-card__date">{formatDate(event.startAt)}</div>
+      <time className="event-card__date" dateTime={event.startAt ?? undefined}>
+        {formatSchedule(event)}
+      </time>
       <span className="event-card__type">{event.format ?? "SDSC event"}</span>
-      <h3>{event.title ?? "Untitled event"}</h3>
+      <h3>{titleContent}</h3>
       <p>{truncate(event.description)}</p>
       {event.location ? (
         <div className="event-card__location">{event.location}</div>
+      ) : null}
+      {event.registrationUrl || event.eventUrl ? (
+        <div className="event-card__actions">
+          {event.registrationUrl ? (
+            <a
+              className="text-link"
+              href={event.registrationUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Register <span aria-hidden="true">→</span>
+            </a>
+          ) : null}
+          {event.eventUrl ? (
+            <a
+              className="text-link"
+              href={event.eventUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Event details <span aria-hidden="true">→</span>
+            </a>
+          ) : null}
+        </div>
       ) : null}
     </article>
   );

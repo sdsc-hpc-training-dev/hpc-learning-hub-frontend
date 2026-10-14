@@ -20,6 +20,8 @@ const NAV_LINKS: NavLink[] = [
 ];
 
 function getCurrentPage(pathname: string): string {
+  if (pathname === "/programs" || pathname.startsWith("/programs/"))
+    return "programs";
   if (pathname.includes("training") || pathname.includes("materials"))
     return "catalog";
   if (pathname.includes("learning")) return "learning";
@@ -54,12 +56,6 @@ export default function Navbar() {
           />
           <span>HPC Learning Hub</span>
         </Link>
-        {/*
-        <button className="mobile-aida" type="button" aria-label="Open Ask AIDA" title="Ask AIDA">
-          <span aria-hidden="true">A</span>
-        </button>
-        
-
         <button
           className="menu-toggle"
           type="button"
@@ -71,7 +67,6 @@ export default function Navbar() {
         >
           Menu
         </button>
-        */}
         <nav
           className={`primary-nav ${menuOpen ? "is-open" : ""}`}
           id="primary-navigation"

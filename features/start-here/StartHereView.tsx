@@ -106,8 +106,8 @@ export default function StartHereView({
           <div className="section-heading section-heading--split">
             <div>
               <span className="eyebrow">Good places to begin</span>
-              <h2 id="featured-heading">Featured Trainings</h2>
-              <p>Explore training materials from across the SDSC catalog.</p>
+              <h2 id="featured-heading">Featured training</h2>
+              <p>See useful training materials from across the SDSC catalog.</p>
             </div>
             <Link className="text-link" href="/materials">
               Browse all training →
