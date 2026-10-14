@@ -110,6 +110,7 @@ jobs:
   test:
     name: Tests & coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [validate-branch]
     steps:
       - uses: actions/checkout@v4
@@ -118,7 +119,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
       - run: npm ci
-      - run: npm run test:coverage
+      - run: npm run test:coverage -- --ci --runInBand --detectOpenHandles
       - run: |
           node -e "
             const s = require('./coverage/coverage-summary.json').total;

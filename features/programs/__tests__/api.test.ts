@@ -55,7 +55,11 @@ const secondMaterialPage = {
 };
 
 function responseWith(body: unknown): Response {
-  return { ok: true, status: 200, json: () => Promise.resolve(body) } as Response;
+  return {
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve(body),
+  } as Response;
 }
 
 function requestUrl(input: RequestInfo | URL): string {
@@ -76,7 +80,10 @@ function mockSelectedProgramResponses(
 }
 
 describe("programs API", () => {
-  const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
+  const fetchMock = jest.fn<
+    ReturnType<typeof fetch>,
+    Parameters<typeof fetch>
+  >();
 
   beforeEach(() => {
     process.env.GATEWAY_URL = "https://gateway.example";
@@ -138,7 +145,10 @@ describe("programs API", () => {
 });
 
 describe("programs API normalization", () => {
-  const fetchMock = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
+  const fetchMock = jest.fn<
+    ReturnType<typeof fetch>,
+    Parameters<typeof fetch>
+  >();
 
   beforeEach(() => {
     process.env.GATEWAY_URL = "https://gateway.example";

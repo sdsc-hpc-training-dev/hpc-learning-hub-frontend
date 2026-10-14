@@ -20,7 +20,9 @@ const recording = {
 
 describe("EventsView", () => {
   it("renders upcoming events and recording links", () => {
-    render(<EventsView upcomingEvents={[upcomingEvent]} recordings={[recording]} />);
+    render(
+      <EventsView upcomingEvents={[upcomingEvent]} recordings={[recording]} />,
+    );
 
     expect(
       screen.getByRole("heading", {
@@ -29,17 +31,18 @@ describe("EventsView", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Upcoming HPC workshop")).toBeInTheDocument();
     expect(screen.getByText("Remote event")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Recorded HPC session" })).toHaveAttribute(
-      "href",
-      "/materials/material-1",
-    );
+    expect(
+      screen.getByRole("link", { name: "Recorded HPC session" }),
+    ).toHaveAttribute("href", "/materials/material-1");
   });
 
   it("renders honest empty states", () => {
     render(<EventsView upcomingEvents={[]} recordings={[]} />);
 
     const statuses = screen.getAllByRole("status");
-    expect(statuses[0]).toHaveTextContent("No upcoming events are currently listed.");
+    expect(statuses[0]).toHaveTextContent(
+      "No upcoming events are currently listed.",
+    );
     expect(statuses[1]).toHaveTextContent(
       "No recorded training sessions are currently available.",
     );

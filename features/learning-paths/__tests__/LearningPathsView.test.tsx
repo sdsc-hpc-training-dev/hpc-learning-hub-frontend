@@ -53,7 +53,6 @@ describe("LearningPathsView", () => {
       "No learning paths are available yet.",
     );
   });
-
 });
 
 describe("LearningPathDetail", () => {
@@ -74,6 +73,8 @@ describe("LearningPathDetail", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "No training materials have been added to this path yet.",
     );
-    expect(screen.queryByText("No learning paths are available yet.")).toBeNull();
+    expect(
+      screen.queryByText("No learning paths are available yet."),
+    ).toBeNull();
   });
 });
