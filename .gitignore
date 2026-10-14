@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/report/
+/a11y-artifacts/
 
 # next.js
 /.next/
