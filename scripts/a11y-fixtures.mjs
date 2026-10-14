@@ -47,29 +47,39 @@ const learningPath = {
   items: [{ position: 1, material: materials[0] }],
 };
 
+function fixtureMaterials(url) {
+  const search = (url.searchParams.get("search") ?? "").toLowerCase();
+  const date = url.searchParams.get("date");
+  const items = materials.filter((material) => {
+    const matchesSearch = `${material.title} ${material.description}`
+      .toLowerCase()
+      .includes(search);
+    const matchesDate =
+      !date ||
+      material.eventEditions.some(
+        (edition) => edition.startAt.slice(0, 10) === date,
+      );
+    return matchesSearch && matchesDate;
+  });
+  return { items, page: 1, pageSize: 100, total: items.length, totalPages: 1 };
+}
+
 // Each endpoint intentionally returns its own API response shape.
 // eslint-disable-next-line sonarjs/function-return-type
 function fixtureResponse(url) {
   switch (url.pathname) {
-    case "/api/v1/materials": {
-      const search = (url.searchParams.get("search") ?? "").toLowerCase();
-      const items = materials.filter((material) =>
-        `${material.title} ${material.description}`
-          .toLowerCase()
-          .includes(search),
-      );
-      return {
-        items,
-        page: 1,
-        pageSize: 100,
-        total: items.length,
-        totalPages: 1,
-      };
-    }
+    case "/api/v1/materials":
+      return fixtureMaterials(url);
     case "/api/v1/materials/a11y-material":
       return materials[0];
     case "/api/v1/event-series":
       return [program];
+    case "/api/v1/topics":
+      return materials[0].topics;
+    case "/api/v1/tools":
+      return materials[0].tools;
+    case "/api/v1/systems":
+      return materials[0].systems;
     case "/api/v1/event-editions":
       return [
         pastEvent,
