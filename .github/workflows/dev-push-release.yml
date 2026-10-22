@@ -175,6 +175,49 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
 
+  dev-image:
+    name: Build, test & publish dev image
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build dev image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: |
+            ghcr.io/sdsc-hpc-training-dev/hpc-learning-hub-frontend:dev
+            ghcr.io/sdsc-hpc-training-dev/hpc-learning-hub-frontend:sha-${{ github.sha }}
+      - name: Smoke-test dev image
+        run: |
+          image=ghcr.io/sdsc-hpc-training-dev/hpc-learning-hub-frontend:dev
+          docker run --detach --name hpc-learning-hub-frontend --publish 3000:3000 "$image"
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:3000/ > /dev/null; then
+              echo "Container returned HTTP 200."
+              docker stop hpc-learning-hub-frontend
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs hpc-learning-hub-frontend
+          exit 1
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push dev image
+        run: |
+          docker push ghcr.io/sdsc-hpc-training-dev/hpc-learning-hub-frontend:dev
+          docker push ghcr.io/sdsc-hpc-training-dev/hpc-learning-hub-frontend:sha-${{ github.sha }}
+
   create-release-branch:
     name: Create Release Branch
     runs-on: ubuntu-latest
@@ -192,6 +235,7 @@ jobs:
         secrets,
         semgrep,
         container-scan,
+        dev-image,
       ]
     steps:
       - uses: actions/checkout@v4
