@@ -196,9 +196,9 @@ jobs:
       - name: Smoke-test dev image
         run: |
           image=ghcr.io/sdsc-hpc-training-dev/hpc-learning-hub-frontend:dev
-          docker run --detach --name hpc-learning-hub-frontend --publish 3000:3000 "$image"
+          docker run --detach --name hpc-learning-hub-frontend --publish 19080:19080 "$image"
           for attempt in {1..30}; do
-            if curl --fail --silent http://localhost:3000/ > /dev/null; then
+            if curl --fail --silent http://localhost:19080/ > /dev/null; then
               echo "Container returned HTTP 200."
               docker stop hpc-learning-hub-frontend
               exit 0
