@@ -48,8 +48,39 @@ function requestUrl(input: RequestInfo | URL): string {
   return input instanceof URL ? input.toString() : input.url;
 }
 
-// Keep the mocked multi-page response and cache assertion in one suite.
-// eslint-disable-next-line max-lines-per-function
+function eventsResponse(input: RequestInfo | URL): Promise<Response> {
+  const url = requestUrl(input);
+  if (url.endsWith("/api/v1/event-editions")) {
+    return Promise.resolve(
+      responseWith([
+        futureLate,
+        {
+          ...futureSoon,
+          id: "past",
+          startAt: "2025-01-01T00:00:00.000Z",
+          endAt: "2099-01-01T00:00:00.000Z",
+        },
+        futureSoon,
+      ]),
+    );
+  }
+  const isSecondPage = url.includes("page=2");
+  return Promise.resolve(
+    responseWith({
+      items: isSecondPage
+        ? [material("newer", "Newer recording", "2026-06-01T18:00:00.000Z")]
+        : [
+            material("older", "Older recording", "2025-06-01T18:00:00.000Z"),
+            material("future", "Future livestream", "2028-06-01T18:00:00.000Z"),
+          ],
+      page: isSecondPage ? 2 : 1,
+      pageSize: 100,
+      total: 3,
+      totalPages: 2,
+    }),
+  );
+}
+
 describe("events API", () => {
   const fetchMock = jest.fn<
     ReturnType<typeof fetch>,
@@ -67,46 +98,7 @@ describe("events API", () => {
   });
 
   it("selects future events and recent recording materials", async () => {
-    fetchMock.mockImplementation((input) => {
-      const url = requestUrl(input);
-      if (url.endsWith("/api/v1/event-editions")) {
-        return Promise.resolve(
-          responseWith([
-            futureLate,
-            {
-              ...futureSoon,
-              id: "past",
-              startAt: "2025-01-01T00:00:00.000Z",
-              endAt: "2099-01-01T00:00:00.000Z",
-            },
-            futureSoon,
-          ]),
-        );
-      }
-      const isSecondPage = url.includes("page=2");
-      return Promise.resolve(
-        responseWith({
-          items: isSecondPage
-            ? [material("newer", "Newer recording", "2026-06-01T18:00:00.000Z")]
-            : [
-                material(
-                  "older",
-                  "Older recording",
-                  "2025-06-01T18:00:00.000Z",
-                ),
-                material(
-                  "future",
-                  "Future livestream",
-                  "2028-06-01T18:00:00.000Z",
-                ),
-              ],
-          page: isSecondPage ? 2 : 1,
-          pageSize: 100,
-          total: 3,
-          totalPages: 2,
-        }),
-      );
-    });
+    fetchMock.mockImplementation(eventsResponse);
 
     const data = await getEventsData(new Date("2027-01-01T00:00:00.000Z"));
 

@@ -17,7 +17,8 @@ export interface TrainingLibraryViewProps {
   onRemoveFilter: (key: keyof FilterValues, value?: string) => void;
   onReset: () => void;
   searchTerms: string[];
-  onSearch: (terms: string[]) => void;
+  onSearch: (terms: string[]) => boolean;
+  searchError?: string;
   filters: {
     topics: { label: string; value: string }[];
     tools: { label: string; value: string }[];
@@ -64,6 +65,7 @@ function ActiveFilterList({
           key={`${key}-${value}`}
           className="filter-chip"
           type="button"
+          aria-label={`Remove ${value}`}
           onClick={() => onRemoveFilter(key, value)}
         >
           {value} <span aria-hidden="true">×</span>
@@ -80,6 +82,7 @@ function CatalogSearchControls({
   onReset,
   searchTerms,
   onSearch,
+  searchError,
 }: Readonly<Pick<
   TrainingLibraryViewProps,
   | "total"
@@ -88,13 +91,13 @@ function CatalogSearchControls({
   | "onReset"
   | "searchTerms"
   | "onSearch"
+  | "searchError"
 >>) {
   const [draft, setDraft] = useState("");
   const [composing, setComposing] = useState(false);
   const commit = (value: string) => {
     const phrases = value.split(",").map((phrase) => phrase.trim());
-    onSearch([...searchTerms, ...phrases]);
-    setDraft("");
+    if (onSearch([...searchTerms, ...phrases])) setDraft("");
   };
   return (
     <>
@@ -123,8 +126,11 @@ function CatalogSearchControls({
               setDraft(value);
               return;
             }
-            onSearch([...searchTerms, ...parts.slice(0, -1)]);
-            setDraft(parts.at(-1) ?? "");
+            if (onSearch([...searchTerms, ...parts.slice(0, -1)])) {
+              setDraft(parts.at(-1) ?? "");
+            } else {
+              setDraft(value);
+            }
           }}
           onKeyDown={(event) => {
             if (composing || event.nativeEvent.isComposing || event.key !== "Enter") return;
@@ -142,6 +148,7 @@ function CatalogSearchControls({
           Search
         </button>
       </div>
+      {searchError ? <p className="feedback-error" role="alert">{searchError}</p> : null}
       <ActiveFilterList
         activeFilters={activeFilters}
         onRemoveFilter={onRemoveFilter}
@@ -194,6 +201,7 @@ export default function TrainingLibraryView({
   onReset,
   searchTerms,
   onSearch,
+  searchError,
   filters,
   values,
   onChange,
@@ -218,6 +226,7 @@ export default function TrainingLibraryView({
               onReset={onReset}
               searchTerms={searchTerms}
               onSearch={onSearch}
+              searchError={searchError}
             />
             <CatalogContent materials={materials} error={error} onReset={onReset} />
             {!error && totalPages > 1 ? (
