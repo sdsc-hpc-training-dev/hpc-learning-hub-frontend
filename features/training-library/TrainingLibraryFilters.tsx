@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import type { FilterValues } from "./navigation";
 
 export interface FilterOption {
   label: string;
@@ -15,16 +16,8 @@ export interface TrainingLibraryFiltersProps {
     programs: FilterOption[];
     resourceTypes: FilterOption[];
   };
-  values: {
-    query: string;
-    topic: string;
-    tool: string;
-    system: string;
-    program: string;
-    resource: string;
-    date: string;
-  };
-  onChange: (key: string, value: string) => void;
+  values: FilterValues;
+  onChange: (key: Exclude<keyof FilterValues, "query">, value: string) => void;
   onReset: () => void;
 }
 
@@ -80,6 +73,20 @@ export default function TrainingLibraryFilters({
             onChange={(event) => { onChange("date", event.target.value); }}
           />
         </div>
+
+        <SelectControl
+          id="catalog-sort"
+          label="Sort"
+          emptyLabel="Recommended"
+          value={values.sort}
+          options={[
+            { label: "Recommended", value: "recommended" },
+            { label: "Title", value: "title" },
+            { label: "Date: newest first", value: "date_desc" },
+            { label: "Date: oldest first", value: "date_asc" },
+          ]}
+          onChange={(value) => { onChange("sort", value); }}
+        />
 
         <button type="button" className="w-full rounded-md border border-sky-700 bg-white px-3 py-2 text-sm font-semibold text-sky-800 transition hover:bg-sky-50" onClick={onReset}>
           Reset filters

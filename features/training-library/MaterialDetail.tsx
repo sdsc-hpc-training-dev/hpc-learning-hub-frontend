@@ -3,6 +3,7 @@ import InlineError from "@/components/ui/InlineError";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 import MaterialCard from "./MaterialCard";
 import ExpandableDescription from "./ExpandableDescription";
+import MaterialTags from "./MaterialTags";
 import { catalogPlainText, publicResourceTypeLabel } from "./presentation";
 
 interface MaterialDetailProps {
@@ -70,11 +71,7 @@ export default function MaterialDetail({
   relatedMaterialsError,
 }: Readonly<MaterialDetailProps>) {
   const resources = material.resources.filter((resource) => resource.url);
-  const tags = [
-    ...material.topics,
-    ...material.tools,
-    ...material.systems,
-  ].slice(0, 8);
+  const tags = [...material.topics, ...material.tools, ...material.systems];
   const related = rankRelatedMaterials(material, relatedMaterials);
   const title = catalogPlainText(material.title) || "Untitled material";
   const summary =
@@ -93,13 +90,7 @@ export default function MaterialDetail({
               <h1>{title}</h1>
             </div>
             <ExpandableDescription text={summary} />
-            <div className="tag-row" aria-label="Material topics and tools">
-              {tags.map((tag) => (
-                <span className="tag" key={tag}>
-                  {tag}
-                </span>
-              ))}
-            </div>
+            <MaterialTags tags={tags} />
           </div>
           <aside className="material-facts" aria-label="Material details">
             <div className="fact-row">

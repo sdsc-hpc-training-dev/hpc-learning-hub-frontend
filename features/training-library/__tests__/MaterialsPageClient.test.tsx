@@ -30,27 +30,23 @@ beforeEach(() => {
 });
 
 describe("Training Library search", () => {
-  it("delegates the debounced query to the server and preserves current results", async () => {
+  it("commits comma-separated terms but leaves a final draft uncommitted", () => {
     render(<MaterialsPageClient materials={[batchMaterial]} />);
 
     fireEvent.change(screen.getByRole("searchbox"), {
-      target: { value: "batch computing" },
+      target: { value: "batch computing,slurm" },
     });
 
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith(
-        "/materials?query=batch+computing",
-        { scroll: false },
-      );
-    });
+    expect(mockReplace).toHaveBeenCalledWith("/materials?query=batch+computing", { scroll: false });
+    expect(screen.getByRole("searchbox")).toHaveValue("slurm");
+    fireEvent.keyDown(screen.getByRole("searchbox"), { key: "Enter" });
+    expect(mockReplace).toHaveBeenLastCalledWith("/materials?query=batch+computing&query=slurm", { scroll: false });
     expect(screen.getByText("1 material found")).toBeInTheDocument();
   });
 
   it("clears the URL search when filters are reset", () => {
     render(<MaterialsPageClient materials={[batchMaterial]} />);
-    fireEvent.change(screen.getByRole("searchbox"), {
-      target: { value: "batch computing" },
-    });
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "batch computing," } });
     fireEvent.click(
       screen.getAllByRole("button", { name: "Reset filters" })[0],
     );
@@ -58,6 +54,16 @@ describe("Training Library search", () => {
     expect(mockReplace).toHaveBeenLastCalledWith("/materials", {
       scroll: false,
     });
+  });
+
+  it("does not commit comma text while an IME composition is active", () => {
+    render(<MaterialsPageClient materials={[batchMaterial]} />);
+    fireEvent.compositionStart(screen.getByRole("searchbox"));
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "batch," },
+    });
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(screen.getByRole("searchbox")).toHaveAttribute("aria-describedby", "catalog-search-helper");
   });
 });
 
@@ -102,7 +108,7 @@ describe("Training Library topic filters", () => {
 
 it("renders the ten supplied records in server order and navigates with all filters and ranking intact", () => {
   const filters = {
-    query: "batch",
+    query: ["batch"],
     topic: "Batch Computing",
     tool: "Slurm",
     system: "Expanse",
@@ -110,8 +116,9 @@ it("renders the ten supplied records in server order and navigates with all filt
     resource: "video",
     date: "2025-01-01",
   };
-  for (const [key, value] of Object.entries(filters))
-    mockSearchParams.set(key, value);
+  for (const [key, value] of Object.entries(filters)) {
+    for (const entry of Array.isArray(value) ? value : [value]) mockSearchParams.append(key, entry);
+  }
   mockSearchParams.set("sort", "recommended");
   const materials = Array.from({ length: 10 }, (_, index) => ({
     ...batchMaterial,
@@ -137,10 +144,9 @@ it("renders the ten supplied records in server order and navigates with all filt
   expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "Next" }));
   const url = new URL(mockReplace.mock.calls[0][0], "https://example.org");
-  expect(Object.fromEntries(url.searchParams)).toEqual({
-    ...filters,
-    sort: "recommended",
-    page: "2",
+  expect(url.searchParams.getAll("query")).toEqual(["batch"]);
+  expect(Object.fromEntries(url.searchParams)).toMatchObject({
+    topic: "Batch Computing", tool: "Slurm", system: "Expanse", program: "series-1", resource: "video", date: "2025-01-01", page: "2",
   });
   expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(10);
 });
@@ -174,7 +180,7 @@ it("resets the server page when changing or removing a filter", async () => {
       { scroll: false },
     );
   });
-  expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+  expect(mockReplace).toHaveBeenCalledTimes(1);
 });
 
 it("keeps catalog-wide options available when they are absent from the current page", () => {
