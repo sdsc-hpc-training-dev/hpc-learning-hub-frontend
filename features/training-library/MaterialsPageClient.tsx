@@ -57,11 +57,14 @@ function filterValues(initialFilters: MaterialListFilters): FilterValues {
       ? [initialQuery]
       : [];
   return {
-    ...emptyFilterValues,
-    ...Object.fromEntries(
-      Object.entries(initialFilters).filter(([, value]) => value !== undefined),
-    ),
     query: normalizedTerms(queries),
+    topic: initialFilters.topic ?? "",
+    tool: initialFilters.tool ?? "",
+    system: initialFilters.system ?? "",
+    program: initialFilters.program ?? "",
+    resource: initialFilters.resource ?? "",
+    date: initialFilters.date ?? "",
+    sort: initialFilters.sort ?? emptyFilterValues.sort,
   };
 }
 

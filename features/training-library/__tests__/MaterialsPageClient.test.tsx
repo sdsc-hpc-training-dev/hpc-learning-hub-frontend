@@ -132,6 +132,17 @@ it("uses public labels for resource and sort chips", () => {
   expect(screen.getByRole("button", { name: "Remove Sort: Newest First" })).toBeInTheDocument();
 });
 
+it("does not render the server page value as a typed filter chip", () => {
+  render(
+    <MaterialsPageClient
+      materials={[batchMaterial]}
+      initialFilters={{ page: "2", topic: "Batch Computing" }}
+    />,
+  );
+  expect(screen.getByRole("button", { name: "Remove Topic: Batch Computing" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /undefined: 2|Page: 2/ })).toBeNull();
+});
+
 describe("Training Library program filters", () => {
   it("shows fetched program options and submits the selected series ID", async () => {
     render(
