@@ -23,6 +23,7 @@ interface SelectControlProps {
   id: string;
   label: string;
   emptyLabel: string;
+  emptyValue?: string;
   value: string;
   options: FilterOption[];
   onChange: (value: string) => void;
@@ -32,6 +33,7 @@ function SelectControl({
   id,
   label,
   emptyLabel,
+  emptyValue = "",
   value,
   options,
   onChange,
@@ -55,7 +57,7 @@ function SelectControl({
           onChange(event.target.value);
         }}
       >
-        <option value="">{emptyLabel}</option>
+        <option value={emptyValue}>{emptyLabel}</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -121,12 +123,12 @@ function CatalogSortControl({
       id="catalog-sort"
       label="Sort"
       emptyLabel="Recommended"
+      emptyValue="recommended"
       value={value}
       options={[
-        { label: "Recommended", value: "recommended" },
-        { label: "Title", value: "title" },
-        { label: "Date: newest first", value: "date_desc" },
-        { label: "Date: oldest first", value: "date_asc" },
+        { label: "Title A-Z", value: "title" },
+        { label: "Newest First", value: "date_desc" },
+        { label: "Oldest First", value: "date_asc" },
       ]}
       onChange={onChange}
     />
