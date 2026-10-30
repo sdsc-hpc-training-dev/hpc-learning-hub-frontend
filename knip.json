@@ -2,11 +2,12 @@
   "$schema": "https://unpkg.com/knip@5/schemas/knip.json",
   "entry": [
     "app/**/*.{ts,tsx}",
-    "src/**/*.{ts,tsx}"
+    "features/**/*.{ts,tsx}"
   ],
   "project": [
     "app/**/*.{ts,tsx}",
     "components/**/*.{ts,tsx}",
+    "features/**/*.{ts,tsx}",
     "lib/**/*.{ts,tsx}",
     "types/**/*.ts",
     "*.config.{js,cjs,mjs,ts}"

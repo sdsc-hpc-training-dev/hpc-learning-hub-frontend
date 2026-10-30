@@ -13,7 +13,7 @@ function formatDate(value?: string | null) {
 
   return Number.isNaN(date.getTime())
     ? null
-    : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
+    : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(date);
 }
 
 function truncate(value: string | null | undefined, length: number) {

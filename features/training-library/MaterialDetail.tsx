@@ -23,6 +23,7 @@ function formatDate(value?: string | null) {
         month: "short",
         day: "numeric",
         year: "numeric",
+        timeZone: "UTC",
       }).format(date);
 }
 
@@ -142,7 +143,10 @@ export default function MaterialDetail({
                   key={resource.id}
                 >
                   <span>
-                    <strong>{resource.title}</strong>
+                    <strong>
+                      {catalogPlainText(resource.title) ||
+                        resourceLabel(resource.type)}
+                    </strong>
                     <br />
                     <small>{resourceLabel(resource.type)}</small>
                   </span>

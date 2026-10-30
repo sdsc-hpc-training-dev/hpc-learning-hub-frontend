@@ -1,13 +1,18 @@
 import type { CatalogResource } from "@/lib/gateway/types";
+import { decodeHTMLStrict } from "entities";
+import { Parser } from "htmlparser2";
 
-const HTML_ENTITIES = new Map([
-  ["amp", "&"],
-  ["apos", "'"],
-  ["gt", ">"],
-  ["lt", "<"],
-  ["nbsp", " "],
-  ["quot", '"'],
-]);
+const HTML_TAGS = new Set(
+  "a abbr address area article aside audio b base bdi bdo blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn dialog div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hgroup hr html i iframe img input ins kbd label legend li link main map mark menu meta meter nav noscript object ol optgroup option output p picture pre progress q rp rt ruby s samp script search section select slot small source span strong style sub summary sup table tbody td template textarea tfoot th thead time title tr track u ul var video wbr svg path".split(
+    " ",
+  ),
+);
+const HIDDEN_TAGS = new Set(["script", "style", "template", "noscript"]);
+const SEPARATOR_TAGS = new Set(
+  "a article aside blockquote br dd div dl dt figcaption figure footer h1 h2 h3 h4 h5 h6 header hr li main nav ol p pre section table td th tr ul".split(
+    " ",
+  ),
+);
 
 const RESOURCE_TYPE_LABELS = new Map([
   ["audio", "Audio"],
@@ -24,33 +29,10 @@ const RESOURCE_TYPE_LABELS = new Map([
   ["webpage", "Web resource"],
 ]);
 
-function decodedCodePoint(value: string, radix: number) {
-  const codePoint = Number.parseInt(value, radix);
-  return Number.isSafeInteger(codePoint) && codePoint <= 0x10ffff
-    ? String.fromCodePoint(codePoint)
-    : null;
-}
-
-function decodeHtmlEntitiesOnce(value: string) {
-  return value.replace(
-    /&(#x[\da-f]+|#\d+|[a-z]+);/gi,
-    (entity, token: string) => {
-      const normalized = token.toLowerCase();
-      if (normalized.startsWith("#x")) {
-        return decodedCodePoint(normalized.slice(2), 16) ?? entity;
-      }
-      if (normalized.startsWith("#")) {
-        return decodedCodePoint(normalized.slice(1), 10) ?? entity;
-      }
-      return HTML_ENTITIES.get(normalized) ?? entity;
-    },
-  );
-}
-
 function decodeHtmlEntities(value: string) {
   let decoded = value;
   for (let pass = 0; pass < 3; pass += 1) {
-    const next = decodeHtmlEntitiesOnce(decoded);
+    const next = decodeHTMLStrict(decoded);
     if (next === decoded) return decoded;
     decoded = next;
   }
@@ -82,29 +64,6 @@ function replaceMarkdownTokens(
   return output;
 }
 
-function removeHtmlBlock(value: string, tag: "script" | "style") {
-  const lowerValue = value.toLowerCase();
-  const opening = `<${tag}`;
-  const closing = `</${tag}>`;
-  let cursor = 0;
-  let output = "";
-
-  while (cursor < value.length) {
-    const start = lowerValue.indexOf(opening, cursor);
-    if (start < 0) return output + value.slice(cursor);
-
-    const openingEnd = lowerValue.indexOf(">", start + opening.length);
-    const end =
-      openingEnd < 0 ? -1 : lowerValue.indexOf(closing, openingEnd + 1);
-    if (openingEnd < 0 || end < 0) return output + value.slice(cursor);
-
-    output += `${value.slice(cursor, start)} `;
-    cursor = end + closing.length;
-  }
-
-  return output;
-}
-
 function removeCreativeCommonsLicenseBadges(value: string) {
   return value.replace(
     /<a\b[^<]{0,1000}creativecommons\.org\/licenses\/[\s\S]{0,1000}?<\/a\s*>?/gi,
@@ -113,45 +72,50 @@ function removeCreativeCommonsLicenseBadges(value: string) {
 }
 
 function stripHtml(value: string) {
-  const withoutBlocks = removeHtmlBlock(
-    removeHtmlBlock(value, "style"),
-    "script",
-  );
-  let cursor = 0;
-  let output = "";
-
-  while (cursor < withoutBlocks.length) {
-    const start = withoutBlocks.indexOf("<", cursor);
-    if (start < 0) return output + withoutBlocks.slice(cursor);
-
-    const end = withoutBlocks.indexOf(">", start + 1);
-    if (end < 0) return output + withoutBlocks.slice(cursor);
-
-    const content = withoutBlocks.slice(start + 1, end).trim();
-    output += withoutBlocks.slice(cursor, start);
-    output +=
-      content.startsWith("http://") || content.startsWith("https://")
-        ? content
-        : " ";
-    cursor = end + 1;
-  }
-
-  return output;
+  // Older snapshots removed '>' before HTML cleanup, breaking empty README anchors.
+  const repaired = value
+    .replace(/<a\s+(?:name|id)\s*=\s*(?:"[^"]*"|'[^']*')\s*(?=<\/a\b)/gi, " ")
+    .replace(/<\/a(?=\s|$)(?!\s*>)/gi, " ")
+    .replace(/<((?:https?:\/\/)[^>]+)>/g, "$1");
+  const text: string[] = [];
+  let hiddenDepth = 0;
+  const parser = new Parser({
+    onopentag(name, attributes) {
+      if (hiddenDepth || HIDDEN_TAGS.has(name)) {
+        hiddenDepth += 1;
+      } else if (!HTML_TAGS.has(name) && Object.keys(attributes).length === 0) {
+        text.push(repaired.slice(parser.startIndex, parser.endIndex + 1));
+      } else if (SEPARATOR_TAGS.has(name)) {
+        text.push(" ");
+      }
+    },
+    ontext(value) {
+      if (!hiddenDepth) text.push(value);
+    },
+    onclosetag(name, implied) {
+      if (hiddenDepth) hiddenDepth -= 1;
+      else if (!HTML_TAGS.has(name) && !implied) {
+        text.push(repaired.slice(parser.startIndex, parser.endIndex + 1));
+      } else if (SEPARATOR_TAGS.has(name)) text.push(" ");
+    },
+  });
+  parser.end(repaired);
+  return text.join("");
 }
 
 export function catalogPlainText(value: string | null | undefined) {
   if (!value) return "";
 
-  const withoutImages = replaceMarkdownTokens(value, "![", false);
-  const withoutLinks = replaceMarkdownTokens(withoutImages, "[", true);
-  const withoutLicenseBadges = removeCreativeCommonsLicenseBadges(
-    decodeHtmlEntities(withoutLinks),
+  const plain = stripHtml(
+    removeCreativeCommonsLicenseBadges(decodeHtmlEntities(value)),
   );
+  const withoutImages = replaceMarkdownTokens(plain, "![", false);
+  const withoutLinks = replaceMarkdownTokens(withoutImages, "[", true);
 
-  return stripHtml(withoutLicenseBadges)
+  return withoutLinks
     .replace(/(^|\s)#{1,6}\s+/g, "$1")
     .replace(/(^|\s)(?:[-+*]|\d+[.)])\s+/g, "$1")
-    .replace(/[`*_~|>]+/g, " ")
+    .replace(/[`*~|]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
