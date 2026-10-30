@@ -134,6 +134,11 @@ describe("catalog badge cleanup", () => {
     ).toBe("Mai Nguyen Paul Rodriguez Jon Stephens");
   });
 
+  it("preserves the existing master cleanup for broken empty anchors and breaks", () => {
+    expect(catalogPlainText('<a class="empty" </a Real prose<br More prose')).toBe("Real prose More prose");
+    expect(catalogPlainText("<br")).toBe("");
+  });
+
   it("removes malformed Creative Commons badges without losing real prose", () => {
     const badge =
       '<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" <img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" / </a';
