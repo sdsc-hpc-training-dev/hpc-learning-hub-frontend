@@ -1,6 +1,7 @@
 import Link from "next/link";
 import InlineError from "@/components/ui/InlineError";
 import type { LearningPath, LearningPathItem } from "@/lib/gateway/types";
+import { catalogPlainText } from "@/features/training-library/presentation";
 
 interface LearningPathsViewProps {
   paths: LearningPath[];
@@ -12,7 +13,7 @@ interface LearningPathDetailProps {
 }
 
 function truncateTrainingDescription(description: string): string {
-  const characters = Array.from(description.replace(/\s+/g, " ").trim());
+  const characters = Array.from(catalogPlainText(description));
   return characters.length > 100
     ? `${characters.slice(0, 99).join("").trimEnd()}…`
     : characters.join("");
@@ -23,14 +24,16 @@ function PathCard({ path }: Readonly<{ path: LearningPath }>) {
 
   return (
     <article className="learning-path-card">
-      <span className="eyebrow">{path.estimatedScope ?? stepLabel}</span>
+      <span className="eyebrow">
+        {catalogPlainText(path.estimatedScope) || stepLabel}
+      </span>
       <h2>
         <Link href={`/learning-paths/${encodeURIComponent(path.id)}`}>
-          {path.title}
+          {catalogPlainText(path.title)}
         </Link>
       </h2>
       <p>
-        {path.description ??
+        {catalogPlainText(path.description) ||
           "Open this path to explore its recommended training sequence."}
       </p>
       <div className="learning-path-card__footer">
@@ -109,9 +112,9 @@ export function LearningPathsView({
           </h1>
           <p>
             Start with a curated learning path to build your skills in High
-            Performance Computing (HPC). These paths arrange HPC trainings
-            into a clear first journey. They are proposed guidance, not a
-            completed curriculum.
+            Performance Computing (HPC). These paths arrange HPC trainings into
+            a clear first journey. They are proposed guidance, not a completed
+            curriculum.
           </p>
         </div>
       </section>
@@ -144,7 +147,8 @@ function PathStep({
       <div>
         <h3>
           <Link href={`/materials/${encodeURIComponent(item.material.id)}`}>
-            {item.material.title ?? "Untitled training material"}
+            {catalogPlainText(item.material.title) ||
+              "Untitled training material"}
           </Link>
         </h3>
         {item.material.description ? (
@@ -166,16 +170,19 @@ function PathMetadata({ path }: Readonly<{ path: LearningPath }>) {
     <aside className="learning-path-meta" aria-label="Path information">
       <div>
         <strong>Designed for</strong>
-        <p>{path.audience ?? "All HPC learners"}</p>
+        <p>{catalogPlainText(path.audience) || "All HPC learners"}</p>
       </div>
       <div>
         <strong>Before you begin</strong>
-        <p>{path.prerequisites ?? "No prerequisites specified"}</p>
+        <p>
+          {catalogPlainText(path.prerequisites) || "No prerequisites specified"}
+        </p>
       </div>
       <div>
         <strong>Estimated scope</strong>
         <p>
-          {path.estimatedScope ?? `${String(path.items.length)} guided steps`}
+          {catalogPlainText(path.estimatedScope) ||
+            `${String(path.items.length)} guided steps`}
         </p>
       </div>
     </aside>
@@ -196,9 +203,9 @@ export function LearningPathDetail({
             ← All learning paths
           </Link>
           <span className="eyebrow">Guided learning path</span>
-          <h1>{path.title}</h1>
+          <h1>{catalogPlainText(path.title)}</h1>
           <p>
-            {path.description ??
+            {catalogPlainText(path.description) ||
               "Follow the recommended materials below in order."}
           </p>
         </div>
