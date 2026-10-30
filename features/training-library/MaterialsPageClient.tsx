@@ -110,6 +110,15 @@ const filterLabels: Record<Exclude<keyof FilterValues, "query">, string> = {
   sort: "Sort",
 };
 
+function sortChipLabel(value: string) {
+  switch (value) {
+    case "title": return "Title A–Z";
+    case "date_desc": return "Newest First";
+    case "date_asc": return "Oldest First";
+    default: return value;
+  }
+}
+
 function activeFilterEntries(
   filters: FilterValues,
   programs: GatewayEventSeries[],
@@ -122,23 +131,24 @@ function activeFilterEntries(
     .filter(([key, value]) => key !== "query" && value && value !== "recommended")
     .map(([key, value]) => {
       const selected = String(value);
-      return {
-      key: key as Exclude<keyof FilterValues, "query">,
-      value: `${filterLabels[key as Exclude<keyof FilterValues, "query">]}: ${
+      const displayValue =
         key === "program"
           ? (programs.find((program) => program.id === selected)?.name ?? selected)
-          : selected
-      }`,
+          : key === "resource"
+            ? (publicResourceTypeLabel(selected) ?? selected)
+            : key === "sort"
+              ? sortChipLabel(selected)
+              : selected;
+      return {
+      key: key as Exclude<keyof FilterValues, "query">,
+      value: `${filterLabels[key as Exclude<keyof FilterValues, "query">]}: ${displayValue}`,
     }; });
   return [...terms, ...facets];
 }
 
 function useServerFilters(initialFilters: MaterialListFilters) {
   const serverFilterKey = JSON.stringify(initialFilters);
-  const serverFilters = useMemo(
-    () => filterValues(initialFilters),
-    [serverFilterKey],
-  );
+  const serverFilters = useMemo(() => filterValues(initialFilters), [serverFilterKey]);
   const [filters, setFilters] = useState<FilterValues>(serverFilters);
   useEffect(() => {
     setFilters(serverFilters);
@@ -153,6 +163,7 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
   const [pending, startTransition] = useTransition();
   const [filters, setFilters] = useServerFilters(initialFilters);
   const [termError, setTermError] = useState<string>();
+  const [resetVersion, setResetVersion] = useState(0);
   const commit = (nextFilters: FilterValues, page = 1) => {
     setFilters(nextFilters);
     startTransition(() => {
@@ -161,10 +172,7 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
       });
     });
   };
-  const changeFilter = (
-    key: Exclude<keyof FilterValues, "query">,
-    value: string,
-  ) => { commit({ ...filters, [key]: value }); };
+  const changeFilter = (key: Exclude<keyof FilterValues, "query">, value: string) => { commit({ ...filters, [key]: value }); };
   const changeQueries = (queries: string[]) => {
     const validated = validatedTerms(queries);
     if ("error" in validated) {
@@ -189,7 +197,11 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
       });
     });
   };
-  const reset = () => { commit({ ...emptyFilterValues }); };
+  const reset = () => {
+    setTermError(undefined);
+    setResetVersion((current) => current + 1);
+    commit({ ...emptyFilterValues });
+  };
   return {
     filters,
     changeFilter,
@@ -198,6 +210,7 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
     changePage,
     reset,
     termError,
+    resetVersion,
     pending,
   };
 }
@@ -225,6 +238,7 @@ export default function MaterialsPageClient({
       searchTerms={filters.query}
       onSearch={navigation.changeQueries}
       searchError={navigation.termError}
+      resetVersion={navigation.resetVersion}
       filters={filterOptions(facets, programs, filters)}
       values={filters}
       onChange={navigation.changeFilter}

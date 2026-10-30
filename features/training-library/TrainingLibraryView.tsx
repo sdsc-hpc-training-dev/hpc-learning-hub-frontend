@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-confusing-void-expression, max-lines-per-function */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TrainingLibraryFilters from "./TrainingLibraryFilters";
 import MaterialCard from "./MaterialCard";
 import InlineError from "@/components/ui/InlineError";
@@ -19,6 +19,7 @@ export interface TrainingLibraryViewProps {
   searchTerms: string[];
   onSearch: (terms: string[]) => boolean;
   searchError?: string;
+  resetVersion: number;
   filters: {
     topics: { label: string; value: string }[];
     tools: { label: string; value: string }[];
@@ -83,6 +84,7 @@ function CatalogSearchControls({
   searchTerms,
   onSearch,
   searchError,
+  resetVersion,
 }: Readonly<Pick<
   TrainingLibraryViewProps,
   | "total"
@@ -92,6 +94,7 @@ function CatalogSearchControls({
   | "searchTerms"
   | "onSearch"
   | "searchError"
+  | "resetVersion"
 >>) {
   const [draft, setDraft] = useState("");
   const [composing, setComposing] = useState(false);
@@ -99,6 +102,9 @@ function CatalogSearchControls({
     const phrases = value.split(",").map((phrase) => phrase.trim());
     if (onSearch([...searchTerms, ...phrases])) setDraft("");
   };
+  useEffect(() => {
+    setDraft("");
+  }, [resetVersion]);
   return (
     <>
       <label htmlFor="catalog-search" className="sr-only">
@@ -202,6 +208,7 @@ export default function TrainingLibraryView({
   searchTerms,
   onSearch,
   searchError,
+  resetVersion,
   filters,
   values,
   onChange,
@@ -227,6 +234,7 @@ export default function TrainingLibraryView({
               searchTerms={searchTerms}
               onSearch={onSearch}
               searchError={searchError}
+              resetVersion={resetVersion}
             />
             <CatalogContent materials={materials} error={error} onReset={onReset} />
             {!error && totalPages > 1 ? (

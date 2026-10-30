@@ -109,6 +109,29 @@ it("reports term limits without changing committed query state or discarding the
     expect(screen.getByRole("button", { name: "Remove term 0" })).toBeInTheDocument();
 });
 
+it("clears terms, draft, and term errors from either reset control", () => {
+  const queries = Array.from({ length: 10 }, (_, index) => `term ${String(index)}`);
+  render(<MaterialsPageClient materials={[batchMaterial]} initialFilters={{ query: queries }} />);
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "one too many," } });
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+  fireEvent.click(screen.getAllByRole("button", { name: "Reset filters" })[0]);
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(screen.getByRole("searchbox")).toHaveValue("");
+  expect(screen.getByLabelText("No active filters")).toBeEmptyDOMElement();
+  expect(mockPush).toHaveBeenLastCalledWith("/materials", { scroll: false });
+});
+
+it("uses public labels for resource and sort chips", () => {
+  render(
+    <MaterialsPageClient
+      materials={[batchMaterial]}
+      initialFilters={{ resource: "repository_session", sort: "date_desc" }}
+    />,
+  );
+  expect(screen.getByRole("button", { name: "Remove Resource: Repository materials" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Remove Sort: Newest First" })).toBeInTheDocument();
+});
+
 describe("Training Library program filters", () => {
   it("shows fetched program options and submits the selected series ID", async () => {
     render(
