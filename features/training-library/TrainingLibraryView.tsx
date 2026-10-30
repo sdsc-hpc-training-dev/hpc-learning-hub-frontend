@@ -11,6 +11,7 @@ import type { FilterValues } from "./navigation";
 export interface TrainingLibraryViewProps {
   pending?: boolean;
   materials: CatalogMaterial[];
+  returnTo?: string;
   total: number;
   error?: string;
   activeFilters: { key: keyof FilterValues; value: string }[];
@@ -173,10 +174,12 @@ function CatalogSearchControls({
 
 function CatalogContent({
   materials,
+  returnTo,
   error,
   onReset,
 }: Readonly<{
   materials: CatalogMaterial[];
+  returnTo?: string;
   error?: string;
   onReset: () => void;
 }>) {
@@ -194,12 +197,13 @@ function CatalogContent({
       </div>
     );
   }
-  return <div className="catalog-results">{materials.map((material) => <MaterialCard key={material.id} material={material} />)}</div>;
+  return <div className="catalog-results">{materials.map((material) => <MaterialCard key={material.id} material={material} returnTo={returnTo} />)}</div>;
 }
 
 export default function TrainingLibraryView({
   pending,
   materials,
+  returnTo,
   total,
   error,
   activeFilters,
@@ -236,7 +240,7 @@ export default function TrainingLibraryView({
               searchError={searchError}
               resetVersion={resetVersion}
             />
-            <CatalogContent materials={materials} error={error} onReset={onReset} />
+            <CatalogContent materials={materials} returnTo={returnTo} error={error} onReset={onReset} />
             {!error && totalPages > 1 ? (
               <nav className="catalog-pagination" aria-label="Training material pages">
                 <button type="button" className="button button--secondary" disabled={Boolean(pending) || page <= 1} onClick={() => onPageChange(page - 1)}>Previous</button>

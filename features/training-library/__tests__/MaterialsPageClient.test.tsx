@@ -29,6 +29,18 @@ beforeEach(() => {
   window.history.replaceState(null, "", "/materials");
 });
 
+it("includes the complete current results URL when opening a material", () => {
+  mockSearchParams.append("query", "Machine Learning");
+  mockSearchParams.append("query", "Containers");
+  mockSearchParams.set("system", "Comet");
+  mockSearchParams.set("sort", "date_desc");
+  mockSearchParams.set("page", "2");
+  render(<MaterialsPageClient materials={[batchMaterial]} page={2} totalPages={3} />);
+  const link = screen.getByRole("link", { name: batchMaterial.title });
+  const href = new URL(link.getAttribute("href") ?? "", "https://catalog.invalid");
+  expect(href.searchParams.get("returnTo")).toBe(`/materials?${mockSearchParams}`);
+});
+
 it("commits comma-separated terms but leaves a final draft uncommitted", () => {
     render(<MaterialsPageClient materials={[batchMaterial]} />);
 

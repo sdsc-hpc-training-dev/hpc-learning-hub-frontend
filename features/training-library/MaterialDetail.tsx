@@ -5,12 +5,14 @@ import MaterialCard from "./MaterialCard";
 import ExpandableDescription from "./ExpandableDescription";
 import MaterialTags from "./MaterialTags";
 import { catalogPlainText, publicResourceTypeLabel } from "./presentation";
+import { catalogReturnTo } from "./navigation";
 
 interface MaterialDetailProps {
   material: CatalogMaterial;
   relatedMaterials: CatalogMaterial[];
   relatedMaterialsLoading?: boolean;
   relatedMaterialsError?: string;
+  returnTo?: string;
 }
 
 function formatDate(value?: string | null) {
@@ -70,6 +72,7 @@ export default function MaterialDetail({
   relatedMaterials,
   relatedMaterialsLoading = false,
   relatedMaterialsError,
+  returnTo,
 }: Readonly<MaterialDetailProps>) {
   const resources = material.resources.filter((resource) => resource.url);
   const tags = [...material.topics, ...material.tools, ...material.systems];
@@ -84,6 +87,9 @@ export default function MaterialDetail({
       <section className="material-hero">
         <div className="section-shell material-hero__layout">
           <div id="material-body">
+            <Link className="text-link material-back-link" href={catalogReturnTo(returnTo)} aria-label="Go back to search results">
+              <span aria-hidden="true">←</span> Go back
+            </Link>
             <span className="eyebrow">
               {material.series ?? "SDSC training material"}
             </span>
@@ -192,7 +198,7 @@ export default function MaterialDetail({
           related.length > 0 ? (
             <div className="related-materials-grid">
               {related.map((candidate) => (
-                <MaterialCard key={candidate.id} material={candidate} compact />
+                <MaterialCard key={candidate.id} material={candidate} compact returnTo={returnTo} />
               ))}
             </div>
           ) : null}

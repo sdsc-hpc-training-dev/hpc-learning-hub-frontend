@@ -1,10 +1,12 @@
 import Link from "next/link";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 import { catalogPlainText, resourceTypeSummary } from "./presentation";
+import { materialDetailsHref } from "./navigation";
 
 interface MaterialCardProps {
   material: CatalogMaterial;
   compact?: boolean;
+  returnTo?: string;
 }
 
 function formatDate(value?: string | null) {
@@ -21,14 +23,14 @@ function truncate(value: string | null | undefined, length: number) {
   return clean.length > length ? `${clean.slice(0, length).trim()}…` : clean;
 }
 
-export default function MaterialCard({ material, compact = false }: Readonly<MaterialCardProps>) {
+export default function MaterialCard({ material, compact = false, returnTo }: Readonly<MaterialCardProps>) {
   const meta = [
     formatDate(material.date),
     material.series,
     material.systems[0],
     material.instructors.length ? `Instructor: ${material.instructors.join(", ")}` : null,
   ].filter(Boolean);
-  const href = `/materials/${encodeURIComponent(material.id)}`;
+  const href = materialDetailsHref(material.id, returnTo);
   const cardClassName = compact
     ? "material-card material-card--compact"
     : "material-card";
