@@ -19,7 +19,61 @@ describe("catalog presentation cleanup", () => {
       "Join SDSC at SC26",
     );
   });
+});
 
+describe("encoded catalog text", () => {
+  it.each([
+    ["Cheap &amp; FAIR Data Practices", "Cheap & FAIR Data Practices"],
+    [
+      "Python technologies&#8212;Numba and Dask&#8212;for HPC",
+      "Python technologies\u2014Numba and Dask\u2014for HPC",
+    ],
+    [
+      "&copy; SDSC &ndash; &ldquo;Training&rdquo; &eacute;",
+      "\u00a9 SDSC \u2013 \u201cTraining\u201d \u00e9",
+    ],
+    [
+      "Use MPI_COMM_WORLD and vector<T>; x < y && y > z.",
+      "Use MPI_COMM_WORLD and vector<T>; x < y && y > z.",
+    ],
+    ["<p>First</p><p>Second<br>Third</p>", "First Second Third"],
+    [
+      "Read <b>HPC</b> &lt;https://example.org/a_b&gt;",
+      "Read HPC https://example.org/a_b",
+    ],
+    [
+      "<script>alert('bad')</script><style>body {color:red}</style>Safe",
+      "Safe",
+    ],
+    ["Safe<script>never shown", "Safe"],
+    ["Safe<!-- hidden --><template><b>hidden</b></template> text", "Safe text"],
+    ["&#x110000; &#55296; &unknown;", "\ufffd \ufffd &unknown;"],
+  ])("cleans catalog text without executing HTML: %s", (input, expected) => {
+    expect(catalogPlainText(input)).toBe(expected);
+    expect(catalogPlainText(expected)).toBe(expected);
+  });
+
+  it.each([
+    'SDSC Summer Institute 2026 <a name="top" </a This repository hosts all material and slides.',
+    "SDSC Summer Institute 2026 <a id='top' </a This repository hosts all material and slides.",
+    'SDSC Summer Institute 2026 <a name="top"></a> This repository hosts all material and slides.',
+    'SDSC Summer Institute 2026 &lt;a name="top" &lt;/a This repository hosts all material and slides.',
+  ])("preserves the prose after empty legacy README anchors: %s", (input) => {
+    expect(catalogPlainText(input)).toBe(
+      "SDSC Summer Institute 2026 This repository hosts all material and slides.",
+    );
+  });
+
+  it("handles absent values and leaves ordinary sentences unchanged", () => {
+    expect(catalogPlainText(null)).toBe("");
+    expect(catalogPlainText(undefined)).toBe("");
+    expect(catalogPlainText("Learn C++ and C# on Expanse.")).toBe(
+      "Learn C++ and C# on Expanse.",
+    );
+  });
+});
+
+describe("catalog resource presentation", () => {
   it("hides internal metadata and summarizes repository resources", () => {
     expect(
       resourceTypeSummary([
@@ -78,6 +132,11 @@ describe("catalog badge cleanup", () => {
     expect(
       catalogPlainText("Mai Nguyen <br / Paul Rodriguez </br Jon Stephens"),
     ).toBe("Mai Nguyen Paul Rodriguez Jon Stephens");
+  });
+
+  it("preserves the existing master cleanup for broken empty anchors and breaks", () => {
+    expect(catalogPlainText('<a class="empty" </a Real prose<br More prose')).toBe("Real prose More prose");
+    expect(catalogPlainText("<br")).toBe("");
   });
 
   it("removes malformed Creative Commons badges without losing real prose", () => {

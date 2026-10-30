@@ -48,7 +48,7 @@ function EmptyEvents({ children }: Readonly<{ children: string }>) {
 export function UpcomingEventCard({
   event,
 }: Readonly<{ event: GatewayEventEdition }>) {
-  const title = event.title ?? "Untitled event";
+  const title = catalogPlainText(event.title) || "Untitled event";
   const titleContent = event.eventUrl ? (
     <a href={event.eventUrl} target="_blank" rel="noreferrer">
       {title}
@@ -62,11 +62,15 @@ export function UpcomingEventCard({
       <time className="event-card__date" dateTime={event.startAt ?? undefined}>
         {formatSchedule(event)}
       </time>
-      <span className="event-card__type">{event.format ?? "SDSC event"}</span>
+      <span className="event-card__type">
+        {catalogPlainText(event.format) || "SDSC event"}
+      </span>
       <h3>{titleContent}</h3>
       <p>{truncate(event.description)}</p>
       {event.location ? (
-        <div className="event-card__location">{event.location}</div>
+        <div className="event-card__location">
+          {catalogPlainText(event.location)}
+        </div>
       ) : null}
       {event.registrationUrl || event.eventUrl ? (
         <div className="event-card__actions">
