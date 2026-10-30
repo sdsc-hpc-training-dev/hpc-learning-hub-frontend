@@ -1,5 +1,6 @@
 "use client";
 
+import type { FilterValues } from "./navigation";
 export interface FilterOption {
   label: string;
   value: string;
@@ -13,16 +14,8 @@ export interface TrainingLibraryFiltersProps {
     programs: FilterOption[];
     resourceTypes: FilterOption[];
   };
-  values: {
-    query: string;
-    topic: string;
-    tool: string;
-    system: string;
-    program: string;
-    resource: string;
-    date: string;
-  };
-  onChange: (key: string, value: string) => void;
+  values: FilterValues;
+  onChange: (key: Exclude<keyof FilterValues, "query">, value: string) => void;
   onReset: () => void;
 }
 
@@ -164,6 +157,22 @@ export default function TrainingLibraryFilters({
             }}
           />
         </div>
+
+        <SelectControl
+          id="catalog-sort"
+          label="Sort"
+          emptyLabel="Recommended"
+          value={values.sort}
+          options={[
+            { label: "Recommended", value: "recommended" },
+            { label: "Title", value: "title" },
+            { label: "Date: newest first", value: "date_desc" },
+            { label: "Date: oldest first", value: "date_asc" },
+          ]}
+          onChange={(value) => {
+            onChange("sort", value);
+          }}
+        />
 
         <button
           type="button"

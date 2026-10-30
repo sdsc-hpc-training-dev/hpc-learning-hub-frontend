@@ -1,7 +1,8 @@
 "use client";
+/* eslint-disable sonarjs/no-nested-conditional */
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import TrainingLibraryView from "./TrainingLibraryView";
 import type { CatalogMaterial, GatewayEventSeries } from "@/lib/gateway/types";
 import type { CatalogFacets, MaterialListFilters } from "./api";
@@ -19,13 +20,32 @@ interface MaterialsPageClientProps {
   initialError?: string;
 }
 
+function normalizedTerms(terms: string[]) {
+  const seen = new Set<string>();
+  return terms.reduce<string[]>((result, term) => {
+    const value = term.trim().slice(0, 100);
+    const key = value.toLocaleLowerCase();
+    if (!value || seen.has(key) || result.length >= 10) return result;
+    seen.add(key);
+    result.push(value);
+    return result;
+  }, []);
+}
+
 function filterValues(initialFilters: MaterialListFilters): FilterValues {
-  return Object.fromEntries(
-    Object.keys(emptyFilterValues).map((key) => [
-      key,
-      initialFilters[key as keyof FilterValues] ?? "",
-    ]),
-  ) as FilterValues;
+  const initialQuery = initialFilters.query;
+  const queries = Array.isArray(initialQuery)
+    ? initialQuery
+    : initialQuery
+      ? [initialQuery]
+      : [];
+  return {
+    ...emptyFilterValues,
+    ...Object.fromEntries(
+      Object.entries(initialFilters).filter(([, value]) => value !== undefined),
+    ),
+    query: normalizedTerms(queries),
+  };
 }
 
 function namedOptions(items: CatalogFacets["topics"], selected: string) {
@@ -63,19 +83,37 @@ function filterOptions(
   };
 }
 
+const filterLabels: Record<Exclude<keyof FilterValues, "query">, string> = {
+  topic: "Topic",
+  tool: "Tool",
+  system: "System",
+  program: "Program",
+  resource: "Resource",
+  date: "Date",
+  sort: "Sort",
+};
+
 function activeFilterEntries(
   filters: FilterValues,
   programs: GatewayEventSeries[],
 ) {
-  return Object.entries(filters)
-    .filter(([, value]) => value)
-    .map(([key, value]) => ({
-      key,
-      value:
+  const terms = filters.query.map((value) => ({
+    key: "query" as const,
+    value,
+  }));
+  const facets = (Object.entries(filters) as [keyof FilterValues, string | string[]][])
+    .filter(([key, value]) => key !== "query" && value && value !== "recommended")
+    .map(([key, value]) => {
+      const selected = String(value);
+      return {
+      key: key as Exclude<keyof FilterValues, "query">,
+      value: `${filterLabels[key as Exclude<keyof FilterValues, "query">]}: ${
         key === "program"
-          ? (programs.find((program) => program.id === value)?.name ?? value)
-          : value,
-    }));
+          ? (programs.find((program) => program.id === selected)?.name ?? selected)
+          : selected
+      }`,
+    }; });
+  return [...terms, ...facets];
 }
 
 function useCatalogFilters(initialFilters: MaterialListFilters) {
@@ -86,28 +124,27 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
   const [filters, setFilters] = useState<FilterValues>(() =>
     filterValues(initialFilters),
   );
-  const filterQuery = JSON.stringify(filters);
-  const initialQuery = JSON.stringify(filterValues(initialFilters));
-  useEffect(() => {
-    if (filterQuery === initialQuery) return;
-    const timeout = window.setTimeout(() => {
-      startTransition(() => {
-        router.replace(
-          catalogUrl(
-            pathname,
-            currentQuery,
-            JSON.parse(filterQuery) as FilterValues,
-          ),
-          { scroll: false },
-        );
+  const commit = (nextFilters: FilterValues, page = 1) => {
+    setFilters(nextFilters);
+    startTransition(() => {
+      router.replace(catalogUrl(pathname, currentQuery, nextFilters, page), {
+        scroll: false,
       });
-    }, 300);
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [filterQuery, initialQuery, pathname, currentQuery, router]);
-  const changeFilter = (key: string, value: string) => {
-    setFilters((current) => ({ ...current, [key]: value }));
+    });
+  };
+  const changeFilter = (
+    key: Exclude<keyof FilterValues, "query">,
+    value: string,
+  ) => { commit({ ...filters, [key]: value }); };
+  const changeQueries = (queries: string[]) => {
+    commit({ ...filters, query: normalizedTerms(queries) });
+  };
+  const removeFilter = (key: keyof FilterValues, value?: string) => {
+    if (key === "query") {
+      changeQueries(filters.query.filter((term) => term !== value));
+      return;
+    }
+    changeFilter(key, key === "sort" ? "recommended" : "");
   };
   const changePage = (nextPage: number) => {
     startTransition(() => {
@@ -116,20 +153,15 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
       });
     });
   };
-  const reset = () => {
-    setFilters({ ...emptyFilterValues });
-    startTransition(() => {
-      router.replace(catalogUrl(pathname, currentQuery, emptyFilterValues), {
-        scroll: false,
-      });
-    });
-  };
+  const reset = () => { commit({ ...emptyFilterValues }); };
   return {
     filters,
     changeFilter,
+    changeQueries,
+    removeFilter,
     changePage,
     reset,
-    pending: pending || filterQuery !== initialQuery,
+    pending,
   };
 }
 
@@ -144,24 +176,20 @@ export default function MaterialsPageClient({
   initialError,
 }: Readonly<MaterialsPageClientProps>) {
   const navigation = useCatalogFilters(initialFilters);
-  const { filters, changeFilter } = navigation;
+  const { filters } = navigation;
   return (
     <TrainingLibraryView
       materials={materials}
       total={total}
       error={initialError}
       activeFilters={activeFilterEntries(filters, programs)}
-      onRemoveFilter={(key) => {
-        changeFilter(key, "");
-      }}
+      onRemoveFilter={navigation.removeFilter}
       onReset={navigation.reset}
-      searchValue={filters.query}
-      onSearch={(value) => {
-        changeFilter("query", value);
-      }}
+      searchTerms={filters.query}
+      onSearch={navigation.changeQueries}
       filters={filterOptions(facets, programs, filters)}
       values={filters}
-      onChange={changeFilter}
+      onChange={navigation.changeFilter}
       page={page}
       totalPages={totalPages}
       pending={navigation.pending}

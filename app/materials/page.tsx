@@ -25,13 +25,17 @@ export default async function MaterialsPage({
   const params = await searchParams;
   const getValue = (value: string | string[] | undefined) =>
     Array.isArray(value) ? value[0] : value;
+  const getQueries = (value: string | string[] | undefined) => {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    return value ? [value] : [];
+  };
   const filters = {
     topic: getValue(params.topic),
     tool: getValue(params.tool),
     system: getValue(params.system),
     program: getValue(params.program),
     resource: getValue(params.resource),
-    query: getValue(params.query),
+    query: getQueries(params.query),
     date: getValue(params.date),
     page: getValue(params.page),
     sort: getValue(params.sort),

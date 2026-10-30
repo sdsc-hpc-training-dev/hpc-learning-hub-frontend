@@ -181,7 +181,7 @@ describe("training program filter data", () => {
 
     const page = await MaterialsPage({
       searchParams: Promise.resolve({
-        query: "batch computing",
+        query: ["batch computing"],
         program: "series-1",
       }),
     });
@@ -189,7 +189,7 @@ describe("training program filter data", () => {
 
     expect(getTrainingLibraryDataMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        query: "batch computing",
+        query: ["batch computing"],
         program: "series-1",
       }),
     );

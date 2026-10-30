@@ -1,18 +1,23 @@
+"use client";
+/* eslint-disable @typescript-eslint/no-confusing-void-expression, max-lines-per-function */
+
+import { useState } from "react";
 import TrainingLibraryFilters from "./TrainingLibraryFilters";
 import MaterialCard from "./MaterialCard";
 import InlineError from "@/components/ui/InlineError";
 import type { CatalogMaterial } from "@/lib/gateway/types";
+import type { FilterValues } from "./navigation";
 
 export interface TrainingLibraryViewProps {
   pending?: boolean;
   materials: CatalogMaterial[];
   total: number;
   error?: string;
-  activeFilters: { key: string; value: string }[];
-  onRemoveFilter: (key: string) => void;
+  activeFilters: { key: keyof FilterValues; value: string }[];
+  onRemoveFilter: (key: keyof FilterValues, value?: string) => void;
   onReset: () => void;
-  searchValue: string;
-  onSearch: (value: string) => void;
+  searchTerms: string[];
+  onSearch: (terms: string[]) => void;
   filters: {
     topics: { label: string; value: string }[];
     tools: { label: string; value: string }[];
@@ -20,16 +25,8 @@ export interface TrainingLibraryViewProps {
     programs: { label: string; value: string }[];
     resourceTypes: { label: string; value: string }[];
   };
-  values: {
-    query: string;
-    topic: string;
-    tool: string;
-    system: string;
-    program: string;
-    resource: string;
-    date: string;
-  };
-  onChange: (key: string, value: string) => void;
+  values: FilterValues;
+  onChange: (key: Exclude<keyof FilterValues, "query">, value: string) => void;
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -50,36 +47,12 @@ function CatalogHero() {
   );
 }
 
-interface CatalogResultsProps {
-  pending?: boolean;
-  materials: CatalogMaterial[];
-  total: number;
-  error?: string;
-  activeFilters: { key: string; value: string }[];
-  onRemoveFilter: (key: string) => void;
-  onReset: () => void;
-  searchValue: string;
-  onSearch: (value: string) => void;
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}
-
-interface CatalogSearchControlsProps {
-  total: number;
-  activeFilters: { key: string; value: string }[];
-  onRemoveFilter: (key: string) => void;
-  onReset: () => void;
-  searchValue: string;
-  onSearch: (value: string) => void;
-}
-
 function ActiveFilterList({
   activeFilters,
   onRemoveFilter,
 }: Readonly<{
-  activeFilters: { key: string; value: string }[];
-  onRemoveFilter: (key: string) => void;
+  activeFilters: TrainingLibraryViewProps["activeFilters"];
+  onRemoveFilter: TrainingLibraryViewProps["onRemoveFilter"];
 }>) {
   return (
     <div
@@ -89,12 +62,10 @@ function ActiveFilterList({
     >
       {activeFilters.map(({ key, value }) => (
         <button
-          key={key + "-" + value}
+          key={`${key}-${value}`}
           className="filter-chip"
           type="button"
-          onClick={() => {
-            onRemoveFilter(key);
-          }}
+          onClick={() => onRemoveFilter(key, value)}
         >
           {value} <span aria-hidden="true">×</span>
         </button>
@@ -108,44 +79,82 @@ function CatalogSearchControls({
   activeFilters,
   onRemoveFilter,
   onReset,
-  searchValue,
+  searchTerms,
   onSearch,
-}: Readonly<CatalogSearchControlsProps>) {
+}: Readonly<Pick<
+  TrainingLibraryViewProps,
+  | "total"
+  | "activeFilters"
+  | "onRemoveFilter"
+  | "onReset"
+  | "searchTerms"
+  | "onSearch"
+>>) {
+  const [draft, setDraft] = useState("");
+  const [composing, setComposing] = useState(false);
+  const commit = (value: string) => {
+    const phrases = value.split(",").map((phrase) => phrase.trim());
+    onSearch([...searchTerms, ...phrases]);
+    setDraft("");
+  };
   return (
     <>
       <label htmlFor="catalog-search" className="sr-only">
-        Search material titles and descriptions
+        Search training materials
       </label>
+      <p id="catalog-search-helper" className="catalog-search-helper">
+        Type comma-separated terms to filter training materials.
+      </p>
       <div className="catalog-search-wrap">
         <input
           id="catalog-search"
           className="catalog-search"
           type="search"
-          placeholder="Search material titles and descriptions…"
-          value={searchValue}
+          placeholder="Search training materials…"
+          value={draft}
+          aria-describedby="catalog-search-helper"
           onChange={(event) => {
-            onSearch(event.target.value);
+            const value = event.target.value;
+            if (composing) {
+              setDraft(value);
+              return;
+            }
+            const parts = value.split(",");
+            if (parts.length === 1) {
+              setDraft(value);
+              return;
+            }
+            onSearch([...searchTerms, ...parts.slice(0, -1)]);
+            setDraft(parts.at(-1) ?? "");
           }}
+          onKeyDown={(event) => {
+            if (composing || event.nativeEvent.isComposing || event.key !== "Enter") return;
+            event.preventDefault();
+            commit(draft);
+          }}
+          onCompositionStart={() => { setComposing(true); }}
+          onCompositionEnd={() => { setComposing(false); }}
         />
-      </div>
-      <div className="catalog-toolbar">
-        <p className="catalog-count" aria-live="polite">
-          {total} {total === 1 ? "material" : "materials"} found
-        </p>
         <button
           type="button"
-          className="button button--secondary"
-          onClick={() => {
-            onReset();
-          }}
+          className="button button--secondary catalog-search-button"
+          onClick={() => commit(draft)}
         >
-          Reset filters
+          Search
         </button>
       </div>
       <ActiveFilterList
         activeFilters={activeFilters}
         onRemoveFilter={onRemoveFilter}
       />
+      <div className="catalog-toolbar">
+        <p className="catalog-count" aria-live="polite">
+          {total} {total === 1 ? "material" : "materials"} found
+        </p>
+        <button type="button" className="button button--secondary" onClick={onReset}>
+          Reset filters
+        </button>
+      </div>
     </>
   );
 }
@@ -160,96 +169,20 @@ function CatalogContent({
   onReset: () => void;
 }>) {
   if (error) {
-    return (
-      <InlineError
-        title="Training materials are unavailable."
-        message={error}
-      />
-    );
+    return <InlineError title="Training materials are unavailable." message={error} />;
   }
   if (materials.length === 0) {
     return (
       <div className="empty-state">
         <h2>No materials match those filters</h2>
         <p>Try removing a filter or searching for a broader topic.</p>
-        <button
-          type="button"
-          className="button button--secondary"
-          onClick={() => {
-            onReset();
-          }}
-        >
+        <button type="button" className="button button--secondary" onClick={onReset}>
           Reset filters
         </button>
       </div>
     );
   }
-  return (
-    <div className="catalog-results">
-      {materials.map((material) => (
-        <MaterialCard key={material.id} material={material} />
-      ))}
-    </div>
-  );
-}
-
-function CatalogResults({
-  pending,
-  materials,
-  total,
-  activeFilters,
-  onRemoveFilter,
-  onReset,
-  searchValue,
-  onSearch,
-  page,
-  totalPages,
-  onPageChange,
-  error,
-}: Readonly<CatalogResultsProps>) {
-  return (
-    <div aria-busy={pending}>
-      <CatalogSearchControls
-        total={total}
-        activeFilters={activeFilters}
-        onRemoveFilter={onRemoveFilter}
-        onReset={onReset}
-        searchValue={searchValue}
-        onSearch={onSearch}
-      />
-      <CatalogContent materials={materials} error={error} onReset={onReset} />
-      {!error && totalPages > 1 ? (
-        <nav
-          className="catalog-pagination"
-          aria-label="Training material pages"
-        >
-          <button
-            type="button"
-            className="button button--secondary"
-            disabled={Boolean(pending) || page <= 1}
-            onClick={() => {
-              onPageChange(page - 1);
-            }}
-          >
-            Previous
-          </button>
-          <span aria-live="polite">
-            Page {page} of {totalPages}
-          </span>
-          <button
-            type="button"
-            className="button button--secondary"
-            disabled={Boolean(pending) || page >= totalPages}
-            onClick={() => {
-              onPageChange(page + 1);
-            }}
-          >
-            Next
-          </button>
-        </nav>
-      ) : null}
-    </div>
-  );
+  return <div className="catalog-results">{materials.map((material) => <MaterialCard key={material.id} material={material} />)}</div>;
 }
 
 export default function TrainingLibraryView({
@@ -260,7 +193,7 @@ export default function TrainingLibraryView({
   activeFilters,
   onRemoveFilter,
   onReset,
-  searchValue,
+  searchTerms,
   onSearch,
   filters,
   values,
@@ -272,32 +205,30 @@ export default function TrainingLibraryView({
   return (
     <>
       <CatalogHero />
-
       <section className="section">
         <div className="section-shell catalog-layout">
           <div className="catalog-filters" aria-label="Training filters">
-            <TrainingLibraryFilters
-              options={filters}
-              values={values}
-              onChange={onChange}
-              onReset={onReset}
-            />
+            <TrainingLibraryFilters options={filters} values={values} onChange={onChange} onReset={onReset} />
           </div>
-
-          <CatalogResults
-            pending={pending}
-            materials={materials}
-            total={total}
-            error={error}
-            activeFilters={activeFilters}
-            onRemoveFilter={onRemoveFilter}
-            onReset={onReset}
-            searchValue={searchValue}
-            onSearch={onSearch}
-            page={page}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-          />
+          <div aria-busy={pending} aria-live="polite">
+            {pending ? <span className="sr-only">Updating training materials…</span> : null}
+            <CatalogSearchControls
+              total={total}
+              activeFilters={activeFilters}
+              onRemoveFilter={onRemoveFilter}
+              onReset={onReset}
+              searchTerms={searchTerms}
+              onSearch={onSearch}
+            />
+            <CatalogContent materials={materials} error={error} onReset={onReset} />
+            {!error && totalPages > 1 ? (
+              <nav className="catalog-pagination" aria-label="Training material pages">
+                <button type="button" className="button button--secondary" disabled={Boolean(pending) || page <= 1} onClick={() => onPageChange(page - 1)}>Previous</button>
+                <span aria-live="polite">Page {page} of {totalPages}</span>
+                <button type="button" className="button button--secondary" disabled={Boolean(pending) || page >= totalPages} onClick={() => onPageChange(page + 1)}>Next</button>
+              </nav>
+            ) : null}
+          </div>
         </div>
       </section>
     </>
