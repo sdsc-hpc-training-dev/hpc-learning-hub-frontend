@@ -207,6 +207,7 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
   };
   return {
     filters,
+    returnTo: currentQuery ? `${pathname}?${currentQuery}` : pathname,
     changeFilter,
     changeQueries,
     removeFilter,
@@ -233,6 +234,7 @@ export default function MaterialsPageClient({
   return (
     <TrainingLibraryView
       materials={materials}
+      returnTo={navigation.returnTo}
       total={total}
       error={initialError}
       activeFilters={activeFilterEntries(filters, programs)}

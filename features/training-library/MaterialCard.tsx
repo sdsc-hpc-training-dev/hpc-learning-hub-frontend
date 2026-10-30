@@ -1,10 +1,12 @@
 import Link from "next/link";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 import { catalogPlainText, resourceTypeSummary } from "./presentation";
+import { materialDetailsHref } from "./navigation";
 
 interface MaterialCardProps {
   material: CatalogMaterial;
   compact?: boolean;
+  returnTo?: string;
 }
 
 function formatDate(value?: string | null) {
@@ -33,6 +35,7 @@ function headingTag(compact: boolean) {
 export default function MaterialCard({
   material,
   compact = false,
+  returnTo,
 }: Readonly<MaterialCardProps>) {
   const Heading = headingTag(compact);
   const meta = [
@@ -43,7 +46,7 @@ export default function MaterialCard({
       ? `Instructor: ${material.instructors.join(", ")}`
       : null,
   ].filter(Boolean);
-  const href = `/materials/${encodeURIComponent(material.id)}`;
+  const href = materialDetailsHref(material.id, returnTo);
   const cardClassName = compact
     ? "material-card material-card--compact"
     : "material-card";

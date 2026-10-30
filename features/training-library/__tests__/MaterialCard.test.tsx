@@ -65,6 +65,25 @@ describe("catalog cards and detail text", () => {
       material.resources[0].url,
     );
     expect(container.textContent).not.toMatch(/&amp;|<a name/);
-    expect(container.querySelector("#material-body a")).toBeNull();
+    expect(container.querySelector('#material-body a[name="top"]')).toBeNull();
+  });
+});
+
+describe("material Go back control", () => {
+  const returnTo = "/materials?query=Containers&system=Comet&sort=date_desc&page=2";
+
+  it("links both card actions to the same filtered return context", () => {
+    render(<MaterialCard material={material} returnTo={returnTo} />);
+    for (const link of screen.getAllByRole("link")) {
+      const href = new URL(link.getAttribute("href") ?? "", "https://catalog.invalid");
+      expect(href.searchParams.get("returnTo")).toBe(returnTo);
+    }
+  });
+
+  it("returns to the exact original results or safely falls back for a direct visit", () => {
+    const { rerender } = render(<MaterialDetail material={material} relatedMaterials={[]} returnTo={returnTo} />);
+    expect(screen.getByRole("link", { name: "Go back to search results" })).toHaveAttribute("href", returnTo);
+    rerender(<MaterialDetail material={material} relatedMaterials={[]} />);
+    expect(screen.getByRole("link", { name: "Go back to search results" })).toHaveAttribute("href", "/materials");
   });
 });

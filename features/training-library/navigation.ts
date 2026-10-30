@@ -1,4 +1,25 @@
 export const MATERIALS_PAGE_SIZE = 10;
+
+export function catalogReturnTo(value?: string | string[]): string {
+  const target = Array.isArray(value) ? value[0] : value;
+  if (!target?.startsWith("/") || target.length > 8192) return "/materials";
+  try {
+    const url = new URL(target, "https://catalog.invalid");
+    if (url.origin !== "https://catalog.invalid" || url.pathname !== "/materials") {
+      return "/materials";
+    }
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return "/materials";
+  }
+}
+
+export function materialDetailsHref(materialId: string, returnTo?: string) {
+  const path = `/materials/${encodeURIComponent(materialId)}`;
+  if (!returnTo) return path;
+  return `${path}?${new URLSearchParams({ returnTo: catalogReturnTo(returnTo) })}`;
+}
+
 export const emptyFilterValues = {
   query: [] as string[],
   topic: "",
