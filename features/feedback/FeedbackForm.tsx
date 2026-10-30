@@ -49,8 +49,8 @@ export default function FeedbackForm() {
         body: JSON.stringify({
           rating: values.rating,
           foundWhatNeeded: values.foundWhatNeeded || null,
-          workedWell: values.workedWell.trim() || null,
-          improvements: values.improvements.trim() || null,
+          workedWell: values.workedWell.trim() ? values.workedWell : null,
+          improvements: values.improvements.trim() ? values.improvements : null,
         }),
       });
       if (!response.ok) throw new Error(String(response.status));

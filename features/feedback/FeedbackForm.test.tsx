@@ -20,7 +20,7 @@ it("validates the rating and submits anonymous normalized feedback once", async 
   fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
   await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
   expect(fetchMock).toHaveBeenCalledWith("/api/v1/feedback", expect.objectContaining({ credentials: "omit" }));
-  expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ rating: 4, foundWhatNeeded: null, workedWell: "Great resources", improvements: null });
+  expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ rating: 4, foundWhatNeeded: null, workedWell: "  Great resources  ", improvements: null });
   expect(screen.getByRole("status")).toHaveTextContent("feedback was received");
 });
 
@@ -32,4 +32,15 @@ it("keeps values and exposes a friendly retry state after failure", async () => 
   fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
   await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("temporarily unavailable"));
   expect(screen.getByLabelText(/What could improve/)).toHaveValue("More examples");
+});
+
+it("preserves nonblank whitespace and newlines while converting blank text to null", async () => {
+  fetchMock.mockResolvedValue({ ok: true, status: 201 } as Response);
+  render(<FeedbackForm />);
+  fireEvent.click(screen.getByRole("radio", { name: "3" }));
+  fireEvent.change(screen.getByLabelText(/What worked well/), { target: { value: "\n  Useful detail\n" } });
+  fireEvent.change(screen.getByLabelText(/What could improve/), { target: { value: " \n\t " } });
+  fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+  expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ rating: 3, foundWhatNeeded: null, workedWell: "\n  Useful detail\n", improvements: null });
 });
