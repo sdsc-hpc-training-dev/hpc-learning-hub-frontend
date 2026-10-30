@@ -2,7 +2,7 @@
 /* eslint-disable sonarjs/no-nested-conditional */
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import TrainingLibraryView from "./TrainingLibraryView";
 import type { CatalogMaterial, GatewayEventSeries } from "@/lib/gateway/types";
 import type { CatalogFacets, MaterialListFilters } from "./api";
@@ -20,16 +20,33 @@ interface MaterialsPageClientProps {
   initialError?: string;
 }
 
+function normalizeWhitespace(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
 function normalizedTerms(terms: string[]) {
   const seen = new Set<string>();
   return terms.reduce<string[]>((result, term) => {
-    const value = term.trim().slice(0, 100);
+    const value = normalizeWhitespace(term);
     const key = value.toLocaleLowerCase();
-    if (!value || seen.has(key) || result.length >= 10) return result;
+    if (!value || seen.has(key)) return result;
     seen.add(key);
     result.push(value);
     return result;
   }, []);
+}
+
+type TermValidation = { terms: string[] } | { error: string };
+
+function validatedTerms(terms: string[]): TermValidation {
+  if (terms.some((term) => normalizeWhitespace(term).length > 100)) {
+    return { error: "Each search term must be 100 characters or fewer." };
+  }
+  const normalized = normalizedTerms(terms);
+  if (normalized.length > 10) {
+    return { error: "Use at most 10 search terms." };
+  }
+  return { terms: normalized };
 }
 
 function filterValues(initialFilters: MaterialListFilters): FilterValues {
@@ -116,18 +133,30 @@ function activeFilterEntries(
   return [...terms, ...facets];
 }
 
+function useServerFilters(initialFilters: MaterialListFilters) {
+  const serverFilterKey = JSON.stringify(initialFilters);
+  const serverFilters = useMemo(
+    () => filterValues(initialFilters),
+    [serverFilterKey],
+  );
+  const [filters, setFilters] = useState<FilterValues>(serverFilters);
+  useEffect(() => {
+    setFilters(serverFilters);
+  }, [serverFilters]);
+  return [filters, setFilters] as const;
+}
+
 function useCatalogFilters(initialFilters: MaterialListFilters) {
   const pathname = usePathname();
   const router = useRouter();
   const currentQuery = useSearchParams().toString();
   const [pending, startTransition] = useTransition();
-  const [filters, setFilters] = useState<FilterValues>(() =>
-    filterValues(initialFilters),
-  );
+  const [filters, setFilters] = useServerFilters(initialFilters);
+  const [termError, setTermError] = useState<string>();
   const commit = (nextFilters: FilterValues, page = 1) => {
     setFilters(nextFilters);
     startTransition(() => {
-      router.replace(catalogUrl(pathname, currentQuery, nextFilters, page), {
+      router.push(catalogUrl(pathname, currentQuery, nextFilters, page), {
         scroll: false,
       });
     });
@@ -137,7 +166,14 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
     value: string,
   ) => { commit({ ...filters, [key]: value }); };
   const changeQueries = (queries: string[]) => {
-    commit({ ...filters, query: normalizedTerms(queries) });
+    const validated = validatedTerms(queries);
+    if ("error" in validated) {
+      setTermError(validated.error);
+      return false;
+    }
+    setTermError(undefined);
+    commit({ ...filters, query: validated.terms });
+    return true;
   };
   const removeFilter = (key: keyof FilterValues, value?: string) => {
     if (key === "query") {
@@ -148,7 +184,7 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
   };
   const changePage = (nextPage: number) => {
     startTransition(() => {
-      router.replace(catalogUrl(pathname, currentQuery, filters, nextPage), {
+      router.push(catalogUrl(pathname, currentQuery, filters, nextPage), {
         scroll: false,
       });
     });
@@ -161,6 +197,7 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
     removeFilter,
     changePage,
     reset,
+    termError,
     pending,
   };
 }
@@ -187,6 +224,7 @@ export default function MaterialsPageClient({
       onReset={navigation.reset}
       searchTerms={filters.query}
       onSearch={navigation.changeQueries}
+      searchError={navigation.termError}
       filters={filterOptions(facets, programs, filters)}
       values={filters}
       onChange={navigation.changeFilter}

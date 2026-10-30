@@ -59,7 +59,6 @@ export default async function MaterialsPage({
 
   return (
     <MaterialsPageClient
-      key={JSON.stringify(filters)}
       materials={materials}
       total={total}
       page={page}
