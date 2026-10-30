@@ -144,7 +144,7 @@ export interface MaterialListFilters {
   system?: string;
   program?: string;
   resource?: string;
-  query?: string;
+  query?: string | string[];
   date?: string;
   page?: string;
   sort?: string;
@@ -218,10 +218,16 @@ export function normalizeMaterial(material: GatewayMaterial): CatalogMaterial {
   };
 }
 
-function queryForFilters(filters: MaterialListFilters, page: number) {
+function queryTerms(query: MaterialListFilters["query"]): string[] {
+  if (Array.isArray(query)) return query;
+  if (query) return [query];
+  return [];
+}
+
+// Gateway query construction intentionally preserves each selected facet.
+export function queryForFilters(filters: MaterialListFilters, page: number) {
   const params = new URLSearchParams();
   const mappedFilters: [string, string | undefined][] = [
-    ["search", filters.query],
     ["eventSeries", filters.program],
     ["topic", filters.topic],
     ["tool", filters.tool],
@@ -232,9 +238,12 @@ function queryForFilters(filters: MaterialListFilters, page: number) {
   for (const [key, value] of mappedFilters) {
     if (value?.trim()) params.set(key, value.trim());
   }
+  for (const term of queryTerms(filters.query)) {
+    if (term.trim()) params.append("term", term.trim());
+  }
   params.set("page", String(page));
-  if (filters.query?.trim()) params.set("searchMode", "phrase");
-  params.set("sort", filters.sort === "title" ? "title" : "recommended");
+  const sort = filters.sort;
+  params.set("sort", ["title", "date_asc", "date_desc"].includes(sort ?? "") ? sort ?? "recommended" : "recommended");
   params.set("pageSize", String(MATERIALS_PAGE_SIZE));
 
   return params;
