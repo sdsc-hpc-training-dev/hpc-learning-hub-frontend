@@ -25,19 +25,20 @@ interface SelectControlProps {
   id: string;
   label: string;
   emptyLabel: string;
+  emptyValue?: string;
   value: string;
   options: FilterOption[];
   onChange: (value: string) => void;
 }
 
-function SelectControl({ id, label, emptyLabel, value, options, onChange }: Readonly<SelectControlProps>) {
+function SelectControl({ id, label, emptyLabel, emptyValue = "", value, options, onChange }: Readonly<SelectControlProps>) {
   const controlClassName = "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200";
 
   return (
     <div>
       <label htmlFor={id} className="mb-1 block text-sm font-semibold text-slate-700">{label}</label>
       <select id={id} className={controlClassName} value={value} onChange={(event) => { onChange(event.target.value); }}>
-        <option value="">{emptyLabel}</option>
+        <option value={emptyValue}>{emptyLabel}</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>{option.label}</option>
         ))}
@@ -78,12 +79,12 @@ export default function TrainingLibraryFilters({
           id="catalog-sort"
           label="Sort"
           emptyLabel="Recommended"
+          emptyValue="recommended"
           value={values.sort}
           options={[
-            { label: "Recommended", value: "recommended" },
-            { label: "Title", value: "title" },
-            { label: "Date: newest first", value: "date_desc" },
-            { label: "Date: oldest first", value: "date_asc" },
+            { label: "Title A-Z", value: "title" },
+            { label: "Newest First", value: "date_desc" },
+            { label: "Oldest First", value: "date_asc" },
           ]}
           onChange={(value) => { onChange("sort", value); }}
         />
