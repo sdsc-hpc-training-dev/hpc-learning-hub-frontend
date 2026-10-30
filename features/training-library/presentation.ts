@@ -74,6 +74,8 @@ function removeCreativeCommonsLicenseBadges(value: string) {
 function stripHtml(value: string) {
   // Older snapshots removed '>' before HTML cleanup, breaking empty README anchors.
   const repaired = value
+    .replace(/<a\b[^<>]{0,1000}<\/a\s*>?/gi, " ")
+    .replace(/<\/?br\b\s*\/?\s*>?/gi, " ")
     .replace(/<a\s+(?:name|id)\s*=\s*(?:"[^"]*"|'[^']*')\s*(?=<\/a\b)/gi, " ")
     .replace(/<\/a(?=\s|$)(?!\s*>)/gi, " ")
     .replace(/<((?:https?:\/\/)[^>]+)>/g, "$1");
