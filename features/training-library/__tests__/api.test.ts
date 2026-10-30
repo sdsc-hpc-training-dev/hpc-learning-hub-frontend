@@ -59,7 +59,7 @@ afterEach(() => {
 it("requests exactly one ten-item Gateway page with every filter and preserves server order and totals", async () => {
   const result = await getTrainingLibraryData({
     page: "2",
-    query: "batch computing",
+    query: ["batch computing", "slurm"],
     program: "series-1",
     topic: "Batch Computing",
     tool: "Slurm",
@@ -70,8 +70,6 @@ it("requests exactly one ten-item Gateway page with every filter and preserves s
   expect(fetchMock).toHaveBeenCalledTimes(1);
   const url = new URL(requestUrl(fetchMock.mock.calls[0][0]));
   expect(Object.fromEntries(url.searchParams)).toEqual({
-    search: "batch computing",
-    searchMode: "phrase",
     eventSeries: "series-1",
     page: "2",
     pageSize: "10",
@@ -80,8 +78,10 @@ it("requests exactly one ten-item Gateway page with every filter and preserves s
     system: "Expanse",
     resourceType: "video",
     date: "2025-01-01",
+    term: "slurm",
     sort: "recommended",
   });
+  expect(url.searchParams.getAll("term")).toEqual(["batch computing", "slurm"]);
   expect(result.materials.map((item) => item.id)).toEqual(
     Array.from({ length: 10 }, (_, i) => String(i)),
   );
