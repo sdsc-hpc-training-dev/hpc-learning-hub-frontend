@@ -2,12 +2,12 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import MaterialsPageClient from "../MaterialsPageClient";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 
-const mockReplace = jest.fn<undefined, [string, { scroll: boolean }]>();
+const mockPush = jest.fn<undefined, [string, { scroll: boolean }]>();
 const mockSearchParams = new URLSearchParams();
 
 jest.mock("next/navigation", () => ({
   usePathname: () => "/materials",
-  useRouter: () => ({ replace: mockReplace }),
+  useRouter: () => ({ push: mockPush }),
   useSearchParams: () => mockSearchParams,
 }));
 
@@ -23,42 +23,124 @@ const batchMaterial: CatalogMaterial = {
 };
 
 beforeEach(() => {
-  mockReplace.mockReset();
+  mockPush.mockReset();
   for (const key of Array.from(mockSearchParams.keys()))
     mockSearchParams.delete(key);
   window.history.replaceState(null, "", "/materials");
 });
 
-describe("Training Library search", () => {
-  it("delegates the debounced query to the server and preserves current results", async () => {
+it("commits comma-separated terms but leaves a final draft uncommitted", () => {
     render(<MaterialsPageClient materials={[batchMaterial]} />);
 
     fireEvent.change(screen.getByRole("searchbox"), {
-      target: { value: "batch computing" },
+      target: { value: "batch computing,slurm" },
     });
 
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith(
-        "/materials?query=batch+computing",
-        { scroll: false },
-      );
-    });
+    expect(mockPush).toHaveBeenCalledWith("/materials?query=batch+computing", { scroll: false });
+    expect(screen.getByRole("searchbox")).toHaveValue("slurm");
+    fireEvent.keyDown(screen.getByRole("searchbox"), { key: "Enter" });
+    expect(mockPush).toHaveBeenLastCalledWith("/materials?query=batch+computing&query=slurm", { scroll: false });
     expect(screen.getByText("1 material found")).toBeInTheDocument();
-  });
+});
 
-  it("clears the URL search when filters are reset", () => {
+it("clears the URL search when filters are reset", () => {
     render(<MaterialsPageClient materials={[batchMaterial]} />);
-    fireEvent.change(screen.getByRole("searchbox"), {
-      target: { value: "batch computing" },
-    });
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "batch computing," } });
     fireEvent.click(
       screen.getAllByRole("button", { name: "Reset filters" })[0],
     );
 
-    expect(mockReplace).toHaveBeenLastCalledWith("/materials", {
+    expect(mockPush).toHaveBeenLastCalledWith("/materials", {
       scroll: false,
     });
-  });
+});
+
+it("does not commit comma text while an IME composition is active", () => {
+    render(<MaterialsPageClient materials={[batchMaterial]} />);
+    fireEvent.compositionStart(screen.getByRole("searchbox"));
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "batch," },
+    });
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(screen.getByRole("searchbox")).toHaveAttribute("aria-describedby", "catalog-search-helper");
+});
+
+it("keeps the final pasted phrase as a draft after server navigation", () => {
+    const { rerender } = render(<MaterialsPageClient materials={[batchMaterial]} />);
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "Machine Learning,Containers" },
+    });
+    expect(mockPush).toHaveBeenCalledWith("/materials?query=Machine+Learning", { scroll: false });
+    rerender(
+      <MaterialsPageClient
+        materials={[batchMaterial]}
+        initialFilters={{ query: ["Machine Learning"] }}
+      />,
+    );
+    expect(screen.getByRole("searchbox")).toHaveValue("Containers");
+});
+
+it("keeps an uncommitted draft when a facet navigation returns server data", () => {
+    const { rerender } = render(
+      <MaterialsPageClient
+        materials={[batchMaterial]}
+        facets={{ topics: [{ id: "linux", name: "Linux" }], tools: [], systems: [] }}
+      />,
+    );
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Containers" } });
+    fireEvent.change(screen.getByLabelText("Topic"), { target: { value: "Linux" } });
+    rerender(
+      <MaterialsPageClient
+        materials={[batchMaterial]}
+        initialFilters={{ topic: "Linux" }}
+        facets={{ topics: [{ id: "linux", name: "Linux" }], tools: [], systems: [] }}
+      />,
+    );
+    expect(screen.getByRole("searchbox")).toHaveValue("Containers");
+});
+
+it("reports term limits without changing committed query state or discarding the draft", () => {
+    const queries = Array.from({ length: 10 }, (_, index) => `term ${String(index)}`);
+    render(<MaterialsPageClient materials={[batchMaterial]} initialFilters={{ query: queries }} />);
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "one too many," } });
+    expect(screen.getByRole("alert")).toHaveTextContent("Use at most 10 search terms.");
+    expect(screen.getByRole("searchbox")).toHaveValue("one too many,");
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Remove term 0" })).toBeInTheDocument();
+});
+
+it("clears terms, draft, and term errors from either reset control", () => {
+  const queries = Array.from({ length: 10 }, (_, index) => `term ${String(index)}`);
+  render(<MaterialsPageClient materials={[batchMaterial]} initialFilters={{ query: queries }} />);
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "one too many," } });
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+  fireEvent.click(screen.getAllByRole("button", { name: "Reset filters" })[0]);
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(screen.getByRole("searchbox")).toHaveValue("");
+  expect(screen.getByLabelText("No active filters")).toBeEmptyDOMElement();
+  expect(mockPush).toHaveBeenLastCalledWith("/materials", { scroll: false });
+});
+
+it("uses public labels for resource and sort chips", () => {
+  render(
+    <MaterialsPageClient
+      materials={[batchMaterial]}
+      initialFilters={{ resource: "repository_session", sort: "date_desc" }}
+    />,
+  );
+  expect(screen.getByRole("button", { name: "Remove Resource: Repository materials" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Remove Sort: Newest First" })).toBeInTheDocument();
+});
+
+it("does not render the server page value as a typed filter chip", () => {
+  render(
+    <MaterialsPageClient
+      materials={[batchMaterial]}
+      initialFilters={{ page: "2", topic: "Batch Computing" }}
+    />,
+  );
+  expect(screen.getByRole("button", { name: "Remove Topic: Batch Computing" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /undefined: 2|Page: 2/ })).toBeNull();
 });
 
 describe("Training Library program filters", () => {
@@ -75,7 +157,7 @@ describe("Training Library program filters", () => {
     });
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith("/materials?program=series-1", {
+      expect(mockPush).toHaveBeenCalledWith("/materials?program=series-1", {
         scroll: false,
       });
     });
@@ -102,7 +184,7 @@ describe("Training Library topic filters", () => {
 
 it("renders the ten supplied records in server order and navigates with all filters and ranking intact", () => {
   const filters = {
-    query: "batch",
+    query: ["batch"],
     topic: "Batch Computing",
     tool: "Slurm",
     system: "Expanse",
@@ -110,8 +192,9 @@ it("renders the ten supplied records in server order and navigates with all filt
     resource: "video",
     date: "2025-01-01",
   };
-  for (const [key, value] of Object.entries(filters))
-    mockSearchParams.set(key, value);
+  for (const [key, value] of Object.entries(filters)) {
+    for (const entry of Array.isArray(value) ? value : [value]) mockSearchParams.append(key, entry);
+  }
   mockSearchParams.set("sort", "recommended");
   const materials = Array.from({ length: 10 }, (_, index) => ({
     ...batchMaterial,
@@ -136,11 +219,10 @@ it("renders the ten supplied records in server order and navigates with all filt
   ).toEqual(materials.map((material) => material.title));
   expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "Next" }));
-  const url = new URL(mockReplace.mock.calls[0][0], "https://example.org");
-  expect(Object.fromEntries(url.searchParams)).toEqual({
-    ...filters,
-    sort: "recommended",
-    page: "2",
+  const url = new URL(mockPush.mock.calls[0][0], "https://example.org");
+  expect(url.searchParams.getAll("query")).toEqual(["batch"]);
+  expect(Object.fromEntries(url.searchParams)).toMatchObject({
+    topic: "Batch Computing", tool: "Slurm", system: "Expanse", program: "series-1", resource: "video", date: "2025-01-01", page: "2",
   });
   expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(10);
 });
@@ -169,12 +251,12 @@ it("resets the server page when changing or removing a filter", async () => {
     target: { value: "Linux" },
   });
   await waitFor(() => {
-    expect(mockReplace).toHaveBeenCalledWith(
+      expect(mockPush).toHaveBeenCalledWith(
       "/materials?topic=Linux&tool=Slurm",
       { scroll: false },
     );
   });
-  expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+  expect(mockPush).toHaveBeenCalledTimes(1);
 });
 
 it("keeps catalog-wide options available when they are absent from the current page", () => {

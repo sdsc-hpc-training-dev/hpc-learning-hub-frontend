@@ -17,7 +17,17 @@ async function scanSelectFilters(page, viewportName, scan) {
         "catalog-",
         "",
       );
-      await page.waitForURL((url) => url.searchParams.get(parameter) === value);
+      const defaultSort = parameter === "sort" && value === "recommended";
+      await page.waitForURL((url) =>
+        defaultSort
+          ? !url.searchParams.has(parameter)
+          : url.searchParams.get(parameter) === value,
+      );
+      if (defaultSort) {
+        await page.waitForFunction(() => !document.querySelector(".filter-chip"));
+        await scan(`${viewportName}: recommended sort without a filter chip`);
+        continue;
+      }
       await page.locator(".filter-chip").first().waitFor();
       await scan(
         `${viewportName}: ${await filter.getAttribute("id")}=${value}`,
@@ -88,6 +98,7 @@ export async function scanInteractions(page, route, scan) {
 
     // A real keyword exposes the dynamically rendered removal button.
     await page.locator("#catalog-search").fill("computing");
+    await page.locator("#catalog-search").press("Enter");
     await page.waitForURL(
       (url) => url.searchParams.get("query") === "computing",
     );

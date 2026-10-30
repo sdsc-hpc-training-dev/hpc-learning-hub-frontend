@@ -1,7 +1,8 @@
 "use client";
+/* eslint-disable sonarjs/no-nested-conditional */
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import TrainingLibraryView from "./TrainingLibraryView";
 import type { CatalogMaterial, GatewayEventSeries } from "@/lib/gateway/types";
 import type { CatalogFacets, MaterialListFilters } from "./api";
@@ -19,13 +20,52 @@ interface MaterialsPageClientProps {
   initialError?: string;
 }
 
+function normalizeWhitespace(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function normalizedTerms(terms: string[]) {
+  const seen = new Set<string>();
+  return terms.reduce<string[]>((result, term) => {
+    const value = normalizeWhitespace(term);
+    const key = value.toLocaleLowerCase();
+    if (!value || seen.has(key)) return result;
+    seen.add(key);
+    result.push(value);
+    return result;
+  }, []);
+}
+
+type TermValidation = { terms: string[] } | { error: string };
+
+function validatedTerms(terms: string[]): TermValidation {
+  if (terms.some((term) => normalizeWhitespace(term).length > 100)) {
+    return { error: "Each search term must be 100 characters or fewer." };
+  }
+  const normalized = normalizedTerms(terms);
+  if (normalized.length > 10) {
+    return { error: "Use at most 10 search terms." };
+  }
+  return { terms: normalized };
+}
+
 function filterValues(initialFilters: MaterialListFilters): FilterValues {
-  return Object.fromEntries(
-    Object.keys(emptyFilterValues).map((key) => [
-      key,
-      initialFilters[key as keyof FilterValues] ?? "",
-    ]),
-  ) as FilterValues;
+  const initialQuery = initialFilters.query;
+  const queries = Array.isArray(initialQuery)
+    ? initialQuery
+    : initialQuery
+      ? [initialQuery]
+      : [];
+  return {
+    query: normalizedTerms(queries),
+    topic: initialFilters.topic ?? "",
+    tool: initialFilters.tool ?? "",
+    system: initialFilters.system ?? "",
+    program: initialFilters.program ?? "",
+    resource: initialFilters.resource ?? "",
+    date: initialFilters.date ?? "",
+    sort: initialFilters.sort ?? emptyFilterValues.sort,
+  };
 }
 
 function namedOptions(items: CatalogFacets["topics"], selected: string) {
@@ -63,19 +103,60 @@ function filterOptions(
   };
 }
 
+const filterLabels: Record<Exclude<keyof FilterValues, "query">, string> = {
+  topic: "Topic",
+  tool: "Tool",
+  system: "System",
+  program: "Program",
+  resource: "Resource",
+  date: "Date",
+  sort: "Sort",
+};
+
+function sortChipLabel(value: string) {
+  switch (value) {
+    case "title": return "Title A–Z";
+    case "date_desc": return "Newest First";
+    case "date_asc": return "Oldest First";
+    default: return value;
+  }
+}
+
 function activeFilterEntries(
   filters: FilterValues,
   programs: GatewayEventSeries[],
 ) {
-  return Object.entries(filters)
-    .filter(([, value]) => value)
-    .map(([key, value]) => ({
-      key,
-      value:
+  const terms = filters.query.map((value) => ({
+    key: "query" as const,
+    value,
+  }));
+  const facets = (Object.entries(filters) as [keyof FilterValues, string | string[]][])
+    .filter(([key, value]) => key !== "query" && value && value !== "recommended")
+    .map(([key, value]) => {
+      const selected = String(value);
+      const displayValue =
         key === "program"
-          ? (programs.find((program) => program.id === value)?.name ?? value)
-          : value,
-    }));
+          ? (programs.find((program) => program.id === selected)?.name ?? selected)
+          : key === "resource"
+            ? (publicResourceTypeLabel(selected) ?? selected)
+            : key === "sort"
+              ? sortChipLabel(selected)
+              : selected;
+      return {
+      key: key as Exclude<keyof FilterValues, "query">,
+      value: `${filterLabels[key as Exclude<keyof FilterValues, "query">]}: ${displayValue}`,
+    }; });
+  return [...terms, ...facets];
+}
+
+function useServerFilters(initialFilters: MaterialListFilters) {
+  const serverFilterKey = JSON.stringify(initialFilters);
+  const serverFilters = useMemo(() => filterValues(initialFilters), [serverFilterKey]);
+  const [filters, setFilters] = useState<FilterValues>(serverFilters);
+  useEffect(() => {
+    setFilters(serverFilters);
+  }, [serverFilters]);
+  return [filters, setFilters] as const;
 }
 
 function useCatalogFilters(initialFilters: MaterialListFilters) {
@@ -83,53 +164,57 @@ function useCatalogFilters(initialFilters: MaterialListFilters) {
   const router = useRouter();
   const currentQuery = useSearchParams().toString();
   const [pending, startTransition] = useTransition();
-  const [filters, setFilters] = useState<FilterValues>(() =>
-    filterValues(initialFilters),
-  );
-  const filterQuery = JSON.stringify(filters);
-  const initialQuery = JSON.stringify(filterValues(initialFilters));
-  useEffect(() => {
-    if (filterQuery === initialQuery) return;
-    const timeout = window.setTimeout(() => {
-      startTransition(() => {
-        router.replace(
-          catalogUrl(
-            pathname,
-            currentQuery,
-            JSON.parse(filterQuery) as FilterValues,
-          ),
-          { scroll: false },
-        );
+  const [filters, setFilters] = useServerFilters(initialFilters);
+  const [termError, setTermError] = useState<string>();
+  const [resetVersion, setResetVersion] = useState(0);
+  const commit = (nextFilters: FilterValues, page = 1) => {
+    setFilters(nextFilters);
+    startTransition(() => {
+      router.push(catalogUrl(pathname, currentQuery, nextFilters, page), {
+        scroll: false,
       });
-    }, 300);
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [filterQuery, initialQuery, pathname, currentQuery, router]);
-  const changeFilter = (key: string, value: string) => {
-    setFilters((current) => ({ ...current, [key]: value }));
+    });
+  };
+  const changeFilter = (key: Exclude<keyof FilterValues, "query">, value: string) => { commit({ ...filters, [key]: value }); };
+  const changeQueries = (queries: string[]) => {
+    const validated = validatedTerms(queries);
+    if ("error" in validated) {
+      setTermError(validated.error);
+      return false;
+    }
+    setTermError(undefined);
+    commit({ ...filters, query: validated.terms });
+    return true;
+  };
+  const removeFilter = (key: keyof FilterValues, value?: string) => {
+    if (key === "query") {
+      changeQueries(filters.query.filter((term) => term !== value));
+      return;
+    }
+    changeFilter(key, key === "sort" ? "recommended" : "");
   };
   const changePage = (nextPage: number) => {
     startTransition(() => {
-      router.replace(catalogUrl(pathname, currentQuery, filters, nextPage), {
+      router.push(catalogUrl(pathname, currentQuery, filters, nextPage), {
         scroll: false,
       });
     });
   };
   const reset = () => {
-    setFilters({ ...emptyFilterValues });
-    startTransition(() => {
-      router.replace(catalogUrl(pathname, currentQuery, emptyFilterValues), {
-        scroll: false,
-      });
-    });
+    setTermError(undefined);
+    setResetVersion((current) => current + 1);
+    commit({ ...emptyFilterValues });
   };
   return {
     filters,
     changeFilter,
+    changeQueries,
+    removeFilter,
     changePage,
     reset,
-    pending: pending || filterQuery !== initialQuery,
+    termError,
+    resetVersion,
+    pending,
   };
 }
 
@@ -144,24 +229,22 @@ export default function MaterialsPageClient({
   initialError,
 }: Readonly<MaterialsPageClientProps>) {
   const navigation = useCatalogFilters(initialFilters);
-  const { filters, changeFilter } = navigation;
+  const { filters } = navigation;
   return (
     <TrainingLibraryView
       materials={materials}
       total={total}
       error={initialError}
       activeFilters={activeFilterEntries(filters, programs)}
-      onRemoveFilter={(key) => {
-        changeFilter(key, "");
-      }}
+      onRemoveFilter={navigation.removeFilter}
       onReset={navigation.reset}
-      searchValue={filters.query}
-      onSearch={(value) => {
-        changeFilter("query", value);
-      }}
+      searchTerms={filters.query}
+      onSearch={navigation.changeQueries}
+      searchError={navigation.termError}
+      resetVersion={navigation.resetVersion}
       filters={filterOptions(facets, programs, filters)}
       values={filters}
-      onChange={changeFilter}
+      onChange={navigation.changeFilter}
       page={page}
       totalPages={totalPages}
       pending={navigation.pending}
