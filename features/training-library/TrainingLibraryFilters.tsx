@@ -109,6 +109,58 @@ function selectFilters(
   ];
 }
 
+function CatalogSortControl({
+  value,
+  onChange,
+}: Readonly<{
+  value: string;
+  onChange: (value: string) => void;
+}>) {
+  return (
+    <SelectControl
+      id="catalog-sort"
+      label="Sort"
+      emptyLabel="Recommended"
+      value={value}
+      options={[
+        { label: "Recommended", value: "recommended" },
+        { label: "Title", value: "title" },
+        { label: "Date: newest first", value: "date_desc" },
+        { label: "Date: oldest first", value: "date_asc" },
+      ]}
+      onChange={onChange}
+    />
+  );
+}
+
+function CatalogDateControl({
+  value,
+  onChange,
+}: Readonly<{
+  value: string;
+  onChange: (value: string) => void;
+}>) {
+  return (
+    <div>
+      <label
+        htmlFor="catalog-date"
+        className="mb-1 block text-sm font-semibold text-slate-700"
+      >
+        Date
+      </label>
+      <input
+        id="catalog-date"
+        type="date"
+        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200"
+        value={value}
+        onChange={(event) => {
+          onChange(event.target.value);
+        }}
+      />
+    </div>
+  );
+}
+
 export default function TrainingLibraryFilters({
   options,
   values,
@@ -134,41 +186,21 @@ export default function TrainingLibraryFilters({
               value={filterValue}
               options={filterOptions}
               onChange={(value) => {
-                onChange(key, value);
+                onChange(key as Exclude<keyof FilterValues, "query">, value);
               }}
             />
           ),
         )}
 
-        <div>
-          <label
-            htmlFor="catalog-date"
-            className="mb-1 block text-sm font-semibold text-slate-700"
-          >
-            Date
-          </label>
-          <input
-            id="catalog-date"
-            type="date"
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200"
-            value={values.date}
-            onChange={(event) => {
-              onChange("date", event.target.value);
-            }}
-          />
-        </div>
+        <CatalogDateControl
+          value={values.date}
+          onChange={(value) => {
+            onChange("date", value);
+          }}
+        />
 
-        <SelectControl
-          id="catalog-sort"
-          label="Sort"
-          emptyLabel="Recommended"
+        <CatalogSortControl
           value={values.sort}
-          options={[
-            { label: "Recommended", value: "recommended" },
-            { label: "Title", value: "title" },
-            { label: "Date: newest first", value: "date_desc" },
-            { label: "Date: oldest first", value: "date_asc" },
-          ]}
           onChange={(value) => {
             onChange("sort", value);
           }}

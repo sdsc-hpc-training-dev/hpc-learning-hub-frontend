@@ -28,7 +28,11 @@ export default function MaterialTags({ tags }: Readonly<{ tags: string[] }>) {
   if (!labels.length) return null;
 
   return (
-    <div className="material-tags" aria-label="Material topics, tools, and systems">
+    <div
+      className="material-tags"
+      role="group"
+      aria-label="Material topics, tools, and systems"
+    >
       <div className="tag-row">
         {visible.map((tag) => <span className="tag" key={tag}>{tag}</span>)}
       </div>
