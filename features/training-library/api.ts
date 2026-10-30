@@ -151,7 +151,9 @@ export interface MaterialListFilters {
 }
 
 function namedValues(items: { name: string }[] | undefined) {
-  return Array.isArray(items) ? items.map((item) => item.name) : [];
+  return Array.isArray(items)
+    ? items.map((item) => catalogPlainText(item.name)).filter(Boolean)
+    : [];
 }
 
 function prioritizeTitleMatches(values: string[], title: string) {
@@ -243,7 +245,12 @@ export function queryForFilters(filters: MaterialListFilters, page: number) {
   }
   params.set("page", String(page));
   const sort = filters.sort;
-  params.set("sort", ["title", "date_asc", "date_desc"].includes(sort ?? "") ? sort ?? "recommended" : "recommended");
+  params.set(
+    "sort",
+    ["title", "date_asc", "date_desc"].includes(sort ?? "")
+      ? (sort ?? "recommended")
+      : "recommended",
+  );
   params.set("pageSize", String(MATERIALS_PAGE_SIZE));
 
   return params;

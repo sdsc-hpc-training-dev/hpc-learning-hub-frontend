@@ -419,6 +419,14 @@ h3 {
   overflow-wrap: anywhere;
 }
 
+.material-back-link {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
 .material-summary {
   max-width: 780px;
   font-size: 1.16rem;
