@@ -10,6 +10,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { scanInteractions } from "./a11y-interactions.mjs";
 import { startFixtureGateway } from "./a11y-fixtures.mjs";
 import { checkPageStructure } from "./a11y-page-checks.mjs";
+import { routeReportFilename } from "./a11y-artifacts.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -228,9 +229,7 @@ async function main() {
 
     for (const route of routes) {
       const fullUrl = `${baseUrl}${route}`;
-      const routeName =
-        route === "/" ? "index" : route.replace(/^\//, "").replace(/\//g, "-");
-      const resultPath = path.join(reportDir, `${routeName}.json`);
+      const resultPath = path.join(reportDir, routeReportFilename(route));
 
       const response = await page.goto(fullUrl, {
         waitUntil: "domcontentloaded",
@@ -297,6 +296,7 @@ async function main() {
 
       const routeSummary = {
         route,
+        reportFile: path.basename(resultPath),
         url: fullUrl,
         violationCount: violations.length,
         violations,
