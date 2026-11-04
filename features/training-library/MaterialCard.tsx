@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { materialOpenEvent } from "@/features/analytics/events";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 import { catalogPlainText, resourceTypeSummary } from "./presentation";
 import { materialDetailsHref } from "./navigation";
@@ -47,6 +48,7 @@ export default function MaterialCard({
       : null,
   ].filter(Boolean);
   const href = materialDetailsHref(material.id, returnTo);
+  const tracking = materialOpenEvent(material.id);
   const cardClassName = compact
     ? "material-card material-card--compact"
     : "material-card";
@@ -64,7 +66,9 @@ export default function MaterialCard({
           {meta.join(" | ") || "SDSC training material"}
         </div>
         <Heading>
-          <Link href={href}>{title}</Link>
+          <Link href={href} {...tracking}>
+            {title}
+          </Link>
         </Heading>
         <p>{summary}</p>
         <div className="tag-row" role="group" aria-label="Topics and tools">
@@ -79,7 +83,7 @@ export default function MaterialCard({
       </div>
       <div className="material-card__footer">
         <span>{resourceTypeSummary(material.resources)}</span>
-        <Link className="text-link" href={href}>
+        <Link className="text-link" href={href} {...tracking}>
           View material <span aria-hidden="true">→</span>
         </Link>
       </div>
