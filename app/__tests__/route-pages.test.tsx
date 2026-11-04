@@ -129,6 +129,19 @@ describe("static route components", () => {
 });
 
 describe("training catalog routes", () => {
+  it("keeps a page heading when the material API fails", async () => {
+    getMaterialByIdMock.mockRejectedValueOnce(new Error("Catalog unavailable"));
+    const log = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      render(await MaterialPage({ params: Promise.resolve({ materialId: "failed-material" }) }));
+      expect(screen.getByRole("heading", {
+        level: 1, name: "This training material is unavailable.",
+      })).toBeInTheDocument();
+    } finally {
+      log.mockRestore();
+    }
+  });
+
   it("renders the catalog page with the public library hero text", async () => {
     render(await MaterialsPage({}));
     expect(
@@ -207,6 +220,7 @@ describe("static loading and not-found states", () => {
   it("renders the loading and not-found states", () => {
     const { unmount: unmountLoading } = render(<Loading />);
     expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Loading the Learning Hub");
     unmountLoading();
 
     render(<NotFound />);

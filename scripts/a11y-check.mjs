@@ -9,10 +9,14 @@ import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { scanInteractions } from "./a11y-interactions.mjs";
 import { startFixtureGateway } from "./a11y-fixtures.mjs";
+import { checkPageStructure } from "./a11y-page-checks.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const reportDir = path.join(repoRoot, "a11y-artifacts");
+// Optional WCAG AAA contrast checks, in addition to the default axe rules.
+const enhancedContrast = process.env.A11Y_ENHANCED_CONTRAST === "1";
+const enhancedTargets = process.env.A11Y_ENHANCED_TARGETS === "1";
 async function discoverPages(directory, segments = []) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
   const pages = [];
@@ -89,7 +93,13 @@ async function analyzePage(page) {
           !document.querySelector("main [aria-busy='true']"),
       );
       await page.evaluate(() => document.fonts.ready);
-      return await new AxeBuilder({ page }).analyze();
+      const builder = new AxeBuilder({ page });
+      if (enhancedContrast) {
+        builder.options({ rules: { "color-contrast-enhanced": { enabled: true } } });
+      }
+      const results = await builder.analyze();
+      results.violations.push(...await checkPageStructure(page, enhancedTargets));
+      return results;
     } catch (error) {
       const navigationError =
         /Execution context was destroyed|Frame was detached/i.test(
@@ -162,6 +172,8 @@ async function main() {
 
   const summary = {
     generatedAt: new Date().toISOString(),
+    enhancedContrast,
+    enhancedTargets,
     routes: [],
     totals: {
       pagesScanned: 0,
@@ -176,6 +188,12 @@ async function main() {
     if (!existingBaseUrl) {
       if (!process.env.GATEWAY_URL && !process.env.NEXT_PUBLIC_GATEWAY_URL) {
         fixtureGateway = await startFixtureGateway();
+        routes.push(
+          "/materials?topic=GPU+Programming",
+          "/materials?tool=Slurm",
+          "/programs?program=a11y-program",
+          "/programs/materials?program=a11y-program&page=1",
+        );
         console.log("Accessibility scan uses the local fixture gateway.");
       }
       serverProcess = spawn(

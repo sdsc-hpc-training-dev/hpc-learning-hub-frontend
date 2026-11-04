@@ -26,6 +26,7 @@ export default async function MaterialPage({
     console.error("Failed to load training material", error);
     return (
       <InlineError
+        headingLevel={1}
         title="This training material is unavailable."
         message="We could not reach the training catalog. Please try again."
       />

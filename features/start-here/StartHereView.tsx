@@ -39,7 +39,7 @@ export default function StartHereView({
               San Diego Supercomputer Center.
             </p>
           </div>
-          <div className="hero-actions" aria-label="Choose how to begin">
+          <div className="hero-actions" role="group" aria-label="Choose how to begin">
             <Link className="route-action" href="/materials">
               <strong>Find training</strong>
               <span>Search by topic, tool, system, or format.</span>
@@ -79,6 +79,7 @@ export default function StartHereView({
           {data.browseOptions.length ? (
             <div
               className="home-topic-grid"
+              role="group"
               aria-label="Browse training filters"
             >
               {data.browseOptions.map((option) => (
@@ -117,7 +118,7 @@ export default function StartHereView({
           {data.featuredMaterials.length ? (
             <div className="home-material-grid">
               {data.featuredMaterials.map((material) => (
-                <MaterialCard key={material.id} material={material} />
+                <MaterialCard key={material.id} material={material} headingLevel={3} />
               ))}
             </div>
           ) : (

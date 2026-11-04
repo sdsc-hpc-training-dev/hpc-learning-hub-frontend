@@ -55,6 +55,18 @@ async function scanDateFilter(page, viewportName, scan) {
   await scan(`${viewportName}: reset filters`);
 }
 
+async function scanActionCards(page, viewportName, scan) {
+  const actions = page.locator(".route-action");
+  for (let index = 0; index < (await actions.count()); index += 1) {
+    const action = actions.nth(index);
+    await action.hover();
+    await scan(`${viewportName}: action ${index + 1} hover`);
+    await page.mouse.move(0, 0);
+    await action.focus();
+    await scan(`${viewportName}: action ${index + 1} focus`);
+  }
+}
+
 export async function scanInteractions(page, route, scan) {
   const disclosureSelector = ["header", "main", "footer"]
     .flatMap((region) => [
@@ -68,6 +80,7 @@ export async function scanInteractions(page, route, scan) {
   ]) {
     await page.setViewportSize(viewport);
     await scan(`${viewport.name}: initial`);
+    await scanActionCards(page, viewport.name, scan);
 
     const disclosures = page.locator(disclosureSelector);
     const disclosureCount = await disclosures.count();
@@ -90,7 +103,8 @@ export async function scanInteractions(page, route, scan) {
     }
 
     await page.goto(route, { waitUntil: "load" });
-    if (new URL(route).pathname !== "/materials") continue;
+    const routeUrl = new URL(route);
+    if (routeUrl.pathname !== "/materials" || routeUrl.search) continue;
 
     await scanSelectFilters(page, viewport.name, scan);
 
