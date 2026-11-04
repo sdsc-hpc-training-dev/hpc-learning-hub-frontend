@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+// Footer columns intentionally remain together for the site-wide layout.
+// eslint-disable-next-line max-lines-per-function
 export default function SiteFooter() {
   return (
     <footer className="site-footer">
@@ -37,6 +39,14 @@ export default function SiteFooter() {
             rel="noopener"
           >
             Contact SDSC
+          </a>
+          <Link href="/feedback">Give feedback</Link>
+          <a
+            href="https://github.com/sdsc-hpc-training-dev/learning-hub-feedback/issues/new/choose"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Report a bug or request a feature
           </a>
         </div>
         <div>

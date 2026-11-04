@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { materialOpenEvent } from "@/features/analytics/events";
 import type { CatalogMaterial } from "@/lib/gateway/types";
+import { catalogPlainText, resourceTypeSummary } from "./presentation";
+import { materialDetailsHref } from "./navigation";
 
 interface MaterialCardProps {
   material: CatalogMaterial;
   compact?: boolean;
+  returnTo?: string;
 }
 
 function formatDate(value?: string | null) {
@@ -17,6 +20,7 @@ function formatDate(value?: string | null) {
         month: "short",
         day: "numeric",
         year: "numeric",
+        timeZone: "UTC",
       }).format(date);
 }
 
@@ -32,10 +36,8 @@ function headingTag(compact: boolean) {
 export default function MaterialCard({
   material,
   compact = false,
+  returnTo,
 }: Readonly<MaterialCardProps>) {
-  const resourceTypes = [
-    ...new Set(material.resources.map((resource) => resource.type)),
-  ];
   const Heading = headingTag(compact);
   const meta = [
     formatDate(material.date),
@@ -45,13 +47,15 @@ export default function MaterialCard({
       ? `Instructor: ${material.instructors.join(", ")}`
       : null,
   ].filter(Boolean);
-  const href = `/materials/${encodeURIComponent(material.id)}`;
+  const href = materialDetailsHref(material.id, returnTo);
   const tracking = materialOpenEvent(material.id);
   const cardClassName = compact
     ? "material-card material-card--compact"
     : "material-card";
+  const title = catalogPlainText(material.title) || "Untitled material";
   const summary = truncate(
-    material.summary ?? material.description ?? "No summary available.",
+    catalogPlainText(material.summary ?? material.description) ||
+      "No summary available.",
     compact ? 112 : 180,
   );
 
@@ -63,11 +67,11 @@ export default function MaterialCard({
         </div>
         <Heading>
           <Link href={href} {...tracking}>
-            {material.title}
+            {title}
           </Link>
         </Heading>
         <p>{summary}</p>
-        <div className="tag-row" aria-label="Topics and tools">
+        <div className="tag-row" role="group" aria-label="Topics and tools">
           {[...material.topics, ...material.tools]
             .slice(0, compact ? 2 : 3)
             .map((item) => (
@@ -78,9 +82,7 @@ export default function MaterialCard({
         </div>
       </div>
       <div className="material-card__footer">
-        <span>
-          {resourceTypes.length ? resourceTypes.join(" + ") : "Catalog entry"}
-        </span>
+        <span>{resourceTypeSummary(material.resources)}</span>
         <Link className="text-link" href={href} {...tracking}>
           View material <span aria-hidden="true">→</span>
         </Link>

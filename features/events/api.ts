@@ -1,4 +1,5 @@
 import { gatewayFetch } from "@/lib/gateway/client";
+import { catalogFetchOptions } from "@/lib/gateway/cache";
 import type {
   GatewayEventEdition,
   GatewayMaterial,
@@ -58,7 +59,7 @@ function recordingsUrl(page: number): string {
 
 async function getRecordingMaterials(): Promise<GatewayMaterial[]> {
   const firstPage = await gatewayFetch<GatewayMaterialPage>(recordingsUrl(1), {
-    cache: "no-store",
+    ...catalogFetchOptions({ tags: ["catalog:recordings"] }),
   });
   const remainingPages = Array.from(
     { length: Math.max(firstPage.totalPages - 1, 0) },
@@ -67,7 +68,7 @@ async function getRecordingMaterials(): Promise<GatewayMaterial[]> {
   const responses = await Promise.all(
     remainingPages.map((page) =>
       gatewayFetch<GatewayMaterialPage>(recordingsUrl(page), {
-        cache: "no-store",
+        ...catalogFetchOptions({ tags: ["catalog:recordings"] }),
       }),
     ),
   );
@@ -102,7 +103,7 @@ export async function getUpcomingEvents(
 ): Promise<GatewayEventEdition[]> {
   const eventEditions = await gatewayFetch<GatewayEventEdition[]>(
     EVENT_EDITIONS_ENDPOINT,
-    { cache: "no-store" },
+    catalogFetchOptions({ tags: ["catalog:events"] }),
   );
   const nowTimestamp = now.getTime();
 

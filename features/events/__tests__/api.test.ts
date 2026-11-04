@@ -1,5 +1,10 @@
 import { getEventsData } from "../api";
 
+const recordingCache = {
+  revalidate: 300,
+  tags: ["catalog", "catalog:recordings"],
+};
+
 const futureSoon = {
   id: "event-soon",
   title: "Upcoming workshop",
@@ -8,6 +13,9 @@ const futureSoon = {
   endAt: "2027-01-10T19:00:00.000Z",
   format: "online",
   location: "Remote event",
+  eventUrl: "https://www.sdsc.edu/events/upcoming-workshop.html",
+  registrationUrl: "https://registration.example/upcoming-workshop",
+  isTimeDisplayed: true,
 };
 
 const futureLate = {
@@ -45,7 +53,7 @@ function requestUrl(input: RequestInfo | URL): string {
   return input instanceof URL ? input.toString() : input.url;
 }
 
-function fetchEventsFixture(input: RequestInfo | URL): Promise<Response> {
+function eventsResponse(input: RequestInfo | URL): Promise<Response> {
   const url = requestUrl(input);
   if (url.endsWith("/api/v1/event-editions")) {
     return Promise.resolve(
@@ -95,7 +103,7 @@ describe("events API", () => {
   });
 
   it("selects future events and recent recording materials", async () => {
-    fetchMock.mockImplementation(fetchEventsFixture);
+    fetchMock.mockImplementation(eventsResponse);
 
     const data = await getEventsData(new Date("2027-01-01T00:00:00.000Z"));
 
@@ -107,9 +115,13 @@ describe("events API", () => {
       "newer",
       "older",
     ]);
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("resourceType=video"),
-      expect.objectContaining({ cache: "no-store" }),
+    const recordingRequest = fetchMock.mock.calls.find(([input]) =>
+      requestUrl(input).includes("resourceType=video"),
+    );
+    expect(recordingRequest?.[1]).toEqual(
+      expect.objectContaining({
+        next: recordingCache,
+      }),
     );
   });
 });

@@ -42,7 +42,7 @@ describe("LearningPathsView", () => {
     );
     expect(
       screen.getByText(
-        "Start with a curated learning path to build your skills in High Performance Computing (HPC). These two paths arrange HPC trainings into a clear first journey. They are proposed guidance, not a completed curriculum.",
+        "Start with a curated learning path to build your skills in High Performance Computing (HPC). These paths arrange HPC trainings into a clear first journey. They are proposed guidance, not a completed curriculum.",
       ),
     ).toBeInTheDocument();
   });
@@ -56,6 +56,41 @@ describe("LearningPathsView", () => {
 });
 
 describe("LearningPathDetail", () => {
+  it("decodes the reported title and Python description before truncating steps", () => {
+    const { container } = render(
+      <LearningPathDetail
+        path={{
+          ...samplePath,
+          title: "Research &amp; Data",
+          description: "<p>Workflows &amp; tools.</p>",
+          items: [
+            {
+              position: 1,
+              material: {
+                id: "20000132",
+                title: "Cheap &amp; FAIR Data Practices",
+                description:
+                  "In this session, we will explore two transformative Python technologies&#8212;Numba and Dask&#8212;that empower researchers to bring their computing workflows to HPC.",
+              },
+            },
+          ],
+        }}
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Research & Data" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Cheap & FAIR Data Practices" }),
+    ).toHaveAttribute("href", "/materials/20000132");
+    expect(
+      screen.getByText(/Python technologies\u2014Numba and Dask\u2014/),
+    ).toBeInTheDocument();
+    const summary = container.querySelector(".learning-path-step p");
+    expect(Array.from(summary?.textContent ?? "")).toHaveLength(100);
+    expect(container.textContent).not.toMatch(/&amp;|&#8212;|<p>/);
+  });
+
   it("renders metadata and orders steps by position", () => {
     render(<LearningPathDetail path={samplePath} />);
 

@@ -6,15 +6,19 @@ import {
   getTrainingLibraryData,
 } from "@/features/training-library/api";
 import type { CatalogMaterial } from "@/lib/gateway/types";
+import { catalogReturnTo } from "@/features/training-library/navigation";
 
 interface MaterialPageProps {
   params: Promise<{ materialId: string }>;
+  searchParams?: Promise<{ returnTo?: string | string[] }>;
 }
 
 export default async function MaterialPage({
   params,
+  searchParams,
 }: Readonly<MaterialPageProps>) {
   const { materialId } = await params;
+  const returnTo = catalogReturnTo((await searchParams)?.returnTo);
   let material: CatalogMaterial | null;
   try {
     material = await getMaterialById(materialId);
@@ -34,6 +38,7 @@ export default async function MaterialPage({
   return (
     <MaterialDetail
       material={material}
+      returnTo={returnTo}
       relatedMaterials={catalog.materials}
       relatedMaterialsError={
         catalog.error

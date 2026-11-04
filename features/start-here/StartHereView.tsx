@@ -3,6 +3,7 @@ import MaterialCard from "@/features/training-library/MaterialCard";
 import { UpcomingEventCard } from "@/features/events/EventsView";
 import { ProgramCard } from "@/features/programs/ProgramsView";
 import InlineError from "@/components/ui/InlineError";
+import { catalogPlainText } from "@/features/training-library/presentation";
 import type { StartHereData } from "./api";
 
 function EmptyCollection({ message }: Readonly<{ message: string }>) {
@@ -106,8 +107,8 @@ export default function StartHereView({
           <div className="section-heading section-heading--split">
             <div>
               <span className="eyebrow">Good places to begin</span>
-              <h2 id="featured-heading">Featured Trainings</h2>
-              <p>Explore training materials from across the SDSC catalog.</p>
+              <h2 id="featured-heading">Featured training</h2>
+              <p>See useful training materials from across the SDSC catalog.</p>
             </div>
             <Link className="text-link" href="/materials">
               Browse all training →
@@ -171,7 +172,7 @@ export default function StartHereView({
           {data.learningPaths.length ? (
             <div className="home-path-grid">
               {data.learningPaths.map((path) => {
-                const title = path.title ?? path.name ?? "Learning path";
+                const title = catalogPlainText(path.title ?? path.name) || "Learning path";
                 const href = `/learning-paths/${encodeURIComponent(path.id)}`;
                 return (
                   <article className="learning-path-card" key={path.id}>
@@ -179,7 +180,7 @@ export default function StartHereView({
                     <h3>
                       <Link href={href}>{title}</Link>
                     </h3>
-                    {path.description ? <p>{path.description}</p> : null}
+                    {path.description ? <p>{catalogPlainText(path.description)}</p> : null}
                     <div className="learning-path-card__footer">
                       <span>Explore the sequence</span>
                       <Link className="text-link" href={href}>

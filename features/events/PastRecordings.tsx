@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { RecordedMaterial } from "./api";
+import { catalogPlainText } from "@/features/training-library/presentation";
 
 const MATERIALS_PER_PAGE = 6;
 
@@ -19,7 +20,7 @@ function formatDate(value: string | null): string {
 }
 
 function truncate(value: string | null, length = 180): string {
-  const clean = (value ?? "").replace(/\s+/g, " ").trim();
+  const clean = catalogPlainText(value);
   if (!clean) return "Additional event details are not available yet.";
   return clean.length > length ? `${clean.slice(0, length).trim()}…` : clean;
 }
@@ -33,7 +34,9 @@ function RecordingCard({
       <div className="event-card__date">{formatDate(recording.recordedAt)}</div>
       <span className="event-card__type">Recorded session</span>
       <h3>
-        <Link href={href}>{recording.title}</Link>
+        <Link href={href}>
+          {catalogPlainText(recording.title) || "Untitled recording"}
+        </Link>
       </h3>
       <p>{truncate(recording.description)}</p>
       <Link className="text-link event-card__link" href={href}>

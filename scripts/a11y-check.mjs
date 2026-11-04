@@ -1,4 +1,4 @@
-/* eslint-disable no-undef, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/restrict-template-expressions, @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-unary-minus, @typescript-eslint/use-unknown-in-catch-callback-variable, sonarjs/cognitive-complexity, sonarjs/no-os-command-from-path, max-lines-per-function, max-depth, complexity, security/detect-object-injection, security/detect-non-literal-fs-filename */
+/* eslint-disable no-undef, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/restrict-template-expressions, @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-unary-minus, @typescript-eslint/use-unknown-in-catch-callback-variable, sonarjs/cognitive-complexity, max-lines-per-function, max-depth, complexity, security/detect-object-injection, security/detect-non-literal-fs-filename */
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -179,11 +179,10 @@ async function main() {
         console.log("Accessibility scan uses the local fixture gateway.");
       }
       serverProcess = spawn(
-        "npm",
+        process.execPath,
         [
-          "run",
+          "node_modules/next/dist/bin/next",
           "dev",
-          "--",
           "--hostname",
           "127.0.0.1",
           "--port",
