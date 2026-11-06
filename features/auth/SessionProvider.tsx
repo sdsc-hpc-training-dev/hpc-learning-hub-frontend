@@ -10,15 +10,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { request, RequestError } from "./api";
+import {
+  bindLearnerRequest,
+  getCurrentSession,
+  RequestError,
+  type Account,
+  type LearnerRequest,
+} from "./api";
 import { getBookmarks, type Bookmark } from "@/features/my-learning/api";
 
-export interface Account {
-  id: string;
-  username: string;
-  email: string | null;
-  role: string;
-}
 type Status =
   | "checking"
   | "disabled"
@@ -29,6 +29,7 @@ type Status =
 interface Session {
   status: Status;
   account: Account | null;
+  privateRequest: LearnerRequest | null;
   bookmarks: Bookmark[];
   bookmarksAvailable: boolean;
   reloadBookmarks: (activity?: boolean) => Promise<void>;
@@ -37,94 +38,168 @@ interface Session {
 const fallback: Session = {
   status: "disabled",
   account: null,
+  privateRequest: null,
   bookmarks: [],
   bookmarksAvailable: false,
-  reloadBookmarks: () => Promise.resolve(),
-  signOut: () => Promise.resolve(),
+  reloadBookmarks: () => Promise.reject(new RequestError(401)),
+  signOut: () => Promise.reject(new RequestError(401)),
 };
 const Context = createContext<Session>(fallback);
 
-// eslint-disable-next-line max-lines-per-function
-export function SessionProvider({
-  children,
-}: Readonly<{ children: ReactNode }>) {
-  const [status, setStatus] = useState<Status>("checking");
-  const [account, setAccount] = useState<Account | null>(null);
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [bookmarksAvailable, setBookmarksAvailable] = useState(false);
-  const generation = useRef(0);
+type UnboundStatus = Exclude<Status, "signed-in">;
+type Binding =
+  | { status: UnboundStatus }
+  | {
+      status: "signed-in";
+      account: Account;
+      privateRequest: LearnerRequest;
+      signOut: () => Promise<void>;
+    };
+
+function watchSession(
+  current: Awaited<ReturnType<typeof getCurrentSession>>,
+  signal: AbortSignal,
+  clear: (status: UnboundStatus) => void,
+) {
+  let checking = false;
+  async function recheck() {
+    if (checking || signal.aborted) return;
+    checking = true;
+    try {
+      const next = await getCurrentSession(signal);
+      if (
+        next.sessionContext !== current.sessionContext ||
+        next.account.id !== current.account.id
+      ) {
+        clear("expired");
+      }
+    } catch (error) {
+      clear(
+        error instanceof RequestError && error.status === 401
+          ? "expired"
+          : "unavailable",
+      );
+    } finally {
+      checking = false;
+    }
+  }
+  const verify = () => {
+    void recheck();
+  };
+  window.addEventListener("focus", verify, { signal });
+  window.addEventListener(
+    "pageshow",
+    (event) => {
+      if (event.persisted) verify();
+    },
+    { signal },
+  );
+}
+
+function useBinding(clearBookmarks: () => void) {
+  const [binding, setBinding] = useState<Binding>({ status: "checking" });
   useEffect(() => {
-    let active = true;
+    const controller = new AbortController();
+    const { signal } = controller;
+    function clear(status: UnboundStatus) {
+      if (signal.aborted) return;
+      controller.abort();
+      clearBookmarks();
+      setBinding({ status });
+    }
     async function init() {
       try {
         const config = await fetch("/api/account-config", {
           cache: "no-store",
           credentials: "same-origin",
+          signal,
         });
-        if (!config.ok) throw new Error();
+        if (!config.ok) throw new RequestError(config.status);
         const { enabled } = (await config.json()) as { enabled: boolean };
-        // The component may unmount while the configuration request is pending.
-        if (!active) return;
+        signal.throwIfAborted();
         if (!enabled) {
-          setStatus("disabled");
+          clear("disabled");
           return;
         }
-        const current = await request<Account>("/me");
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (active) {
-          setAccount(current);
-          setStatus("signed-in");
-        }
+        const current = await getCurrentSession(signal);
+        signal.throwIfAborted();
+        const privateRequest = bindLearnerRequest(
+          current.sessionContext,
+          signal,
+          () => {
+            clear("expired");
+          },
+        );
+        const signOut = async () => {
+          await privateRequest("/auth/logout", { method: "POST" });
+          clear("anonymous");
+        };
+        watchSession(current, signal, clear);
+        setBinding({
+          status: "signed-in",
+          account: current.account,
+          privateRequest,
+          signOut,
+        });
       } catch (error) {
-        if (active)
-          setStatus(
-            error instanceof RequestError && error.status === 401
-              ? "anonymous"
-              : "unavailable",
-          );
+        clear(
+          error instanceof RequestError && error.status === 401
+            ? "anonymous"
+            : "unavailable",
+        );
       }
     }
     void init();
-    const expired = () => {
-      generation.current++;
-      setAccount(null);
-      setBookmarks([]);
-      setBookmarksAvailable(false);
-      setStatus("expired");
-    };
-    window.addEventListener("learner-session-expired", expired);
     return () => {
-      active = false;
-      window.removeEventListener("learner-session-expired", expired);
+      controller.abort();
     };
-  }, []);
-  const reloadBookmarks = useCallback(async (activity = false) => {
-    const started = generation.current;
-    try {
-      const result = await getBookmarks(activity);
-      if (generation.current === started) {
-        setBookmarks(result);
-        setBookmarksAvailable(true);
-      }
-    } catch (error) {
-      if (generation.current === started) setBookmarksAvailable(false);
-      throw error;
-    }
-  }, []);
-  useEffect(() => {
-    if (status === "signed-in") void reloadBookmarks().catch(() => { setBookmarks([]); });
-  }, [status, reloadBookmarks]);
-  const signOut = useCallback(async () => {
-    await request("/auth/logout", { method: "POST" });
+  }, [clearBookmarks]);
+  return binding;
+}
+
+export function SessionProvider({
+  children,
+}: Readonly<{ children: ReactNode }>) {
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [bookmarksAvailable, setBookmarksAvailable] = useState(false);
+  const generation = useRef(0);
+  const clearBookmarks = useCallback(() => {
     generation.current++;
-    setAccount(null);
     setBookmarks([]);
     setBookmarksAvailable(false);
-    setStatus("anonymous");
   }, []);
+  const binding = useBinding(clearBookmarks);
+  const privateRequest =
+    binding.status === "signed-in" ? binding.privateRequest : null;
+  const reloadBookmarks = useCallback(
+    async (activity = false) => {
+      if (!privateRequest) throw new RequestError(401);
+      const started = generation.current;
+      try {
+        const result = await getBookmarks(privateRequest, activity);
+        if (generation.current === started) {
+          setBookmarks(result);
+          setBookmarksAvailable(true);
+        }
+      } catch (error) {
+        if (generation.current === started) setBookmarksAvailable(false);
+        throw error;
+      }
+    },
+    [privateRequest],
+  );
+  useEffect(() => {
+    if (privateRequest) void reloadBookmarks().catch(() => undefined);
+  }, [privateRequest, reloadBookmarks]);
   const value = useMemo(
-    () => ({ status, account, bookmarks, bookmarksAvailable, reloadBookmarks, signOut }),
-    [status, account, bookmarks, bookmarksAvailable, reloadBookmarks, signOut],
+    () => ({
+      ...fallback,
+      status: binding.status,
+      ...(binding.status === "signed-in"
+        ? { ...binding, bookmarks, bookmarksAvailable, reloadBookmarks }
+        : {}),
+    }),
+    [binding, bookmarks, bookmarksAvailable, reloadBookmarks],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

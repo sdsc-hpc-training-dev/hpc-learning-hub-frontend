@@ -2,12 +2,14 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import PersonalPathEditor from "../PersonalPathEditor";
 import { savePath } from "../api";
 jest.mock("../api", () => ({ savePath: jest.fn() }));
+const privateRequest = jest.fn();
 
 test("creates a path with selected materials in the chosen order", async () => {
   (savePath as jest.Mock).mockResolvedValue(undefined);
   const onSaved = jest.fn().mockResolvedValue(undefined);
   render(
     <PersonalPathEditor
+      privateRequest={privateRequest}
       bookmarks={[
         { id: "b1", materialId: "one", createdAt: "" },
         { id: "b2", materialId: "two", createdAt: "" },
@@ -25,6 +27,7 @@ test("creates a path with selected materials in the chosen order", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Save path" }));
   await waitFor(() => {
     expect(savePath).toHaveBeenCalledWith(
+      privateRequest,
       {
         title: "Sequence",
         description: null,
@@ -42,6 +45,7 @@ test("metadata-only edit preserves unavailable items", async () => {
   (savePath as jest.Mock).mockResolvedValue(undefined);
   render(
     <PersonalPathEditor
+      privateRequest={privateRequest}
       path={{
         id: "p",
         title: "Old",
@@ -59,6 +63,7 @@ test("metadata-only edit preserves unavailable items", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Save path" }));
   await waitFor(() => {
     expect(savePath).toHaveBeenCalledWith(
+      privateRequest,
       { title: "New", description: null },
       "p",
     );

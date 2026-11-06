@@ -6,30 +6,40 @@ import { deletePath, getPaths, type PersonalPath } from "./api";
 import PersonalPathEditor from "./PersonalPathEditor";
 import SaveMaterialButton from "./SaveMaterialButton";
 
-// eslint-disable-next-line complexity, max-lines-per-function, sonarjs/cognitive-complexity
 export default function MyLearningView() {
-  const { status, bookmarks, reloadBookmarks } = useSession();
+  const session = useSession();
+  return <MyLearningContent key={session.status} session={session} />;
+}
+
+// eslint-disable-next-line complexity, max-lines-per-function, sonarjs/cognitive-complexity
+function MyLearningContent({
+  session,
+}: Readonly<{ session: ReturnType<typeof useSession> }>) {
+  const { status, bookmarks, reloadBookmarks, privateRequest } = session;
   const [paths, setPaths] = useState<PersonalPath[]>([]);
   const [editing, setEditing] = useState<PersonalPath | "new" | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [titles, setTitles] = useState<Record<string, string>>({});
   const refresh = useCallback(async () => {
+    if (!privateRequest) return;
     setLoading(true);
     setError(false);
     try {
-      const [, result] = await Promise.all([reloadBookmarks(true), getPaths()]);
+      const [, result] = await Promise.all([
+        reloadBookmarks(true),
+        getPaths(privateRequest),
+      ]);
       setPaths(result);
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [reloadBookmarks]);
+  }, [privateRequest, reloadBookmarks]);
   useEffect(() => {
-    if (status === "signed-in") void refresh();
-    else setPaths([]);
-  }, [status, refresh]);
+    if (privateRequest) void refresh();
+  }, [privateRequest, refresh]);
   useEffect(() => {
     if (status !== "signed-in") return;
     const controller = new AbortController();
@@ -56,9 +66,9 @@ export default function MyLearningView() {
     };
   }, [bookmarks, status]);
   async function remove(path: PersonalPath) {
-    if (!window.confirm(`Delete "${path.title}"?`)) return;
+    if (!privateRequest || !window.confirm(`Delete "${path.title}"?`)) return;
     try {
-      await deletePath(path.id);
+      await deletePath(privateRequest, path.id);
       await refresh();
     } catch {
       setError(true);
@@ -82,7 +92,7 @@ export default function MyLearningView() {
           <Link href="/account">Sign in to view My Learning</Link>.
         </p>
       ) : null}
-      {status === "signed-in" ? (
+      {privateRequest ? (
         <>
           {loading ? <p role="status">Loading your learning...</p> : null}
           {error ? (
@@ -128,6 +138,7 @@ export default function MyLearningView() {
                 key={editing === "new" ? "new" : editing.id}
                 path={editing === "new" ? undefined : editing}
                 bookmarks={bookmarks}
+                privateRequest={privateRequest}
                 titles={titles}
                 onCancel={() => {
                   setEditing(null);

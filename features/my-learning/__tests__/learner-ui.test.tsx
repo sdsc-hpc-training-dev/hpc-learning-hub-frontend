@@ -14,6 +14,7 @@ const account = {
   username: "learner",
   email: null,
   role: "learner",
+  sessionContext: "f23c8ef5-32d8-4c90-8723-1075417f6789",
 };
 const bookmarks = [
   { id: "bookmark-1", materialId: "one", createdAt: "" },
@@ -63,6 +64,12 @@ function mockBackend(anonymous = false) {
       return Promise.resolve(reply({ enabled: true }));
     if (url === "/api/v1/me")
       return Promise.resolve(anonymous ? reply({}, 401) : reply(account));
+    if (
+      url.startsWith("/api/v1/me/") &&
+      new Headers(init?.headers).get("X-Learning-Hub-Session") !==
+        account.sessionContext
+    )
+      return Promise.resolve(reply({}, 409));
     if (url === "/api/v1/me/bookmarks" && method === "GET")
       return Promise.resolve(reply(saved));
     if (url === "/api/v1/me/bookmarks/one" && method === "DELETE") {

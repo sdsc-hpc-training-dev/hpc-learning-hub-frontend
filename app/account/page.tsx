@@ -32,7 +32,7 @@ export default function AccountsPage() {
       {status === "expired" ? (
         <p role="alert">Your session expired. Please sign in again.</p>
       ) : null}
-      {error ? (
+      {error && account ? (
         <p role="alert">Sign-out could not be completed. Please try again.</p>
       ) : null}
       {account ? (

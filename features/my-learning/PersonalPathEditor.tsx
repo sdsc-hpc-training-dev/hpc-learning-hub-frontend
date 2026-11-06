@@ -1,17 +1,20 @@
 "use client";
 import { useState, type SubmitEvent } from "react";
+import type { LearnerRequest } from "@/features/auth/api";
 import { savePath, type Bookmark, type PersonalPath } from "./api";
 
 // eslint-disable-next-line complexity, max-lines-per-function
 export default function PersonalPathEditor({
   path,
   bookmarks,
+  privateRequest,
   titles = {},
   onSaved,
   onCancel,
 }: Readonly<{
   path?: PersonalPath;
   bookmarks: Bookmark[];
+  privateRequest: LearnerRequest;
   titles?: Record<string, string>;
   onSaved: () => Promise<void>;
   onCancel: () => void;
@@ -52,6 +55,7 @@ export default function PersonalPathEditor({
     setError(false);
     try {
       await savePath(
+        privateRequest,
         {
           title: title.trim(),
           description: description.trim() || null,
