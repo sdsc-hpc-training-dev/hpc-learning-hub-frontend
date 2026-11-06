@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
+import FooterFeedbackLink from "@/features/feedback/FooterFeedbackLink";
 import { feedbackIssuesUrl } from "@/features/feedback/links";
 
 // Footer columns intentionally remain together for the site-wide layout.
@@ -41,7 +43,9 @@ export default function SiteFooter() {
           >
             Contact SDSC
           </a>
-          <Link href="/feedback">Give feedback</Link>
+          <Suspense fallback={<Link href="/feedback">Give feedback</Link>}>
+            <FooterFeedbackLink />
+          </Suspense>
           <a
             href={feedbackIssuesUrl}
             target="_blank"
