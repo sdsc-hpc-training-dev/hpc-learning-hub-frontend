@@ -69,7 +69,7 @@ export default function FeedbackForm({ returnTo }: Readonly<{ returnTo?: string 
 
   if (submitted) {
     return <div className="feedback-complete"><p ref={successRef} tabIndex={-1} className="feedback-success" role="status">Thank you—your feedback was received.</p>
-      <Link href={safeReturnTo(returnTo)}>{safeReturnTo(returnTo) === "/" ? "Return to Home" : "Return to where you were"}</Link>
+      <Link href={safeReturnTo(returnTo)} className="button button--secondary">Go back</Link>
       <nav aria-label="Explore the Learning Hub"><Link href="/materials">Training Library</Link><Link href="/programs">Programs &amp; Series</Link><Link href="/events">Events &amp; Recordings</Link><Link href="/learning-paths">Learning Paths</Link></nav>
     </div>;
   }

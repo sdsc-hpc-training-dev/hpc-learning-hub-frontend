@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { feedbackIssuesUrl } from "@/features/feedback/links";
 import MaterialCard from "@/features/training-library/MaterialCard";
 import { UpcomingEventCard } from "@/features/events/EventsView";
 import { ProgramCard } from "@/features/programs/ProgramsView";
@@ -230,7 +231,11 @@ export default function StartHereView({
       <section className="section section--compact" aria-labelledby="home-help-heading">
         <div className="section-shell hub-help">
           <div><h2 id="home-help-heading">Help improve the Hub</h2><p>Share your experience with the Learning Hub team.</p></div>
-          <div className="hub-help__links"><Link href="/feedback?returnTo=%2F">Give feedback</Link><Link href="/about">About the Learning Hub</Link></div>
+          <div className="hub-help__links">
+            <Link href="/feedback?returnTo=%2F">Give feedback</Link>
+            <a href={feedbackIssuesUrl}>Report an issue</a>
+            <Link href="/about">About the Learning Hub</Link>
+          </div>
         </div>
       </section>
     </div>

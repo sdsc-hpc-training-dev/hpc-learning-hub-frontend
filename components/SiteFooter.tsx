@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { feedbackIssuesUrl } from "@/features/feedback/links";
 
 // Footer columns intentionally remain together for the site-wide layout.
 // eslint-disable-next-line max-lines-per-function
@@ -42,7 +43,7 @@ export default function SiteFooter() {
           </a>
           <Link href="/feedback">Give feedback</Link>
           <a
-            href="https://github.com/sdsc-hpc-training-dev/learning-hub-feedback/issues/new/choose"
+            href={feedbackIssuesUrl}
             target="_blank"
             rel="noopener noreferrer"
           >
