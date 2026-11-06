@@ -227,7 +227,8 @@ it("renders the ten supplied records in server order and navigates with all filt
   expect(
     screen
       .getAllByRole("heading", { level: 2 })
-      .map((heading) => heading.textContent),
+      .map((heading) => heading.textContent)
+      .filter((text) => text !== "Help improve the Hub"),
   ).toEqual(materials.map((material) => material.title));
   expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "Next" }));
@@ -236,7 +237,7 @@ it("renders the ten supplied records in server order and navigates with all filt
   expect(Object.fromEntries(url.searchParams)).toMatchObject({
     topic: "Batch Computing", tool: "Slurm", system: "Expanse", program: "series-1", resource: "video", date: "2025-01-01", page: "2",
   });
-  expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(10);
+  expect(screen.getAllByRole("heading", { level: 2 }).filter((heading) => heading.textContent !== "Help improve the Hub")).toHaveLength(10);
 });
 
 it("resets the server page when changing or removing a filter", async () => {
