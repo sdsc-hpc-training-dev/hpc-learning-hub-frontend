@@ -2199,3 +2199,11 @@ main#main-content > .events-status {
     grid-template-columns: 1fr;
   }
 }
+.account-page { padding-block: 2rem 4rem; }
+.account-page section { margin-block: 2rem; }
+.account-page li { margin-block: .75rem; }
+.account-path { border-top: 1px solid #b9c3c9; padding-block: 1rem; }
+.account-editor { max-width: 48rem; border: 1px solid #b9c3c9; padding: 1rem; }
+.account-editor > label, .account-editor fieldset > label { display: block; margin-block: 1rem; }
+.account-editor input:not([type="checkbox"]), .account-editor textarea { display: block; width: 100%; }
+.nav-account-actions { display: flex; gap: 1rem; align-items: center; }

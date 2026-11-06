@@ -6,6 +6,7 @@ import ExpandableDescription from "./ExpandableDescription";
 import MaterialTags from "./MaterialTags";
 import { catalogPlainText, publicResourceTypeLabel } from "./presentation";
 import { catalogReturnTo } from "./navigation";
+import SaveMaterialButton from "@/features/my-learning/SaveMaterialButton";
 
 interface MaterialDetailProps {
   material: CatalogMaterial;
@@ -97,6 +98,7 @@ export default function MaterialDetail({
               <h1>{title}</h1>
             </div>
             <ExpandableDescription text={summary} />
+            <SaveMaterialButton materialId={material.id} />
             <MaterialTags tags={tags} />
           </div>
           <aside className="material-facts" aria-label="Material details">

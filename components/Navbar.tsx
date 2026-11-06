@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "@/features/auth/SessionProvider";
 
 interface NavLink {
   key: string;
@@ -24,16 +25,18 @@ function getCurrentPage(pathname: string): string {
     return "programs";
   if (pathname.includes("training") || pathname.includes("materials"))
     return "catalog";
-  if (pathname.includes("learning")) return "learning";
+  if (pathname.startsWith("/learning-paths")) return "learning";
   if (pathname.includes("events")) return "events";
   if (pathname.includes("programs")) return "programs";
   return "home";
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const currentPage = getCurrentPage(pathname);
+  const { status } = useSession();
 
   const closeMenus = () => {
     setMenuOpen(false);
@@ -82,20 +85,24 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-          {/*
-          <button className="nav-button" type="button" title="Ask AIDA" onClick={closeMenus}>
-            Ask AIDA
-          </button>
-
-          <div className="nav-account-actions">
-            <Link className="nav-signin" href="/account">
-              Sign in
-            </Link>
-            <Link className="nav-button" href="/account?mode=create">
-              Create account
-            </Link>
-          </div>
-*/}
+          {status !== "disabled" && status !== "checking" ? (
+            <div className="nav-account-actions">
+              {status === "signed-in" ? (
+                <Link
+                  href="/my-learning"
+                  onClick={closeMenus}
+                  aria-current={
+                    pathname === "/my-learning" ? "page" : undefined
+                  }
+                >
+                  My Learning
+                </Link>
+              ) : null}
+              <Link href="/account" onClick={closeMenus}>
+                {status === "signed-in" ? "Account" : "Sign in"}
+              </Link>
+            </div>
+          ) : null}
         </nav>
       </div>
     </header>
