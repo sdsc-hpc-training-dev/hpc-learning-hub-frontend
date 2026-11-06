@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-confusing-void-expression, max-lines-per-function */
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import TrainingLibraryFilters from "./TrainingLibraryFilters";
 import MaterialCard from "./MaterialCard";
 import InlineError from "@/components/ui/InlineError";
@@ -249,6 +250,10 @@ export default function TrainingLibraryView({
                 <button type="button" className="button button--secondary" disabled={Boolean(pending) || page >= totalPages} onClick={() => onPageChange(page + 1)}>Next</button>
               </nav>
             ) : null}
+            <section className="hub-help hub-help--catalog" aria-labelledby="catalog-help-heading">
+              <div><h2 id="catalog-help-heading">Help improve the Hub</h2><p>Tell us about your experience finding training.</p></div>
+              <Link href={`/feedback?${new URLSearchParams({ returnTo: returnTo ?? "/materials" }).toString()}`}>Give feedback</Link>
+            </section>
           </div>
         </div>
       </section>

@@ -63,6 +63,22 @@ select:focus-visible {
   outline-offset: 3px;
 }
 
+textarea:focus-visible, .feedback-success:focus { outline: 3px solid var(--gold-bright); outline-offset: 3px; }
+.hub-help { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px; border-top: 1px solid var(--line); padding-top: 24px; }
+.hub-help h2 { font-size: 1.3rem; margin-bottom: 4px; }
+.hub-help p { margin: 0; }
+.hub-help a, .feedback-complete a, .about-content a { color: var(--blue-dark); font-weight: 700; }
+.hub-help__links, .feedback-complete nav { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.hub-help--catalog { margin-top: 36px; }
+.feedback-complete nav { margin-top: 24px; }
+.about-content > p { max-width: 70ch; }
+.about-team-heading { margin-top: 56px; }
+.about-team { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 28px 36px; }
+.about-person { display: flex; gap: 18px; border-top: 1px solid var(--line); padding-top: 20px; }
+.about-person h3 { margin-bottom: 6px; font-size: 1.2rem; }
+.about-person p { margin-bottom: 8px; }
+.about-initials { flex: 0 0 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: var(--light-blue); color: var(--navy); font-weight: 800; }
+
 h1,
 h2,
 h3,

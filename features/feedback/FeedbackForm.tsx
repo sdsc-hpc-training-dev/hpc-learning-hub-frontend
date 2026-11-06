@@ -1,7 +1,9 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-confusing-void-expression, @typescript-eslint/no-misused-promises, @typescript-eslint/no-deprecated, sonarjs/deprecation, max-lines-per-function */
 
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { safeReturnTo } from "./return-to";
 
 type FoundWhatNeeded = "yes" | "partly" | "no" | "just_browsing";
 interface FeedbackValues {
@@ -24,12 +26,14 @@ function friendlyError(status: number) {
   return "Please review your response and try again.";
 }
 
-export default function FeedbackForm() {
+export default function FeedbackForm({ returnTo }: Readonly<{ returnTo?: string }>) {
   const [values, setValues] = useState(initialValues);
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const ratingRef = useRef<HTMLInputElement>(null);
+  const successRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (submitted) successRef.current?.focus(); }, [submitted]);
   const update = <K extends keyof FeedbackValues>(key: K, value: FeedbackValues[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -64,7 +68,10 @@ export default function FeedbackForm() {
   };
 
   if (submitted) {
-    return <p className="feedback-success" role="status">Thank you—your feedback was received.</p>;
+    return <div className="feedback-complete"><p ref={successRef} tabIndex={-1} className="feedback-success" role="status">Thank you—your feedback was received.</p>
+      <Link href={safeReturnTo(returnTo)}>{safeReturnTo(returnTo) === "/" ? "Return to Home" : "Return to where you were"}</Link>
+      <nav aria-label="Explore the Learning Hub"><Link href="/materials">Training Library</Link><Link href="/programs">Programs &amp; Series</Link><Link href="/events">Events &amp; Recordings</Link><Link href="/learning-paths">Learning Paths</Link></nav>
+    </div>;
   }
 
   return (

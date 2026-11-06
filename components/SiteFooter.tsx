@@ -51,6 +51,7 @@ export default function SiteFooter() {
         </div>
         <div>
           <h2>About</h2>
+          <Link href="/about">About the Learning Hub</Link>
           <a href="https://www.sdsc.edu/" target="_blank" rel="noopener">
             SDSC home
           </a>

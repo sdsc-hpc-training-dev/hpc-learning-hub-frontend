@@ -1,6 +1,7 @@
 import FeedbackForm from "@/features/feedback/FeedbackForm";
 
-export default function FeedbackPage() {
+export default async function FeedbackPage({ searchParams }: Readonly<{ searchParams: Promise<{ returnTo?: string | string[] }> }>) {
+  const { returnTo } = await searchParams;
   return (
     <>
       <section className="page-hero" aria-labelledby="feedback-heading">
@@ -11,7 +12,7 @@ export default function FeedbackPage() {
         </div>
       </section>
       <section className="section">
-        <div className="section-shell feedback-shell"><FeedbackForm /></div>
+        <div className="section-shell feedback-shell"><FeedbackForm returnTo={typeof returnTo === "string" ? returnTo : undefined} /></div>
       </section>
     </>
   );
