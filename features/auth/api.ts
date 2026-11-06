@@ -1,7 +1,10 @@
 "use client";
 
 export class RequestError extends Error {
-  constructor(public status: number) {
+  constructor(
+    public status: number,
+    public sessionMismatch = false,
+  ) {
     super("The request could not be completed. Please try again.");
   }
 }
@@ -20,6 +23,7 @@ export type LearnerRequest = <T = void>(
 ) => Promise<T>;
 
 const sessionHeader = "X-Learning-Hub-Session";
+const mismatchHeader = "X-Learning-Hub-Session-Mismatch";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -39,7 +43,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   } catch {
     throw new RequestError(0);
   }
-  if (!response.ok) throw new RequestError(response.status);
+  if (!response.ok) {
+    throw new RequestError(
+      response.status,
+      response.status === 409 && response.headers.get(mismatchHeader) === "1",
+    );
+  }
   if (response.status === 204) return undefined as T;
   const text = await response.text();
   return (text ? JSON.parse(text) : undefined) as T;
@@ -84,7 +93,7 @@ export function bindLearnerRequest(
       if (
         !signal.aborted &&
         error instanceof RequestError &&
-        (error.status === 401 || error.status === 409)
+        (error.status === 401 || error.sessionMismatch)
       ) {
         invalidate();
       }

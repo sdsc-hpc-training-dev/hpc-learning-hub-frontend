@@ -38,10 +38,11 @@ const initialPath = {
   ],
 };
 
-function reply(body: unknown, status = 200): Response {
+function reply(body: unknown, status = 200, headers?: HeadersInit): Response {
   return {
     ok: status >= 200 && status < 300,
     status,
+    headers: new Headers(headers),
     json: () => Promise.resolve(body),
     text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
   } as Response;
@@ -69,7 +70,9 @@ function mockBackend(anonymous = false) {
       new Headers(init?.headers).get("X-Learning-Hub-Session") !==
         account.sessionContext
     )
-      return Promise.resolve(reply({}, 409));
+      return Promise.resolve(
+        reply({}, 409, { "X-Learning-Hub-Session-Mismatch": "1" }),
+      );
     if (url === "/api/v1/me/bookmarks" && method === "GET")
       return Promise.resolve(reply(saved));
     if (url === "/api/v1/me/bookmarks/one" && method === "DELETE") {

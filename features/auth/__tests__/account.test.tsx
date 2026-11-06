@@ -26,6 +26,7 @@ const account = {
 };
 const saved = [{ id: "bookmark-1", materialId: "one", createdAt: "" }];
 const sessionHeader = "X-Learning-Hub-Session";
+const mismatchHeader = "X-Learning-Hub-Session-Mismatch";
 
 function Probe() {
   const { status, account } = useSession();
@@ -35,10 +36,11 @@ function Probe() {
     </div>
   );
 }
-function response(body: unknown, status = 200) {
+function response(body: unknown, status = 200, headers?: HeadersInit) {
   return {
     ok: status >= 200 && status < 300,
     status,
+    headers: new Headers(headers),
     text: () => Promise.resolve(body === undefined ? "" : JSON.stringify(body)),
     json: () => Promise.resolve(body),
   };
@@ -77,7 +79,9 @@ function mockSession() {
       if (
         new Headers(init?.headers).get(sessionHeader) !== cookie.sessionContext
       )
-        return Promise.resolve(response({}, 409) as Response);
+        return Promise.resolve(
+          response({}, 409, { [mismatchHeader]: "1" }) as Response,
+        );
       return Promise.resolve(response(saved) as Response);
     });
   return {
@@ -141,6 +145,36 @@ test.each(cases)(
     const count = fetchMock.mock.calls.length;
     await expect(operation()).rejects.toBeInstanceOf(RequestError);
     expect(fetchMock).toHaveBeenCalledTimes(count);
+  },
+);
+
+test.each([undefined, "0"])(
+  "a duplicate-bookmark conflict with mismatch marker %s preserves the session",
+  async (marker) => {
+    const { fetchMock } = mockSession();
+    const { result } = renderHook(useSession, { wrapper: SessionProvider });
+    await waitFor(() => {
+      expect(result.current.bookmarks).toEqual(saved);
+    });
+    const { account, privateRequest } = result.current;
+    if (!privateRequest) throw new Error("Expected a session");
+    const headers = new Headers();
+    if (marker !== undefined) headers.set(mismatchHeader, marker);
+    fetchMock.mockResolvedValueOnce(response({}, 409, headers) as Response);
+
+    await act(async () => {
+      await expect(addBookmark(privateRequest, "one")).rejects.toMatchObject({
+        status: 409,
+      });
+    });
+    expect(result.current).toMatchObject({
+      status: "signed-in",
+      account,
+      bookmarks: saved,
+      bookmarksAvailable: true,
+    });
+    expect(result.current.privateRequest).toBe(privateRequest);
+    await expect(getBookmarks(privateRequest)).resolves.toEqual(saved);
   },
 );
 
