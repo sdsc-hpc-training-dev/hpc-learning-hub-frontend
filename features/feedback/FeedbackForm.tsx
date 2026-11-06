@@ -26,14 +26,25 @@ function friendlyError(status: number) {
   return "Please review your response and try again.";
 }
 
+const exploreOptions = [
+  { href: "/learning-paths", title: "Learning Paths", detail: "Build your skills one step at a time with a guided sequence of training materials." },
+  { href: "/events", title: "Events & Recordings", detail: "See what's coming up at SDSC or catch a workshop you missed." },
+  { href: "/programs", title: "Programs & Series", detail: "Discover related materials from SDSC webinars, summer institutes, and training series." },
+];
+
 export default function FeedbackForm({ returnTo }: Readonly<{ returnTo?: string }>) {
   const [values, setValues] = useState(initialValues);
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const ratingRef = useRef<HTMLInputElement>(null);
-  const successRef = useRef<HTMLParagraphElement>(null);
-  useEffect(() => { if (submitted) successRef.current?.focus(); }, [submitted]);
+  const successRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (submitted) {
+      successRef.current?.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [submitted]);
   const update = <K extends keyof FeedbackValues>(key: K, value: FeedbackValues[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -68,13 +79,39 @@ export default function FeedbackForm({ returnTo }: Readonly<{ returnTo?: string 
   };
 
   if (submitted) {
-    return <div className="feedback-complete"><p ref={successRef} tabIndex={-1} className="feedback-success" role="status">Thank you—your feedback was received.</p>
-      <Link href={safeReturnTo(returnTo)} className="button button--secondary">Go back</Link>
-      <nav aria-label="Explore the Learning Hub"><Link href="/materials">Training Library</Link><Link href="/programs">Programs &amp; Series</Link><Link href="/events">Events &amp; Recordings</Link><Link href="/learning-paths">Learning Paths</Link></nav>
-    </div>;
+    return <>
+      <section className="feedback-complete" aria-labelledby="feedback-thanks">
+        <div className="section-shell">
+          <p className="eyebrow feedback-receipt" role="status">Feedback received</p>
+          <h1 id="feedback-thanks" ref={successRef} tabIndex={-1}>Thanks for helping us improve.</h1>
+          <p className="feedback-invitation">What would you like to learn next? Find a tutorial for your next HPC task, revisit a workshop, or explore something new at your own pace.</p>
+          <div className="feedback-actions">
+            <Link href="/materials" className="button button--gold">Browse the Training Library</Link>
+            <Link href={safeReturnTo(returnTo)} className="button button--secondary">Go back</Link>
+          </div>
+        </div>
+      </section>
+      <section className="feedback-explore" aria-labelledby="feedback-explore">
+        <div className="section-shell">
+          <h2 id="feedback-explore">Keep exploring the Hub</h2>
+          <nav aria-label="Explore the Learning Hub">
+            <ul className="feedback-destinations">
+              {exploreOptions.map(({ href, title, detail }) => (
+                <li key={href}>
+                  <Link href={href} className="feedback-destination">
+                    <span className="text-link">{title} <span aria-hidden="true">&rarr;</span></span>
+                    <span>{detail}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </section>
+    </>;
   }
 
-  return (
+  const form = (
     <form className="feedback-form" onSubmit={submit} noValidate aria-describedby={error ? "feedback-error" : undefined}>
       <p>
         We do not collect your identity or use your answers for analytics. Do
@@ -107,4 +144,17 @@ export default function FeedbackForm({ returnTo }: Readonly<{ returnTo?: string 
       <button className="button button--gold" type="submit" disabled={submitting}>{submitting ? "Sending…" : "Send feedback"}</button>
     </form>
   );
+
+  return <>
+    <section className="page-hero" aria-labelledby="feedback-heading">
+      <div className="page-hero__shell">
+        <span className="eyebrow">Feedback</span>
+        <h1 id="feedback-heading">Help improve the Learning Hub.</h1>
+        <p>Your feedback helps us improve the public training experience.</p>
+      </div>
+    </section>
+    <section className="section">
+      <div className="section-shell feedback-shell">{form}</div>
+    </section>
+  </>;
 }

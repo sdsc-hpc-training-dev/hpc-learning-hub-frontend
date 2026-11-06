@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { feedbackIssuesUrl } from "@/features/feedback/links";
+import { bugReportLinkLabel, feedbackIssuesUrl, feedbackLinkLabel } from "@/features/feedback/links";
 import TrainingLibraryFilters from "./TrainingLibraryFilters";
 import MaterialCard from "./MaterialCard";
 import InlineError from "@/components/ui/InlineError";
@@ -254,8 +254,8 @@ export default function TrainingLibraryView({
             <section className="hub-help hub-help--catalog" aria-labelledby="catalog-help-heading">
               <div><h2 id="catalog-help-heading">Help improve the Hub</h2><p>Tell us about your experience finding training.</p></div>
               <div className="hub-help__links">
-                <Link href={`/feedback?${new URLSearchParams({ returnTo: returnTo ?? "/materials" }).toString()}`}>Give feedback</Link>
-                <a href={feedbackIssuesUrl}>Report an issue</a>
+                <Link href={`/feedback?${new URLSearchParams({ returnTo: returnTo ?? "/materials" }).toString()}`}>{feedbackLinkLabel}</Link>
+                <a href={feedbackIssuesUrl} target="_blank" rel="noopener noreferrer">{bugReportLinkLabel}</a>
               </div>
             </section>
           </div>
