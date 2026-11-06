@@ -29,6 +29,7 @@ export default function PersonalPathEditor({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(false);
   const [itemsChanged, setItemsChanged] = useState(false);
+  const titleMap = new Map(Object.entries(titles).filter(([, title]) => title));
   const unavailable = ids.some(
     (id) => !bookmarks.some((item) => item.materialId === id),
   );
@@ -37,7 +38,9 @@ export default function PersonalPathEditor({
     setIds((current) => {
       const next = [...current];
       const target = index + direction;
-      if (target < 0 || target >= next.length) { return current; }
+      if (target < 0 || target >= next.length) {
+        return current;
+      }
       // eslint-disable-next-line security/detect-object-injection
       [next[index], next[target]] = [next[target], next[index]];
       return next;
@@ -107,11 +110,11 @@ export default function PersonalPathEditor({
         <ol>
           {ids.map((id, index) => (
             <li key={id}>
-              {titles[id] ||
-                (path?.items.find(
+              {titleMap.get(id) ??
+                path?.items.find(
                   (item) => (item.materialId ?? item.material?.id) === id,
                 )?.material?.title ??
-                `Material ${id}`)}{" "}
+                `Material ${id}`}{" "}
               <button
                 type="button"
                 aria-label={`Move material ${id} up`}
@@ -157,7 +160,7 @@ export default function PersonalPathEditor({
                   setIds([...ids, item.materialId]);
                 }}
               />{" "}
-              {titles[item.materialId] || `Material ${item.materialId}`}
+              {titleMap.get(item.materialId) ?? `Material ${item.materialId}`}
             </label>
           ))}
       </fieldset>
