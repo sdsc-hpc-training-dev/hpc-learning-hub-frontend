@@ -1,5 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
+import FooterFeedbackLink from "@/features/feedback/FooterFeedbackLink";
+import { bugReportLinkLabel, feedbackIssuesUrl, feedbackLinkLabel } from "@/features/feedback/links";
 
 // Footer columns intentionally remain together for the site-wide layout.
 // eslint-disable-next-line max-lines-per-function
@@ -40,17 +43,20 @@ export default function SiteFooter() {
           >
             Contact SDSC
           </a>
-          <Link href="/feedback">Give feedback</Link>
+          <Suspense fallback={<Link href="/feedback">{feedbackLinkLabel}</Link>}>
+            <FooterFeedbackLink />
+          </Suspense>
           <a
-            href="https://github.com/sdsc-hpc-training-dev/learning-hub-feedback/issues/new/choose"
+            href={feedbackIssuesUrl}
             target="_blank"
             rel="noopener noreferrer"
           >
-            Report a bug or request a feature
+            {bugReportLinkLabel}
           </a>
         </div>
         <div>
           <h2>About</h2>
+          <Link href="/about">About Us</Link>
           <a href="https://www.sdsc.edu/" target="_blank" rel="noopener">
             SDSC home
           </a>

@@ -16,9 +16,12 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0
-RUN apt-get update \
-    && apt-get upgrade -y \
-    && rm -rf /var/lib/apt/lists/* \
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
+    && node -e 'require("node:fs").writeFileSync("/tmp/build-ca.pem", require("node:tls").rootCertificates.join("\n") + "\n")' \
+    && apt-get -o Acquire::Retries=0 -o Acquire::https::CaInfo=/tmp/build-ca.pem -o APT::Update::Error-Mode=any update \
+    && apt-get -o Acquire::Retries=0 -o Acquire::https::CaInfo=/tmp/build-ca.pem upgrade -y \
+    && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' apt)" ge 2.6.2 \
+    && rm -rf /tmp/build-ca.pem /var/lib/apt/lists/* \
       /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
       /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
     && groupadd --system --gid 1001 nodejs \
