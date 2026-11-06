@@ -63,6 +63,36 @@ select:focus-visible {
   outline-offset: 3px;
 }
 
+textarea:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 3px; }
+.hub-help { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px; border-top: 1px solid var(--line); padding-top: 24px; }
+.hub-help h2 { font-size: 1.3rem; margin-bottom: 4px; }
+.hub-help p { margin: 0; }
+.hub-help a, .about-content a { color: var(--blue-dark); font-weight: 700; }
+.hub-help__links { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.hub-help--catalog { margin-top: 36px; }
+.about-content > p { max-width: 70ch; }
+.about-team-heading { margin-top: 56px; }
+.about-team-group { margin-top: 32px; }
+.about-team { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 36px; }
+.about-person { display: flex; gap: 18px; border-top: 1px solid var(--line); padding-top: 20px; }
+.about-person h4 { margin: 0 0 6px; font-size: 1.2rem; }
+.about-person p { margin-bottom: 8px; }
+.about-avatar { position: relative; flex: 0 0 88px; width: 88px; height: 88px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: var(--light-blue); color: var(--navy); font-size: 1.2rem; font-weight: 800; }
+.about-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 36%; }
+.about-avatar[data-portrait="fernando-garzon"] img { object-position: center 46%; transform: scale(1.85); transform-origin: 86% 38%; }
+.about-avatar[data-portrait="darren-yu"] img { object-position: center 62%; }
+.about-profile-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.about-profile-links > a:first-child { margin-right: 4px; }
+.about-social-link { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 6px; }
+.about-social-link img { width: 20px; height: 20px; object-fit: contain; }
+.about-social-link:hover img { opacity: 0.72; }
+@media (max-width: 760px) {
+  .about-team { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 420px) {
+  .about-avatar { flex-basis: 72px; width: 72px; height: 72px; }
+}
+
 h1,
 h2,
 h3,
@@ -710,16 +740,81 @@ h3 {
   text-align: right;
 }
 
-.feedback-error,
-.feedback-success {
+.feedback-error {
   padding: 14px 16px;
   border: 1px solid #d6a627;
   background: var(--danger-soft);
 }
 
-.feedback-success {
-  border-color: var(--green);
-  background: #f0f8e8;
+html:has(.feedback-complete) { overflow-anchor: none; }
+
+.feedback-complete {
+  padding: 48px 0;
+  background: var(--light-blue);
+}
+
+.feedback-complete .feedback-receipt {
+  color: var(--blue-dark);
+  letter-spacing: 0;
+}
+
+.feedback-complete h1 {
+  margin-bottom: 16px;
+  font-size: 3rem;
+}
+
+.feedback-complete h1:focus {
+  outline: none;
+}
+
+.feedback-invitation {
+  max-width: 59ch;
+  margin-bottom: 24px;
+  font-size: 1.2rem;
+}
+
+.feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.feedback-explore {
+  padding: 40px 0 48px;
+}
+
+.feedback-explore h2 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+}
+
+.feedback-destinations {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feedback-destination {
+  display: grid;
+  gap: 6px;
+  height: 100%;
+  padding: 14px 0 8px;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.feedback-destination:hover .text-link {
+  text-decoration: underline;
+}
+
+@media (max-width: 680px) {
+  .feedback-complete { padding: 36px 0; }
+  .feedback-complete h1 { font-size: 2.25rem; }
+  .feedback-destinations { grid-template-columns: minmax(0, 1fr); gap: 14px; }
 }
 
 .text-link {
