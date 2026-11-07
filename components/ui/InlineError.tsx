@@ -10,6 +10,7 @@ interface InlineErrorProps {
   retryLabel?: string;
   toast?: boolean;
   onRetry?: () => void;
+  headingLevel?: 1 | 2;
 }
 
 export default function InlineError({
@@ -18,7 +19,9 @@ export default function InlineError({
   retryLabel = "Try again",
   toast = true,
   onRetry,
+  headingLevel = 2,
 }: Readonly<InlineErrorProps>) {
+  const Heading = headingLevel === 1 ? "h1" : "h2";
   const router = useRouter();
   const notify = useToast();
 
@@ -29,7 +32,7 @@ export default function InlineError({
   return (
     <section className="inline-error" role="alert" aria-live="assertive">
       <div>
-        <h2>{title}</h2>
+        <Heading>{title}</Heading>
         <p>{message}</p>
       </div>
       <button

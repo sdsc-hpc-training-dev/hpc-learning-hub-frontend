@@ -8,6 +8,7 @@ interface MaterialCardProps {
   material: CatalogMaterial;
   compact?: boolean;
   returnTo?: string;
+  headingLevel?: 2 | 3;
 }
 
 function formatDate(value?: string | null) {
@@ -29,7 +30,9 @@ function truncate(value: string | null | undefined, length: number) {
   return clean.length > length ? `${clean.slice(0, length).trim()}…` : clean;
 }
 
-function headingTag(compact: boolean) {
+function headingTag(compact: boolean, headingLevel?: 2 | 3) {
+  if (headingLevel === 2) return "h2";
+  if (headingLevel === 3) return "h3";
   return compact ? "h3" : "h2";
 }
 
@@ -37,8 +40,9 @@ export default function MaterialCard({
   material,
   compact = false,
   returnTo,
+  headingLevel,
 }: Readonly<MaterialCardProps>) {
-  const Heading = headingTag(compact);
+  const Heading = headingTag(compact, headingLevel);
   const meta = [
     formatDate(material.date),
     material.series,
