@@ -20,6 +20,8 @@ describe("series materials view", () => {
   it("renders six cards and preserves the series in both page links and the detail return", () => {
     render(<SeriesMaterialsView program={program} page={2} totalPages={3} />);
     expect(screen.getAllByRole("article")).toHaveLength(6);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("COMPLECS");
+    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(6);
     expect(screen.getByRole("status")).toHaveTextContent(
       "13 associated materials. Page 2 of 3.",
     );

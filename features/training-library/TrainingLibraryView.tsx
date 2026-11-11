@@ -228,7 +228,7 @@ export default function TrainingLibraryView({
       <CatalogHero />
       <section className="section">
         <div className="section-shell catalog-layout">
-          <div className="catalog-filters" aria-label="Training filters">
+          <div className="catalog-filters" role="group" aria-label="Training filters">
             <TrainingLibraryFilters options={filters} values={values} onChange={onChange} onReset={onReset} />
           </div>
           <div aria-busy={pending} aria-live="polite">

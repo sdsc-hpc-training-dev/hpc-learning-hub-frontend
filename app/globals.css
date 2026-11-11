@@ -13,14 +13,14 @@
   --navy-deep: #101f36;
   --gold: #c69214;
   --gold-bright: #f5c242;
-  --blue: #00629b;
-  --blue-dark: #004f7d;
+  --blue: #004b76;
+  --blue-dark: #00456d;
   --light-blue: #dae8f0;
   --sand: #f5f0e6;
   --green: #6e963b;
   --ink: #182b49;
   --text: #344861;
-  --muted: #526176;
+  --muted: #3c4a5d;
   --line: #d6dee7;
   --surface: #ffffff;
   --surface-soft: #f4f7fa;
@@ -198,6 +198,7 @@ h3 {
 }
 
 .inline-error h2,
+.inline-error h1,
 .route-error h1,
 .not-found-page h1 {
   margin-bottom: 10px;
@@ -615,6 +616,11 @@ h3 {
   margin-bottom: 12px;
 }
 
+/* Heading semantics must not change the full-size card's typography. */
+.material-card:not(.material-card--compact) h3 {
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+}
+
 .material-card h2 a,
 .material-card h3 a {
   color: var(--ink);
@@ -880,14 +886,14 @@ html:has(.feedback-complete) { overflow-anchor: none; }
   --navy-deep: #101f36;
   --gold: #c69214;
   --gold-bright: #f5c242;
-  --blue: #00629b;
-  --blue-dark: #004f7d;
+  --blue: #004b76;
+  --blue-dark: #00456d;
   --light-blue: #dae8f0;
   --sand: #f5f0e6;
   --green: #6e963b;
   --ink: #182b49;
   --text: #344861;
-  --muted: #526176;
+  --muted: #3c4a5d;
   --line: #d6dee7;
   --surface: #ffffff;
   --surface-soft: #f4f7fa;
@@ -1167,6 +1173,10 @@ main#main-content {
 
 .hero-content {
   max-width: 720px;
+  /* Keep text contrast independent of the photograph and gradient position. */
+  padding: 24px;
+  border-radius: var(--radius);
+  background: var(--navy-deep);
 }
 
 .hero h1,
@@ -1213,6 +1223,7 @@ main#main-content {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: stretch;
   padding: 17px 18px;
   border: 1px solid rgba(255, 255, 255, 0.34);
   border-radius: var(--radius);
@@ -1224,7 +1235,7 @@ main#main-content {
 .route-action:hover {
   border-color: var(--gold-bright);
   color: white;
-  background: rgba(0, 98, 155, 0.9);
+  background: var(--blue);
   transition: 0.25s;
 }
 
@@ -2198,4 +2209,37 @@ main#main-content > .events-status {
   .home-path-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Standalone controls meet the 44px enhanced target size (WCAG 2.5.5).
+   Links embedded in prose keep their inline layout and use the inline exception. */
+.site-brand,
+.primary-nav a,
+main a:not(p a),
+.footer-shell a,
+button:not([hidden]),
+input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]),
+select,
+textarea {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.primary-nav a,
+main a:not(p a) {
+  display: inline-flex;
+  align-items: center;
+}
+
+.feedback-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.menu-toggle:not([hidden]) {
+  min-width: 76px;
+  place-items: center;
 }
