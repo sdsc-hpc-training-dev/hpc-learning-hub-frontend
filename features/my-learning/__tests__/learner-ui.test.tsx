@@ -69,7 +69,7 @@ function requestUrl(input: RequestInfo | URL) {
 }
 
 // eslint-disable-next-line max-lines-per-function -- Keep the fixture state and HTTP contract together.
-function mockBackend(anonymous = false, empty = false) {
+function mockBackend(anonymous = false, empty = false, logoutStatus = 204) {
   let saved = empty ? [] : [...bookmarks];
   let paths = empty ? [] : [initialPath];
   let profile = {
@@ -86,6 +86,8 @@ function mockBackend(anonymous = false, empty = false) {
       return Promise.resolve(reply({ enabled: true }));
     if (url === "/api/v1/me")
       return Promise.resolve(anonymous ? reply({}, 401) : reply(account));
+    if (url === "/api/v1/auth/logout" && method === "POST")
+      return Promise.resolve(reply(undefined, logoutStatus));
     if (
       url.startsWith("/api/v1/me/") &&
       new Headers(init?.headers).get("X-Learning-Hub-Session") !==
@@ -170,6 +172,47 @@ test("a denied callback shows a friendly sign-in retry without displaying query 
     expect.stringContaining("/auth/cilogon/callback"),
     expect.anything(),
   );
+});
+
+test("My Learning signs out through the bound session and hides private content", async () => {
+  const fetchMock = mockBackend();
+  render(
+    <SessionProvider>
+      <MyLearningView />
+    </SessionProvider>,
+  );
+  await screen.findByRole("heading", { name: "Original path" });
+  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+  expect(
+    await screen.findByRole("link", { name: "Sign in to view My Learning" }),
+  ).toHaveAttribute("href", "/account");
+  expect(
+    screen.queryByRole("button", { name: "Sign out" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "Original path" }),
+  ).not.toBeInTheDocument();
+  expect(fetchMock).toHaveBeenCalledWith(
+    "/api/v1/auth/logout",
+    expect.objectContaining({ method: "POST", credentials: "same-origin" }),
+  );
+});
+
+test("a failed sign-out leaves My Learning visible and lets the learner retry", async () => {
+  mockBackend(false, false, 503);
+  render(
+    <SessionProvider>
+      <MyLearningView />
+    </SessionProvider>,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Sign-out could not be completed",
+  );
+  expect(screen.getByRole("button", { name: "Sign out" })).toBeEnabled();
+  expect(
+    await screen.findByRole("heading", { name: "Original path" }),
+  ).toBeInTheDocument();
 });
 
 test("removing a bookmark keeps the row visible until the learner leaves My Learning", async () => {

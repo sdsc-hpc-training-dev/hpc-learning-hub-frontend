@@ -2327,6 +2327,7 @@ main#main-content > .events-status {
 .my-learning { max-width: 1160px; }
 .my-learning-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--gold); margin-bottom: 1.5rem; }
 .my-learning-heading h1 { margin: 0; font-size: 2.6rem; line-height: 1.1; }
+.learner-heading-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; }
 .my-learning h2 { margin: 0; font-size: 1.4rem; line-height: 1.25; }
 .my-learning h3 { margin: 0 0 .5rem; font-size: 1.15rem; }
 .learner-workspace { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: 1.5rem 2rem; }

@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/features/auth/SessionProvider";
+import SignOutButton from "@/features/auth/SignOutButton";
 import LearnerProfilePanel from "@/features/my-learning/LearnerProfilePanel";
 
 // eslint-disable-next-line complexity, max-lines-per-function
 export default function AccountsPage() {
-  const { status, account, privateRequest, signOut } = useSession();
-  const [error, setError] = useState(false);
+  const { status, account, privateRequest } = useSession();
   const [callbackStatus, setCallbackStatus] = useState<string | null>(null);
   useEffect(() => {
     setCallbackStatus(
@@ -35,9 +35,6 @@ export default function AccountsPage() {
       {status === "expired" ? (
         <p role="alert">Your session expired. Please sign in again.</p>
       ) : null}
-      {error && account ? (
-        <p role="alert">Sign-out could not be completed. Please try again.</p>
-      ) : null}
       {account && privateRequest ? (
         <>
           <LearnerProfilePanel key={account.id} />
@@ -59,18 +56,7 @@ export default function AccountsPage() {
             </div>
           </section>
           <div className="learner-actions">
-            <button
-              type="button"
-              className="button button--secondary"
-              onClick={() => {
-                setError(false);
-                void signOut().catch(() => {
-                  setError(true);
-                });
-              }}
-            >
-              Sign out
-            </button>
+            <SignOutButton />
           </div>
         </>
       ) : null}

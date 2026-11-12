@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "@/features/auth/SessionProvider";
+import SignOutButton from "@/features/auth/SignOutButton";
 import { deletePath, getPaths, type Bookmark, type PersonalPath } from "./api";
 import PersonalPathEditor from "./PersonalPathEditor";
 import SaveMaterialButton from "./SaveMaterialButton";
@@ -127,9 +128,12 @@ function MyLearningContent({
       <div className="my-learning-heading">
         <h1>My Learning</h1>
         {privateRequest ? (
-          <Link className="text-link" href="#personal-paths">
-            Go to my learning paths
-          </Link>
+          <div className="learner-heading-actions">
+            <Link className="text-link" href="#personal-paths">
+              Go to my learning paths
+            </Link>
+            <SignOutButton />
+          </div>
         ) : null}
       </div>
       {status === "checking" ? (
