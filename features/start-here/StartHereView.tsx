@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { bugReportLinkLabel, feedbackIssuesUrl, feedbackLinkLabel } from "@/features/feedback/links";
+import { bugReportLinkLabel, feedbackIssuesUrl } from "@/features/feedback/links";
 import MaterialCard from "@/features/training-library/MaterialCard";
 import { UpcomingEventCard } from "@/features/events/EventsView";
 import { ProgramCard } from "@/features/programs/ProgramsView";
 import InlineError from "@/components/ui/InlineError";
 import { catalogPlainText } from "@/features/training-library/presentation";
 import type { StartHereData } from "./api";
+import { HomeFeedbackLink, LearnerWelcome } from "./LearnerWelcome";
 
 function EmptyCollection({ message }: Readonly<{ message: string }>) {
   return (
@@ -31,6 +32,7 @@ export default function StartHereView({
         <div className="hero-shell">
           <div className="hero-content">
             <span className="eyebrow">Free public learning from SDSC</span>
+            <LearnerWelcome />
             <h1 id="hero-header">
               Find the training that moves your work forward
             </h1>
@@ -67,7 +69,7 @@ export default function StartHereView({
           <div className="section-heading section-heading--split">
             <div>
               <span className="eyebrow">Browse without jargon</span>
-              <h2 id="browse-heading">Start with something you recognize.</h2>
+              <h2 id="browse-heading">What are you working on?</h2>
               <p>
                 Choose a system, subject, or tool. The library will apply the
                 matching filter for you.
@@ -160,10 +162,10 @@ export default function StartHereView({
         <div className="section-shell">
           <div className="section-heading section-heading--split">
             <div>
-              <span className="eyebrow">Ordered guidance</span>
-              <h2 id="paths-heading">Learning Paths</h2>
+              <span className="eyebrow">Learning Paths</span>
+              <h2 id="paths-heading">Build skills, one step at a time.</h2>
               <p>
-                Follow a curated sequence of materials toward a learning goal.
+                Start with HPC fundamentals or build on what you know. Find the next tutorial without having to piece together a plan yourself.
               </p>
             </div>
             <Link className="text-link" href="/learning-paths">
@@ -232,7 +234,7 @@ export default function StartHereView({
         <div className="section-shell hub-help">
           <div><h2 id="home-help-heading">Help improve the Hub</h2><p>Share your experience with the Learning Hub team.</p></div>
           <div className="hub-help__links">
-            <Link href="/feedback?returnTo=%2F">{feedbackLinkLabel}</Link>
+            <HomeFeedbackLink />
             <a href={feedbackIssuesUrl} target="_blank" rel="noopener noreferrer">{bugReportLinkLabel}</a>
             <Link href="/about">About Us</Link>
           </div>

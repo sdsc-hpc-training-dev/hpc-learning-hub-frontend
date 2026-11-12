@@ -96,9 +96,9 @@ export default function MaterialDetail({
             </span>
             <div className="material-title-row">
               <h1>{title}</h1>
+              <SaveMaterialButton materialId={material.id} placement="detail" />
             </div>
             <ExpandableDescription text={summary} />
-            <SaveMaterialButton materialId={material.id} />
             <MaterialTags tags={tags} />
           </div>
           <aside className="material-facts" aria-label="Material details">

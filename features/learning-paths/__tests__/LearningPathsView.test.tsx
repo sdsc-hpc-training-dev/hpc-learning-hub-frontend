@@ -1,6 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { LearningPathDetail, LearningPathsView } from "../LearningPathsView";
 import type { LearningPath } from "@/lib/gateway/types";
+import { useSession } from "@/features/auth/SessionProvider";
+
+jest.mock("@/features/auth/SessionProvider", () => ({
+  useSession: jest.fn(() => ({ status: "disabled" })),
+}));
 
 const samplePath: LearningPath = {
   id: "new-to-hpc",
@@ -34,8 +39,11 @@ describe("LearningPathsView", () => {
     render(<LearningPathsView paths={[samplePath]} />);
 
     expect(
-      screen.getByRole("heading", { name: "Available learning paths" }),
+      screen.getByRole("heading", { name: "Public learning paths" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Check your learning paths" }),
+    ).toBeNull();
     expect(screen.getByRole("link", { name: "New to HPC" })).toHaveAttribute(
       "href",
       "/learning-paths/new-to-hpc",
@@ -50,8 +58,23 @@ describe("LearningPathsView", () => {
   it("renders an honest empty state", () => {
     render(<LearningPathsView paths={[]} />);
     expect(screen.getByRole("status")).toHaveTextContent(
-      "No learning paths are available yet.",
+      "No public learning paths are available yet.",
     );
+  });
+
+  it("links signed-in learners to personal paths without mixing them into the public collection", () => {
+    jest
+      .mocked(useSession)
+      .mockReturnValueOnce({ status: "signed-in" } as ReturnType<
+        typeof useSession
+      >);
+    render(<LearningPathsView paths={[samplePath]} />);
+    expect(
+      screen.getByRole("link", { name: "Check your learning paths" }),
+    ).toHaveAttribute("href", "/my-learning#personal-paths");
+    expect(
+      screen.getByRole("link", { name: "New to HPC" }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -109,7 +132,7 @@ describe("LearningPathDetail", () => {
       "No training materials have been added to this path yet.",
     );
     expect(
-      screen.queryByText("No learning paths are available yet."),
+      screen.queryByText("No public learning paths are available yet."),
     ).toBeNull();
   });
 });

@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/features/auth/SessionProvider";
+import LearnerProfilePanel from "@/features/my-learning/LearnerProfilePanel";
 
 // eslint-disable-next-line complexity, max-lines-per-function
 export default function AccountsPage() {
-  const { status, account, signOut } = useSession();
+  const { status, account, privateRequest, signOut } = useSession();
   const [error, setError] = useState(false);
   const [callbackStatus, setCallbackStatus] = useState<string | null>(null);
   useEffect(() => {
@@ -15,8 +16,10 @@ export default function AccountsPage() {
     );
   }, []);
   return (
-    <div className="section-shell account-page">
-      <h1>Account</h1>
+    <div className="section-shell account-page my-learning">
+      <div className="my-learning-heading">
+        <h1>My Account</h1>
+      </div>
       {status === "checking" ? (
         <p role="status">Checking your account...</p>
       ) : null}
@@ -35,23 +38,40 @@ export default function AccountsPage() {
       {error && account ? (
         <p role="alert">Sign-out could not be completed. Please try again.</p>
       ) : null}
-      {account ? (
+      {account && privateRequest ? (
         <>
-          <p>Signed in as {account.username}.</p>
-          <p>
-            <Link href="/my-learning">My Learning</Link>
-          </p>
-          <button
-            type="button"
-            className="button button--secondary"
-            onClick={() => {
-              void signOut().catch(() => {
-                setError(true);
-              });
-            }}
+          <LearnerProfilePanel key={account.id} />
+          <section
+            className="learner-profile"
+            aria-labelledby="account-learning-heading"
           >
-            Sign out
-          </button>
+            <h2 id="account-learning-heading">My Learning</h2>
+            <div className="learner-actions">
+              <Link className="text-link" href="/my-learning#saved-materials">
+                Saved materials
+              </Link>
+              <Link
+                className="button button--secondary"
+                href="/my-learning#personal-paths"
+              >
+                Go to my learning paths
+              </Link>
+            </div>
+          </section>
+          <div className="learner-actions">
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() => {
+                setError(false);
+                void signOut().catch(() => {
+                  setError(true);
+                });
+              }}
+            >
+              Sign out
+            </button>
+          </div>
         </>
       ) : null}
       {status === "anonymous" ||

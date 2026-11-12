@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { SessionProvider } from "@/features/auth/SessionProvider";
+import { LearnerProfileProvider } from "@/features/my-learning/LearnerProfileProvider";
 import "./globals.css";
 
 const sourceSans = localFont({
@@ -41,9 +42,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ToastProvider>
           <SessionProvider>
-            <Navbar />
-            <main id="main-content">{children}</main>
-            <SiteFooter />
+            <LearnerProfileProvider>
+              <Navbar />
+              <main id="main-content">{children}</main>
+              <SiteFooter />
+            </LearnerProfileProvider>
           </SessionProvider>
         </ToastProvider>
         {umamiScriptUrl && umamiWebsiteId ? (

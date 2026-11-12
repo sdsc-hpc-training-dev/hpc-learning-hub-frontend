@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { CatalogMaterial } from "@/lib/gateway/types";
 import { catalogPlainText, resourceTypeSummary } from "./presentation";
 import { materialDetailsHref } from "./navigation";
+import SaveMaterialButton from "@/features/my-learning/SaveMaterialButton";
 
 interface MaterialCardProps {
   material: CatalogMaterial;
@@ -59,6 +60,11 @@ export default function MaterialCard({
 
   return (
     <article className={cardClassName}>
+      <SaveMaterialButton
+        materialId={material.id}
+        materialTitle={title}
+        placement="card"
+      />
       <div className="material-card__body">
         <div className="material-card__meta">
           {meta.join(" | ") || "SDSC training material"}

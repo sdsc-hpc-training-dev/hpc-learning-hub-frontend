@@ -21,6 +21,32 @@ export interface PathInput {
   description: string | null;
   items?: { materialId: string; position: number }[];
 }
+export const interestOptions = [
+  { id: "hpc-basics", label: "HPC basics" },
+  { id: "batch-jobs", label: "Batch jobs" },
+  { id: "gpu-computing", label: "GPU computing" },
+  { id: "containers", label: "Containers" },
+  { id: "data-management", label: "Data management" },
+  { id: "machine-learning", label: "Machine learning" },
+] as const;
+export type Interest = (typeof interestOptions)[number]["id"];
+export interface LearnerProfile {
+  displayName: string | null;
+  email: string | null;
+  topics: Interest[];
+  setupComplete: boolean;
+}
+export const getProfile = (request: LearnerRequest) =>
+  request<LearnerProfile>("/me/profile");
+export const saveProfile = (
+  request: LearnerRequest,
+  displayName: string | null,
+  topics: Interest[],
+) =>
+  request<LearnerProfile>("/me/profile", {
+    method: "PATCH",
+    body: JSON.stringify({ displayName, topics }),
+  });
 const activityHeader = { "X-Learning-Hub-Activity": "1" };
 export const getBookmarks = (request: LearnerRequest, activity = false) =>
   request<Bookmark[]>("/me/bookmarks", {

@@ -23,7 +23,7 @@ test("creates a path with selected materials in the chosen order", async () => {
   });
   fireEvent.click(screen.getByLabelText("Material one"));
   fireEvent.click(screen.getByLabelText("Material two"));
-  fireEvent.click(screen.getByRole("button", { name: "Move material two up" }));
+  fireEvent.click(screen.getByRole("button", { name: "Move Material two up" }));
   fireEvent.click(screen.getByRole("button", { name: "Save path" }));
   await waitFor(() => {
     expect(savePath).toHaveBeenCalledWith(
@@ -40,6 +40,56 @@ test("creates a path with selected materials in the chosen order", async () => {
     );
   });
   expect(onSaved).toHaveBeenCalled();
+});
+test("adds a Training Library material without a bookmark", async () => {
+  const fetchMock = jest.fn().mockResolvedValue({
+    ok: true,
+    json: () =>
+      Promise.resolve({
+        items: [{ id: "library-only", title: "Slurm jobs" }],
+        totalPages: 1,
+      }),
+  });
+  const originalFetch = global.fetch;
+  global.fetch = fetchMock;
+  try {
+    (savePath as jest.Mock).mockResolvedValue(undefined);
+    render(
+      <PersonalPathEditor
+        privateRequest={privateRequest}
+        bookmarks={[]}
+        onSaved={jest.fn().mockResolvedValue(undefined)}
+        onCancel={jest.fn()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Title"), {
+      target: { value: "Slurm" },
+    });
+    fireEvent.change(screen.getByLabelText("Find a material"), {
+      target: { value: "Slurm jobs" },
+    });
+    fireEvent.click(
+      await screen.findByRole("checkbox", { name: "Slurm jobs" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save path" }));
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("term=Slurm+jobs"),
+      expect.objectContaining({ credentials: "omit" }),
+    );
+    await waitFor(() => {
+      expect(savePath).toHaveBeenCalledWith(
+        privateRequest,
+        {
+          title: "Slurm",
+          description: null,
+          items: [{ materialId: "library-only", position: 0 }],
+        },
+        undefined,
+      );
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
 });
 test("metadata-only edit preserves unavailable items", async () => {
   (savePath as jest.Mock).mockResolvedValue(undefined);

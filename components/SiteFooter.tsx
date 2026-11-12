@@ -2,7 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import FooterFeedbackLink from "@/features/feedback/FooterFeedbackLink";
-import { bugReportLinkLabel, feedbackIssuesUrl, feedbackLinkLabel } from "@/features/feedback/links";
+import ProfileLink from "@/features/my-learning/ProfileLink";
+import {
+  bugReportLinkLabel,
+  feedbackIssuesUrl,
+  feedbackLinkLabel,
+} from "@/features/feedback/links";
 
 // Footer columns intentionally remain together for the site-wide layout.
 // eslint-disable-next-line max-lines-per-function
@@ -18,6 +23,20 @@ export default function SiteFooter() {
             height={48}
             priority
           />
+          <a
+            className="footer-school-brand"
+            href="https://hsdsc.ucsd.edu/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              src="/brand/hsdsc-white.png"
+              alt="UC San Diego Halicioglu School of Data Science and Computing"
+              width={473}
+              height={150}
+              unoptimized
+            />
+          </a>
           <p>
             Public training, practical learning paths, and grounded discovery
             across SDSC resources.
@@ -43,20 +62,19 @@ export default function SiteFooter() {
           >
             Contact SDSC
           </a>
-          <Suspense fallback={<Link href="/feedback">{feedbackLinkLabel}</Link>}>
+          <Suspense
+            fallback={<Link href="/feedback">{feedbackLinkLabel}</Link>}
+          >
             <FooterFeedbackLink />
           </Suspense>
-          <a
-            href={feedbackIssuesUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href={feedbackIssuesUrl} target="_blank" rel="noopener noreferrer">
             {bugReportLinkLabel}
           </a>
         </div>
         <div>
           <h2>About</h2>
           <Link href="/about">About Us</Link>
+          <ProfileLink />
           <a href="https://www.sdsc.edu/" target="_blank" rel="noopener">
             SDSC home
           </a>
