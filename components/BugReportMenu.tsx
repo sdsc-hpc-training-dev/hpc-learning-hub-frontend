@@ -90,12 +90,12 @@ export default function BugReportMenu({
         </a>
         <p>Don't have a GitHub account?</p>
         <Link
-          href="/feedback#improvements"
+          href="/report"
           onClick={() => {
             setOpen(false);
           }}
         >
-          Tell us what went wrong
+          Create a bug report here
         </Link>
       </div>
     </div>
