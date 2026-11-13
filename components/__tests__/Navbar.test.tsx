@@ -110,7 +110,9 @@ describe("Navbar - Utility navigation", () => {
       "/feedback?returnTo=%2Fmaterials%3Fquery%3DContainers%26page%3D2",
     );
   });
+});
 
+describe("Navbar - Bug reporting", () => {
   it("opens both reporting options and restores focus on Escape", () => {
     (usePathname as jest.Mock).mockReturnValue("/about");
     render(<Navbar />);
