@@ -15,22 +15,7 @@ function isReport(body: unknown): body is Record<string, unknown> {
     Object.keys(body).every((key) => allowedFields.has(key));
 }
 
-export async function POST(request: NextRequest) {
-  // Train routes public writes directly to the rate-limited Gateway.
-  if (process.env.BUG_REPORT_LOCAL_RELAY !== "true") return reply(404);
-  if (request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase() !== "application/json") {
-    return reply(415);
-  }
-  let body: unknown;
-  try {
-    const raw = await readBoundedBody(request.body, 8192);
-    if (raw === null) return reply(413);
-    body = JSON.parse(raw);
-  } catch {
-    return reply(400);
-  }
-  if (!isReport(body)) return reply(400);
-
+async function relayReport(body: Record<string, unknown>) {
   const gateway = process.env.GATEWAY_URL;
   if (!gateway) return reply(503);
   try {
@@ -47,4 +32,21 @@ export async function POST(request: NextRequest) {
   } catch {
     return reply(503);
   }
+}
+
+export async function POST(request: NextRequest) {
+  // Train routes public writes directly to the rate-limited Gateway.
+  if (process.env.BUG_REPORT_LOCAL_RELAY !== "true") return reply(404);
+  if (request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase() !== "application/json") {
+    return reply(415);
+  }
+  let body: unknown;
+  try {
+    const raw = await readBoundedBody(request.body, 8192);
+    if (raw === null) return reply(413);
+    body = JSON.parse(raw);
+  } catch {
+    return reply(400);
+  }
+  return isReport(body) ? relayReport(body) : reply(400);
 }
