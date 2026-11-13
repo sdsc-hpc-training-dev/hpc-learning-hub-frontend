@@ -34,8 +34,11 @@ describe("LearningPathsView", () => {
     render(<LearningPathsView paths={[samplePath]} />);
 
     expect(
-      screen.getByRole("heading", { name: "Available learning paths" }),
+      screen.getByRole("heading", { name: "Public learning paths" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Check your learning paths" }),
+    ).toBeNull();
     expect(screen.getByRole("link", { name: "New to HPC" })).toHaveAttribute(
       "href",
       "/learning-paths/new-to-hpc",
@@ -50,9 +53,10 @@ describe("LearningPathsView", () => {
   it("renders an honest empty state", () => {
     render(<LearningPathsView paths={[]} />);
     expect(screen.getByRole("status")).toHaveTextContent(
-      "No learning paths are available yet.",
+      "No public learning paths are available yet.",
     );
   });
+
 });
 
 describe("LearningPathDetail", () => {
@@ -109,7 +113,7 @@ describe("LearningPathDetail", () => {
       "No training materials have been added to this path yet.",
     );
     expect(
-      screen.queryByText("No learning paths are available yet."),
+      screen.queryByText("No public learning paths are available yet."),
     ).toBeNull();
   });
 });

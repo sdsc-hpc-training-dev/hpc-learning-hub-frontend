@@ -33,15 +33,15 @@ it("validates the rating and submits anonymous normalized feedback once", async 
   await waitFor(() => expect(confirmation).toHaveFocus());
   expect(scrollToMock).toHaveBeenCalledWith({ top: 0, behavior: "instant" });
   expect(screen.queryByRole("heading", { name: "Help improve the Learning Hub." })).not.toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Go back" })).toHaveAttribute("href", "/");
+  expect(screen.queryByRole("link", { name: "Go back" })).not.toBeInTheDocument();
 });
 
-it("offers a safe return to the filtered library after submission", async () => {
+it("offers clear destinations to keep exploring after submission", async () => {
   fetchMock.mockResolvedValue({ ok: true, status: 201 } as Response);
-  render(<FeedbackForm returnTo="/materials?query=HPC" />);
+  render(<FeedbackForm />);
   fireEvent.click(screen.getByRole("radio", { name: "4" }));
   fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
-  expect(await screen.findByRole("link", { name: "Go back" })).toHaveAttribute("href", "/materials?query=HPC");
+  await screen.findByRole("status", { name: "" });
   expect(screen.getByRole("link", { name: "Browse the Training Library" })).toHaveAttribute("href", "/materials");
   expect(screen.getByRole("heading", { name: "Keep exploring the Hub" })).toBeInTheDocument();
   expect(screen.getByRole("navigation", { name: "Explore the Learning Hub" })).toBeInTheDocument();
