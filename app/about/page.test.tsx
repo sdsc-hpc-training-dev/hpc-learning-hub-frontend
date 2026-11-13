@@ -78,11 +78,17 @@ it("lists Mary first as PI, then the rest of leadership by surname", () => {
   const leadership = within(
     screen.getByRole("region", { name: "Project Leadership" }),
   );
+  const team = within(screen.getByRole("region", { name: "Leadership Team" }));
   expect(
     leadership
       .getAllByRole("heading", { level: 4 })
       .map(({ textContent }) => textContent),
-  ).toEqual(["Mary Thomas", "Avery Blas", "Fernando Garzon", "Mai H. Nguyen"]);
+  ).toEqual(["Mary Thomas"]);
+  expect(
+    team
+      .getAllByRole("heading", { level: 4 })
+      .map(({ textContent }) => textContent),
+  ).toEqual(["Avery Blas", "Fernando Garzon", "Mai H. Nguyen"]);
   expect(screen.getByText(/Principal Investigator \(PI\)/)).toBeInTheDocument();
   const lead = leadership
     .getByRole("heading", { name: "Mary Thomas" })
@@ -91,7 +97,10 @@ it("lists Mary first as PI, then the rest of leadership by surname", () => {
   expect(
     lead?.parentElement?.querySelectorAll(".about-person--lead"),
   ).toHaveLength(1);
-  expect(leadership.getByText("AI and Data Science")).toBeInTheDocument();
+  expect(team.getByText("AI and Data Science")).toBeInTheDocument();
+  expect(screen.getByText("programs, and learning paths")).toHaveClass(
+    "about-path-phrase",
+  );
 });
 
 it("uses labeled new-tab links for matched social profiles only", () => {

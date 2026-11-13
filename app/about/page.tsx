@@ -14,7 +14,7 @@ interface TeamMember {
 
 const team: { id: string; heading: string; people: TeamMember[] }[] = [
   {
-    id: "project-leadership",
+    id: "principal-investigator",
     heading: "Project Leadership",
     people: [
       {
@@ -27,6 +27,12 @@ const team: { id: string; heading: string; people: TeamMember[] }[] = [
         role: "Principal Investigator (PI) and Advanced Computing Training",
         bio: "Mary leads SDSC's HPC and cyberinfrastructure training and mentors students in advanced computing.",
       },
+    ],
+  },
+  {
+    id: "leadership-team",
+    heading: "Leadership Team",
+    people: [
       {
         name: "Avery Blas",
         initials: "AB",
@@ -252,10 +258,11 @@ export default function AboutPage() {
         <div className="section-shell about-content">
           <h2>Training, Brought Together</h2>
           <p>
-            The Learning Hub brings together HPC training materials, events,
-            programs,{" "}
-            <span className="about-path-phrase">and learning paths</span> to
-            make SDSC resources easier to discover.
+            The Learning Hub brings together HPC training materials, events,{" "}
+            <span className="about-path-phrase">
+              programs, and learning paths
+            </span>{" "}
+            to make SDSC resources easier to discover.
           </p>
           <a
             href="https://sc26.conference-program.com/presentation/?id=ws_bphpcte116&amp;sess=sess150"

@@ -111,18 +111,34 @@ describe("Navbar - Utility navigation", () => {
     );
   });
 
-  it("offers a short, safely opened GitHub problem-report link", () => {
+  it("opens both reporting options and restores focus on Escape", () => {
     (usePathname as jest.Mock).mockReturnValue("/about");
     render(<Navbar />);
-    const report = screen.getByRole("link", { name: /Report a bug/ });
-    expect(report).toHaveAttribute(
+    const report = screen.getByRole("button", { name: "Report a bug" });
+    expect(report).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(report);
+    const options = within(
+      screen.getByRole("group", { name: "Bug reporting options" }),
+    );
+    const github = options.getByRole("link", {
+      name: /Report an issue or bug on GitHub/,
+    });
+    expect(github).toHaveAttribute(
       "href",
       "https://github.com/sdsc-hpc-training-dev/learning-hub-feedback/issues/new/choose",
     );
-    expect(report).toHaveAttribute("target", "_blank");
-    expect(report).toHaveAttribute("rel", "noopener noreferrer");
+    expect(github).toHaveAttribute("target", "_blank");
+    expect(github).toHaveAttribute("rel", "noopener noreferrer");
+    const noAccount = options.getByRole("link", {
+      name: "Tell us what went wrong",
+    });
+    expect(noAccount).toHaveAttribute("href", "/feedback#improvements");
+    expect(noAccount).not.toHaveAttribute("target");
     expect(report.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(report.querySelector("svg")).toHaveClass("site-utility__bug");
+    fireEvent.keyDown(noAccount, { key: "Escape" });
+    expect(report).toHaveFocus();
+    expect(report).toHaveAttribute("aria-expanded", "false");
   });
 });
 

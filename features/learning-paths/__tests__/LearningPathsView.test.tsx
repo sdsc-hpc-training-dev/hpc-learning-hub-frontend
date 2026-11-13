@@ -45,7 +45,7 @@ describe("LearningPathsView", () => {
     );
     expect(
       screen.getByText(
-        "Start with a curated learning path to build your skills in High Performance Computing (HPC). These paths arrange HPC trainings into a clear first journey. They are proposed guidance, not a completed curriculum.",
+        "Follow an SDSC-curated sequence to build your high-performance computing (HPC) skills.",
       ),
     ).toBeInTheDocument();
   });
@@ -56,7 +56,6 @@ describe("LearningPathsView", () => {
       "No public learning paths are available yet.",
     );
   });
-
 });
 
 describe("LearningPathDetail", () => {

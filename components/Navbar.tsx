@@ -3,14 +3,10 @@
 import { Suspense, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Bug } from "lucide-react";
 import { usePathname } from "next/navigation";
 import FeedbackLink from "@/features/feedback/FeedbackLink";
-import {
-  feedbackIssuesUrl,
-  utilityBugReportLabel,
-  utilityFeedbackLabel,
-} from "@/features/feedback/links";
+import { utilityFeedbackLabel } from "@/features/feedback/links";
+import BugReportMenu from "./BugReportMenu";
 
 interface NavLink {
   key: string;
@@ -60,24 +56,7 @@ export default function Navbar() {
               onNavigate={closeMenus}
             />
           </Suspense>
-          <a
-            className="site-utility__report"
-            href={feedbackIssuesUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Something not working? Report a bug or request a feature on GitHub."
-            onClick={closeMenus}
-          >
-            {utilityBugReportLabel}
-            <Bug
-              className="site-utility__bug"
-              size={20}
-              strokeWidth={1.8}
-              aria-hidden="true"
-              focusable="false"
-            />
-            <span className="sr-only"> on GitHub (opens in a new tab)</span>
-          </a>
+          <BugReportMenu onOpen={closeMenus} />
         </nav>
       </div>
       <div className="header-shell">
