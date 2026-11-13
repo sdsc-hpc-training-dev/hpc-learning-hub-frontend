@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { bugReportLinkLabel, feedbackIssuesUrl, feedbackLinkLabel } from "@/features/feedback/links";
+import {
+  bugReportLinkLabel,
+  feedbackIssuesUrl,
+  feedbackLinkLabel,
+} from "@/features/feedback/links";
 import MaterialCard from "@/features/training-library/MaterialCard";
 import { UpcomingEventCard } from "@/features/events/EventsView";
 import { ProgramCard } from "@/features/programs/ProgramsView";
@@ -35,9 +39,8 @@ export default function StartHereView({
               Find the training that moves your work forward
             </h1>
             <p className="lede">
-              Explore practical HPC (High Performance Computing) learning paths,
-              system guides, upcoming events, and supporting resources from the
-              San Diego Supercomputer Center.
+              Take your next step in high-performance computing. Find practical
+              tutorials, recordings, and workshops for the work you want to do.
             </p>
           </div>
           <div className="hero-actions" aria-label="Choose how to begin">
@@ -46,8 +49,8 @@ export default function StartHereView({
               <span>Search by topic, tool, system, or format.</span>
             </Link>
             <Link className="route-action" href="/learning-paths">
-              <strong>Explore learning paths</strong>
-              <span>Follow a short, guided learning sequence.</span>
+              <strong>New to HPC? Start here</strong>
+              <span>Follow a short, guided learning path.</span>
             </Link>
           </div>
         </div>
@@ -66,11 +69,11 @@ export default function StartHereView({
         <div className="section-shell">
           <div className="section-heading section-heading--split">
             <div>
-              <span className="eyebrow">Browse without jargon</span>
-              <h2 id="browse-heading">Start with something you recognize.</h2>
+              <span className="eyebrow">Explore the library</span>
+              <h2 id="browse-heading">What are you working on?</h2>
               <p>
-                Choose a system, subject, or tool. The library will apply the
-                matching filter for you.
+                Working on Expanse? Learning to use GPUs? Start with what
+                interests you.
               </p>
             </div>
             <Link className="text-link" href="/materials">
@@ -109,7 +112,10 @@ export default function StartHereView({
             <div>
               <span className="eyebrow">Good places to begin</span>
               <h2 id="featured-heading">Featured training</h2>
-              <p>See useful training materials from across the SDSC catalog.</p>
+              <p>
+                Get started with these sessions, or explore the library to find
+                your next challenge.
+              </p>
             </div>
             <Link className="text-link" href="/materials">
               Browse all training →
@@ -160,10 +166,11 @@ export default function StartHereView({
         <div className="section-shell">
           <div className="section-heading section-heading--split">
             <div>
-              <span className="eyebrow">Ordered guidance</span>
-              <h2 id="paths-heading">Learning Paths</h2>
+              <span className="eyebrow">Find your next step</span>
+              <h2 id="paths-heading">Build skills, one step at a time.</h2>
               <p>
-                Follow a curated sequence of materials toward a learning goal.
+                Choose a path that fits your goals, from your first HPC job to
+                working with GPUs. Learn at your own pace.
               </p>
             </div>
             <Link className="text-link" href="/learning-paths">
@@ -173,7 +180,8 @@ export default function StartHereView({
           {data.learningPaths.length ? (
             <div className="home-path-grid">
               {data.learningPaths.map((path) => {
-                const title = catalogPlainText(path.title ?? path.name) || "Learning path";
+                const title =
+                  catalogPlainText(path.title ?? path.name) || "Learning path";
                 const href = `/learning-paths/${encodeURIComponent(path.id)}`;
                 return (
                   <article className="learning-path-card" key={path.id}>
@@ -181,7 +189,9 @@ export default function StartHereView({
                     <h3>
                       <Link href={href}>{title}</Link>
                     </h3>
-                    {path.description ? <p>{catalogPlainText(path.description)}</p> : null}
+                    {path.description ? (
+                      <p>{catalogPlainText(path.description)}</p>
+                    ) : null}
                     <div className="learning-path-card__footer">
                       <span>Explore the sequence</span>
                       <Link className="text-link" href={href}>
@@ -228,12 +238,24 @@ export default function StartHereView({
           )}
         </div>
       </section>
-      <section className="section section--compact" aria-labelledby="home-help-heading">
+      <section
+        className="section section--compact"
+        aria-labelledby="home-help-heading"
+      >
         <div className="section-shell hub-help">
-          <div><h2 id="home-help-heading">Help improve the Hub</h2><p>Share your experience with the Learning Hub team.</p></div>
+          <div>
+            <h2 id="home-help-heading">Help improve the Hub</h2>
+            <p>Share your experience with the Learning Hub team.</p>
+          </div>
           <div className="hub-help__links">
-            <Link href="/feedback?returnTo=%2F">{feedbackLinkLabel}</Link>
-            <a href={feedbackIssuesUrl} target="_blank" rel="noopener noreferrer">{bugReportLinkLabel}</a>
+            <Link href="/feedback">{feedbackLinkLabel}</Link>
+            <a
+              href={feedbackIssuesUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {bugReportLinkLabel}
+            </a>
             <Link href="/about">About Us</Link>
           </div>
         </div>

@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { usePathname } from "next/navigation";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { usePathname, useSearchParams } from "next/navigation";
 import Navbar from "../Navbar";
 
 interface ImageProps {
@@ -8,17 +8,19 @@ interface ImageProps {
   width: number;
   height: number;
   priority?: boolean;
+  unoptimized?: boolean;
 }
 
 jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
+  useSearchParams: jest.fn(() => new URLSearchParams()),
 }));
 
 jest.mock("next/image", () => ({
   __esModule: true,
   default: (props: ImageProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { priority, ...imgProps } = props;
+    const { priority, unoptimized, ...imgProps } = props;
     // eslint-disable-next-line @next/next/no-img-element
     return <img {...imgProps} />;
   },
@@ -35,6 +37,11 @@ describe("Navbar - Rendering", () => {
     expect(
       screen.getByAltText("San Diego Supercomputer Center"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByAltText(
+        "UC San Diego Halicioglu School of Data Science and Computing",
+      ),
+    ).toHaveAttribute("src", "/brand/hsdsc-blue-gold.png");
   });
 
   it("renders all navigation links", () => {
@@ -53,9 +60,87 @@ describe("Navbar - Rendering", () => {
       screen.getByRole("link", { name: /programs & series/i }),
     ).toBeInTheDocument();
   });
+  it("groups the Hub name with the SDSC wordmark to the right of HSDSC", () => {
+    render(<Navbar />);
+    const title = screen.getByRole("link", { name: "HPC Learning Hub" });
+    const group = title.parentElement;
+    expect(group).toHaveClass("site-brand-lockup");
+    expect(
+      Array.from(group?.children ?? []).map((element) => element.className),
+    ).toEqual(["site-school-brand", "site-brand", "site-name"]);
+  });
   it("renders menu toggle button", () => {
     render(<Navbar />);
     expect(screen.getByRole("button", { name: /menu/i })).toBeInTheDocument();
+  });
+});
+
+describe("Navbar - Utility navigation", () => {
+  it.each(["/about", "/feedback"])(
+    "keeps About and Feedback in the same tab on %s",
+    (pathname) => {
+      (usePathname as jest.Mock).mockReturnValue(pathname);
+      render(<Navbar />);
+      const utility = within(
+        screen.getByRole("navigation", { name: "About and feedback" }),
+      );
+      for (const label of ["About Us", "Give us some feedback"]) {
+        expect(utility.getByRole("link", { name: label })).not.toHaveAttribute(
+          "target",
+        );
+      }
+      expect(
+        utility.getByRole("link", {
+          name: pathname === "/about" ? "About Us" : "Give us some feedback",
+        }),
+      ).toHaveAttribute("aria-current", "page");
+    },
+  );
+
+  it("preserves filtered results as the survey return destination", () => {
+    (usePathname as jest.Mock).mockReturnValue("/materials");
+    (useSearchParams as jest.Mock).mockReturnValueOnce(
+      new URLSearchParams("query=Containers&page=2"),
+    );
+    render(<Navbar />);
+    expect(
+      screen.getByRole("link", { name: "Give us some feedback" }),
+    ).toHaveAttribute(
+      "href",
+      "/feedback?returnTo=%2Fmaterials%3Fquery%3DContainers%26page%3D2",
+    );
+  });
+});
+
+describe("Navbar - Bug reporting", () => {
+  it("opens both reporting options and restores focus on Escape", () => {
+    (usePathname as jest.Mock).mockReturnValue("/about");
+    render(<Navbar />);
+    const report = screen.getByRole("button", { name: "Report a bug" });
+    expect(report).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(report);
+    const options = within(
+      screen.getByRole("group", { name: "Bug reporting options" }),
+    );
+    const github = options.getByRole("link", {
+      name: /Report an issue or bug on GitHub/,
+    });
+    expect(github).toHaveAttribute(
+      "href",
+      "https://github.com/sdsc-hpc-training-dev/learning-hub-feedback/issues/new/choose",
+    );
+    expect(github).toHaveAttribute("target", "_blank");
+    expect(github).toHaveAttribute("rel", "noopener noreferrer");
+    const noAccount = options.getByRole("link", {
+      name: "Tell us what went wrong",
+    });
+    expect(noAccount).toHaveAttribute("href", "/feedback#improvements");
+    expect(noAccount).not.toHaveAttribute("target");
+    expect(report.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(report.querySelector("svg")).toHaveClass("site-utility__bug");
+    fireEvent.keyDown(noAccount, { key: "Escape" });
+    expect(report).toHaveFocus();
+    expect(report).toHaveAttribute("aria-expanded", "false");
   });
 });
 
@@ -67,7 +152,7 @@ describe("Navbar - Interactions", () => {
   it("toggles menu when menu button is clicked", () => {
     render(<Navbar />);
     const menuButton = screen.getByRole("button", { name: /menu/i });
-    const nav = screen.getByRole("navigation");
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" });
 
     expect(nav).not.toHaveClass("is-open");
 
@@ -81,7 +166,7 @@ describe("Navbar - Interactions", () => {
   it("closes menu when a navigation link is clicked", () => {
     render(<Navbar />);
     const menuButton = screen.getByRole("button", { name: /menu/i });
-    const nav = screen.getByRole("navigation");
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" });
 
     fireEvent.click(menuButton);
     expect(nav).toHaveClass("is-open");
@@ -93,6 +178,14 @@ describe("Navbar - Interactions", () => {
 });
 
 describe("Navbar - Active Page Detection", () => {
+  it("does not expose account actions in the public navigation", () => {
+    (usePathname as jest.Mock).mockReturnValue("/");
+    render(<Navbar />);
+    expect(screen.queryByRole("link", { name: "My Account" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "My Learning" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Account" })).toBeNull();
+  });
   it("keeps a series materials drill-down under Programs & Series", () => {
     (usePathname as jest.Mock).mockReturnValue("/programs/materials");
     render(<Navbar />);

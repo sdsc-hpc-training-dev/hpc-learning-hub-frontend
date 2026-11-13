@@ -52,7 +52,7 @@ function PathCard({ path }: Readonly<{ path: LearningPath }>) {
 function EmptyPathsStatus() {
   return (
     <div className="learning-path-status" role="status">
-      <h2>No learning paths are available yet.</h2>
+      <h3>No public learning paths are available yet.</h3>
       <p>
         Browse the Training Library to find individual materials while paths are
         being prepared.
@@ -111,10 +111,8 @@ export function LearningPathsView({
             Start with a sequence, not a search box.
           </h1>
           <p>
-            Start with a curated learning path to build your skills in High
-            Performance Computing (HPC). These paths arrange HPC trainings into
-            a clear first journey. They are proposed guidance, not a completed
-            curriculum.
+            Follow an SDSC-curated sequence to build your high-performance
+            computing (HPC) skills.
           </p>
         </div>
       </section>
@@ -122,11 +120,8 @@ export function LearningPathsView({
         <div className="section-shell">
           <div className="section-heading">
             <span className="eyebrow">Choose a goal</span>
-            <h2 id="available-paths-heading">Available learning paths</h2>
-            <p>
-              Each path organizes existing public materials into a practical
-              progression.
-            </p>
+            <h2 id="available-paths-heading">Public learning paths</h2>
+            <p>Explore training selected and ordered by the SDSC team.</p>
           </div>
           <AvailablePaths paths={paths} error={error} />
         </div>

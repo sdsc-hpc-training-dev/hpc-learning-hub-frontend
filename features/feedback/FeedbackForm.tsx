@@ -3,7 +3,6 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { safeReturnTo } from "./return-to";
 
 type FoundWhatNeeded = "yes" | "partly" | "no" | "just_browsing";
 interface FeedbackValues {
@@ -32,7 +31,7 @@ const exploreOptions = [
   { href: "/programs", title: "Programs & Series", detail: "Discover related materials from SDSC webinars, summer institutes, and training series." },
 ];
 
-export default function FeedbackForm({ returnTo }: Readonly<{ returnTo?: string }>) {
+export default function FeedbackForm() {
   const [values, setValues] = useState(initialValues);
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
@@ -87,7 +86,6 @@ export default function FeedbackForm({ returnTo }: Readonly<{ returnTo?: string 
           <p className="feedback-invitation">What would you like to learn next? Find a tutorial for your next HPC task, revisit a workshop, or explore something new at your own pace.</p>
           <div className="feedback-actions">
             <Link href="/materials" className="button button--gold">Browse the Training Library</Link>
-            <Link href={safeReturnTo(returnTo)} className="button button--secondary">Go back</Link>
           </div>
         </div>
       </section>

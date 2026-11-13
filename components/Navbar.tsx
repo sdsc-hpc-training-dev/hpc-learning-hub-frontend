@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import FeedbackLink from "@/features/feedback/FeedbackLink";
+import { utilityFeedbackLabel } from "@/features/feedback/links";
+import BugReportMenu from "./BugReportMenu";
 
 interface NavLink {
   key: string;
@@ -19,21 +22,16 @@ const NAV_LINKS: NavLink[] = [
   { key: "programs", href: "/programs", label: "Programs & Series" },
 ];
 
-function getCurrentPage(pathname: string): string {
-  if (pathname === "/programs" || pathname.startsWith("/programs/"))
-    return "programs";
-  if (pathname.includes("training") || pathname.includes("materials"))
-    return "catalog";
-  if (pathname.includes("learning")) return "learning";
-  if (pathname.includes("events")) return "events";
-  if (pathname.includes("programs")) return "programs";
-  return "home";
+function isCurrent(pathname: string, href: string): "page" | undefined {
+  return pathname === href || (href !== "/" && pathname.startsWith(href + "/"))
+    ? "page"
+    : undefined;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const currentPage = getCurrentPage(pathname);
 
   const closeMenus = () => {
     setMenuOpen(false);
@@ -41,21 +39,60 @@ export default function Navbar() {
 
   return (
     <header className="site-header">
+      <div className="site-utility">
+        <nav className="site-utility__shell" aria-label="About and feedback">
+          <Link
+            href="/about"
+            aria-current={isCurrent(pathname, "/about")}
+            onClick={closeMenus}
+          >
+            About Us
+          </Link>
+          <Suspense
+            fallback={<Link href="/feedback">{utilityFeedbackLabel}</Link>}
+          >
+            <FeedbackLink
+              label={utilityFeedbackLabel}
+              onNavigate={closeMenus}
+            />
+          </Suspense>
+          <BugReportMenu onOpen={closeMenus} />
+        </nav>
+      </div>
       <div className="header-shell">
-        <Link
-          className="site-brand"
-          href="/"
-          aria-label="HPC Learning Hub home"
-        >
-          <Image
-            src="/SDSC-logo.svg"
-            alt="San Diego Supercomputer Center"
-            width={170}
-            height={48}
-            priority
-          />
-          <span>HPC Learning Hub</span>
-        </Link>
+        <div className="site-brand-lockup" aria-label="SDSC and UC San Diego">
+          <a
+            className="site-school-brand"
+            href="https://hsdsc.ucsd.edu/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              src="/brand/hsdsc-blue-gold.png"
+              alt="UC San Diego Halicioglu School of Data Science and Computing"
+              width={657}
+              height={205}
+              priority
+              unoptimized
+            />
+          </a>
+          <Link
+            className="site-brand"
+            href="/"
+            aria-label="HPC Learning Hub home"
+          >
+            <Image
+              src="/SDSC-logo.svg"
+              alt="San Diego Supercomputer Center"
+              width={170}
+              height={48}
+              priority
+            />
+          </Link>
+          <Link href="/" className="site-name">
+            HPC Learning Hub
+          </Link>
+        </div>
         <button
           className="menu-toggle"
           type="button"
@@ -76,26 +113,12 @@ export default function Navbar() {
             <Link
               key={key}
               href={href}
-              aria-current={currentPage === key ? "page" : undefined}
+              aria-current={isCurrent(pathname, href)}
               onClick={closeMenus}
             >
               {label}
             </Link>
           ))}
-          {/*
-          <button className="nav-button" type="button" title="Ask AIDA" onClick={closeMenus}>
-            Ask AIDA
-          </button>
-
-          <div className="nav-account-actions">
-            <Link className="nav-signin" href="/account">
-              Sign in
-            </Link>
-            <Link className="nav-button" href="/account?mode=create">
-              Create account
-            </Link>
-          </div>
-*/}
         </nav>
       </div>
     </header>
