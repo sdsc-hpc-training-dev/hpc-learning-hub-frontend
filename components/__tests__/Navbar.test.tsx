@@ -132,9 +132,9 @@ describe("Navbar - Bug reporting", () => {
     expect(github).toHaveAttribute("target", "_blank");
     expect(github).toHaveAttribute("rel", "noopener noreferrer");
     const noAccount = options.getByRole("link", {
-      name: "Tell us what went wrong",
+      name: "Create a bug report here",
     });
-    expect(noAccount).toHaveAttribute("href", "/feedback#improvements");
+    expect(noAccount).toHaveAttribute("href", "/report");
     expect(noAccount).not.toHaveAttribute("target");
     expect(report.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(report.querySelector("svg")).toHaveClass("site-utility__bug");

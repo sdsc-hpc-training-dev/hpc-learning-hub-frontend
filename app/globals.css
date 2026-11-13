@@ -684,6 +684,62 @@ h3 {
   font-weight: 400;
 }
 
+.report-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+  gap: 56px;
+  align-items: start;
+}
+
+.bug-report-form__field {
+  margin-bottom: 20px;
+}
+
+.bug-report-form__field label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.bug-report-form__field input,
+.bug-report-form__field textarea {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #aab8c7;
+  border-radius: 4px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}
+
+.bug-report-form__field textarea { resize: vertical; }
+.report-count { margin: 0; color: var(--muted); font-size: 0.85rem; text-align: right; }
+.report-help { margin: 0 0 16px; color: var(--muted); font-size: 0.95rem; }
+.bug-report-form__field .report-help { margin: 0; }
+.report-alternatives { border-top: 3px solid var(--gold); padding-top: 20px; }
+.report-alternatives h2, .report-explore h2 { font-size: 1.5rem; }
+.report-alternatives h3 { margin: 24px 0 8px; font-size: 1.1rem; }
+.report-alternatives p { margin: 0 0 8px; }
+.report-alternatives a { overflow-wrap: anywhere; }
+.report-confirmation h1 { max-width: 24ch; margin-bottom: 16px; font-size: 2.8rem; }
+.report-confirmation h1:focus { outline: none; }
+.report-receipt { margin: 28px 0 20px; }
+.report-receipt summary { width: fit-content; padding-block: 10px; color: var(--blue-dark); font-weight: 800; cursor: pointer; }
+.report-receipt dl { max-width: 760px; }
+.report-receipt dl > div { padding-block: 12px; border-top: 1px solid var(--line); }
+.report-receipt dt { font-weight: 800; }
+.report-receipt dd { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.report-explore { margin-top: 40px; }
+.report-explore .feedback-destinations { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (max-width: 760px), (max-width: 1060px) and (pointer: coarse) {
+  .report-layout, .report-explore .feedback-destinations { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .report-confirmation h1 { font-size: 2rem; }
+}
+
 .feedback-options {
   display: flex;
   flex-wrap: wrap;
