@@ -76,6 +76,8 @@ textarea:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 
 .about-team-group { margin-top: 32px; }
 .about-team { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 36px; }
 .about-person { display: flex; gap: 18px; border-top: 1px solid var(--line); padding-top: 20px; }
+.about-person--lead { grid-column: 1 / -1; }
+.about-person--lead > div { max-width: 65ch; }
 .about-person h4 { margin: 0 0 6px; font-size: 1.2rem; }
 .about-person p { margin-bottom: 8px; }
 .about-avatar { position: relative; flex: 0 0 88px; width: 88px; height: 88px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: var(--light-blue); color: var(--navy); font-size: 1.2rem; font-weight: 800; }

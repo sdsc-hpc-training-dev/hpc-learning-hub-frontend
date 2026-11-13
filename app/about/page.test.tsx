@@ -84,6 +84,13 @@ it("lists Mary first as PI, then the rest of leadership by surname", () => {
       .map(({ textContent }) => textContent),
   ).toEqual(["Mary Thomas", "Avery Blas", "Fernando Garzon", "Mai H. Nguyen"]);
   expect(screen.getByText(/Principal Investigator \(PI\)/)).toBeInTheDocument();
+  const lead = leadership
+    .getByRole("heading", { name: "Mary Thomas" })
+    .closest("article");
+  expect(lead).toHaveClass("about-person--lead");
+  expect(
+    lead?.parentElement?.querySelectorAll(".about-person--lead"),
+  ).toHaveLength(1);
   expect(leadership.getByText("AI and Data Science")).toBeInTheDocument();
 });
 

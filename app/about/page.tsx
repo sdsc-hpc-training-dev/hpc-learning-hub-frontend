@@ -5,6 +5,7 @@ interface TeamMember {
   initials: string;
   id: string;
   role: string;
+  lead?: boolean;
   bio: string;
   photo?: string;
   linkedin?: string;
@@ -22,6 +23,7 @@ const team: { id: string; heading: string; people: TeamMember[] }[] = [
         id: "316363",
         linkedin: "mary-thomas-ph-d-a9286773",
         github: "marypthomas",
+        lead: true,
         role: "Principal Investigator (PI) and Advanced Computing Training",
         bio: "Mary leads SDSC's HPC and cyberinfrastructure training and mentors students in advanced computing.",
       },
@@ -199,7 +201,11 @@ function ProfileLinks({ person }: Readonly<{ person: TeamMember }>) {
 
 function TeamProfile({ person }: Readonly<{ person: TeamMember }>) {
   return (
-    <article className="about-person">
+    <article
+      className={
+        person.lead ? "about-person about-person--lead" : "about-person"
+      }
+    >
       <span
         className="about-avatar"
         data-portrait={person.photo}
@@ -247,8 +253,9 @@ export default function AboutPage() {
           <h2>Training, Brought Together</h2>
           <p>
             The Learning Hub brings together HPC training materials, events,
-            programs, <span className="about-path-phrase">and learning paths</span> to make SDSC resources easier to
-            discover.
+            programs,{" "}
+            <span className="about-path-phrase">and learning paths</span> to
+            make SDSC resources easier to discover.
           </p>
           <a
             href="https://sc26.conference-program.com/presentation/?id=ws_bphpcte116&amp;sess=sess150"
